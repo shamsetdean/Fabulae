@@ -1,15 +1,12 @@
-// Un seul gros template HTML : Alpine peut parser toutes les directives
-// normalement puisqu'il est injecté avant Alpine.start()
-
+// Template HTML complet avec fallback de chargement et gestion robuste
 export const appTemplate = `
-<!-- Loading auth initial -->
-<template x-if="!$store.app.authReady">
-  <div class="min-h-dvh flex items-center justify-center">
-    <div class="text-cream-300/40 text-sm">···</div>
-  </div>
-</template>
+<!-- Loading state : affiché tant que authReady est false -->
+<div x-show="!$store.app.authReady" class="min-h-dvh flex items-center justify-center">
+  <div class="text-cream-300/40 text-sm font-mono">chargement...</div>
+</div>
 
-<div x-show="$store.app.authReady" x-cloak>
+<!-- Main app : affiché dès que authReady est true -->
+<div x-show="$store.app.authReady">
 
   <!-- ============== AUTH ============== -->
   <template x-if="$store.app.route.name === 'auth'">
@@ -122,7 +119,7 @@ export const appTemplate = `
             <template x-if="!loading && lists.length === 0">
               <div class="text-center py-16 text-cream-300/60">
                 <p class="text-5xl mb-3 display italic text-cream-200/40">¯\\_(ツ)_/¯</p>
-                <p class="text-sm" x-text="filter === 'following' ? 'Personne que tu suis n\\'a publié de Top 3 pour l\\'instant.' : 'Rien ici. Publie le premier !'"></p>
+                <p class="text-sm">Rien ici pour l'instant. Publie le premier Top 3 !</p>
               </div>
             </template>
 
@@ -214,7 +211,7 @@ export const appTemplate = `
                       <div class="flex-1 min-w-0">
                         <p class="font-medium text-cream-50 text-sm leading-tight" x-text="show.name"></p>
                         <p class="text-xs text-cream-300/50 mt-0.5" x-text="show.year"></p>
-                        <p class="text-xs text-flame-500 mt-1" x-text="show.mentions + ' ' + (show.mentions > 1 ? 'mentions' : 'mention')"></p>
+                        <p class="text-xs text-flame-500 mt-1" x-text="show.mentions + ' mention(s)'"></p>
                       </div>
                     </a>
                   </li>
@@ -317,7 +314,7 @@ export const appTemplate = `
           </section>
         </template>
 
-        <!-- PROFILE (mine) -->
+        <!-- PROFILE (moi ou @username) -->
         <template x-if="$store.app.route.name === 'profile' || $store.app.route.name === 'u'">
           <section :key="$store.app.route.params[0] || 'me'" x-data="profileView()" x-init="init()" class="px-4 pt-4 safe-top animate-fade-in">
             <template x-if="loading">
@@ -346,7 +343,7 @@ export const appTemplate = `
                     </template>
                     <template x-if="!isMe && $store.app.isAuthed">
                       <button @click="toggleFollow" :class="isFollowing ? 'btn-secondary' : 'btn-primary'" class="text-sm py-2 px-4">
-                        <span x-text="isFollowing ? 'Abonné' : 'S\\'abonner'"></span>
+                        <span x-text="isFollowing ? 'Abonné' : 'Suivre'"></span>
                       </button>
                     </template>
                   </div>
@@ -396,19 +393,6 @@ export const appTemplate = `
                     </a>
                   </template>
                 </div>
-
-                <template x-if="history.length > 0">
-                  <div>
-                    <h2 class="text-xs tracking-[0.25em] text-cream-300/60 uppercase mb-3">Anciens classements</h2>
-                    <ul class="space-y-2">
-                      <template x-for="h in history" :key="h.id">
-                        <li class="card p-3 text-xs text-cream-300/70">
-                          <span x-text="new Date(h.created_at).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})"></span>
-                        </li>
-                      </template>
-                    </ul>
-                  </div>
-                </template>
               </div>
             </template>
           </section>
@@ -462,7 +446,7 @@ export const appTemplate = `
                     <h2 class="text-xs tracking-wider uppercase text-cream-300/60 mb-3">Où regarder en France</h2>
 
                     <template x-if="!providers || allProviders.length === 0">
-                      <p class="text-sm text-cream-300/50">Aucune plateforme française listée pour cette série.</p>
+                      <p class="text-sm text-cream-300/50">Aucune plateforme française listée.</p>
                     </template>
 
                     <template x-if="providers && allProviders.length > 0">
@@ -507,9 +491,7 @@ export const appTemplate = `
                           </div>
                         </template>
 
-                        <p class="text-[10px] text-cream-300/40 pt-2">
-                          Données fournies par JustWatch via TMDB. Peuvent varier.
-                        </p>
+                        <p class="text-[10px] text-cream-300/40 pt-2">Données JustWatch via TMDB.</p>
                       </div>
                     </template>
                   </div>
@@ -557,5 +539,6 @@ export const appTemplate = `
       <div class="card px-4 py-2.5 text-sm animate-slide-up" :class="$store.app.toast.type === 'success' ? 'border-flame-500/50 text-flame-400' : ''" x-text="$store.app.toast.message"></div>
     </div>
   </template>
+
 </div>
 `
