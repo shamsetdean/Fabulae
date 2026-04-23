@@ -12,10 +12,42 @@ import { trendingView } from './views/trending.js'
 import { profileView } from './views/profile.js'
 import { showView } from './views/show.js'
 
-// Injection du template AVANT Alpine.start() : Alpine parse tout normalement
-document.getElementById('app').innerHTML = appTemplate
+// Helper pour afficher une erreur dans la page (fond noir, texte lisible)
+function showFatalError(title, message, details) {
+  document.getElementById('app').innerHTML = `
+    <div style="min-height: 100vh; padding: 2rem; color: #F2E9E4; font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="color: #FF6B35; font-size: 1.5rem; margin-bottom: 1rem;">${title}</h1>
+      <p style="margin-bottom: 1rem; line-height: 1.6;">${message}</p>
+      ${details ? `<pre style="background: #1C1A17; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; white-space: pre-wrap; word-break: break-word;">${details}</pre>` : ''}
+    </div>
+  `
+}
 
-// Factories Alpine accessibles dans les directives x-data
+// Handlers globaux pour attraper toute erreur
+window.addEventListener('error', e => {
+  console.error('[Global error]', e.error || e.message)
+})
+window.addEventListener('unhandledrejection', e => {
+  console.error('[Unhandled rejection]', e.reason)
+})
+
+// 1. Vérification des variables d'environnement
+const env = import.meta.env
+const missing = []
+if (!env.VITE_SUPABASE_URL) missing.push('VITE_SUPABASE_URL')
+if (!env.VITE_SUPABASE_ANON_KEY) missing.push('VITE_SUPABASE_ANON_KEY')
+if (!env.VITE_TMDB_TOKEN) missing.push('VITE_TMDB_TOKEN')
+
+if (missing.length > 0) {
+  showFatalError(
+    'Configuration manquante',
+    'Les variables d\'environnement suivantes ne sont pas définies :',
+    missing.map(v => '• ' + v).join('\n') + '\n\nAjoute-les dans Vercel → Settings → Environment Variables, puis redéploie.'
+  )
+  throw new Error('Missing env vars: ' + missing.join(', '))
+}
+
+// 2. Expose les factories Alpine
 window.authView = authView
 window.onboardingView = onboardingView
 window.feedView = feedView
@@ -23,15 +55,39 @@ window.top3View = top3View
 window.trendingView = trendingView
 window.profileView = profileView
 window.showView = showView
-
-// Helpers
 window.formatDate = formatDate
 
-// Store global
-initStore(Alpine)
+// 3. Injection du template dans #app
+try {
+  document.getElementById('app').innerHTML = appTemplate
+} catch (e) {
+  showFatalError('Erreur injection template', e.message, e.stack)
+  throw e
+}
 
+// 4. Init du store AVANT Alpine.start (pattern recommandé)
+try {
+  initStore(Alpine)
+} catch (e) {
+  showFatalError('Erreur init store', e.message, e.stack)
+  throw e
+}
+
+// 5. Démarrage Alpine
 window.Alpine = Alpine
-Alpine.start()
+try {
+  Alpine.start()
+} catch (e) {
+  showFatalError('Erreur Alpine.start', e.message, e.stack)
+  throw e
+}
 
-// Initialise le store APRÈS Alpine.start pour que le reactive system soit prêt
-Alpine.store('app').init()
+// 6. Init async du store (auth session, routing)
+Alpine.store('app').init().catch(err => {
+  console.error('[App] init async failed:', err)
+  showFatalError(
+    'Erreur de démarrage',
+    'L\'application n\'a pas pu s\'initialiser correctement.',
+    err.message + '\n\n' + (err.stack || '')
+  )
+})
