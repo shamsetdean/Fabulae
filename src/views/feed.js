@@ -15,7 +15,8 @@ export const feedView = () => ({
   lists: [],
   loading: true,
   error: null,
-  filter: 'all',
+  filter: 'all',       // 'all' | 'following'
+  kindFilter: 'all',   // 'all' | 'top' | 'flop'
 
   formatDate,
 
@@ -33,6 +34,10 @@ export const feedView = () => ({
         .eq('is_current', true)
         .order('created_at', { ascending: false })
         .limit(40)
+
+      if (this.kindFilter !== 'all') {
+        query = query.eq('kind', this.kindFilter)
+      }
 
       if (this.filter === 'following') {
         const me = window.Alpine.store('app').session?.user?.id
@@ -84,8 +89,6 @@ export const feedView = () => ({
     }
   },
 
-  setFilter(f) {
-    this.filter = f
-    this.load()
-  }
+  setFilter(f) { this.filter = f; this.load() },
+  setKindFilter(k) { this.kindFilter = k; this.load() }
 })
