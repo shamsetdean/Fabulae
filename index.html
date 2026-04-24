@@ -10,9 +10,15 @@
   <meta name="apple-mobile-web-app-title" content="My TVShow" />
   <meta name="description" content="Partage ton Top 3 des séries du moment" />
 
+  <!-- Préconnexions critiques : ouvre TCP/TLS en parallèle pendant le parse HTML -->
+  <link rel="preconnect" href="https://api.themoviedb.org" crossorigin />
+  <link rel="preconnect" href="https://image.tmdb.org" crossorigin />
+  <link rel="preconnect" href="https://zkfnfsixqhoaoxjwyjii.supabase.co" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Polices optimisées : 2 familles au lieu de 3, display=swap non-bloquant -->
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <title>My TVShow — Ton Top 3 séries</title>
 </head>
