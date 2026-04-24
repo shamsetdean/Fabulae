@@ -4,7 +4,7 @@ import { getShowCard } from '../lib/tmdb.js'
 export const profileView = () => ({
   profile: null,
   currentTop: null,
-  history: [],
+  currentFlop: null,
   counts: { followers: 0, following: 0 },
   isMe: false,
   isFollowing: false,
@@ -33,21 +33,30 @@ export const profileView = () => ({
       this.profile = profile
       this.isMe = profile.id === me
 
-      const { data: currentTopList } = await supabase
-        .from('top_lists').select('*').eq('user_id', profile.id).eq('is_current', true).maybeSingle()
-      if (currentTopList) {
-        const shows = await Promise.all([
-          getShowCard(currentTopList.position_1_tmdb_id),
-          getShowCard(currentTopList.position_2_tmdb_id),
-          getShowCard(currentTopList.position_3_tmdb_id)
-        ])
-        this.currentTop = { ...currentTopList, shows }
-      }
+      // Récupérer Top 3 ET Flop 3 courants
+      const { data: currents } = await supabase
+        .from('top_lists').select('*')
+        .eq('user_id', profile.id).eq('is_current', true)
 
-      const { data: hist } = await supabase
-        .from('top_lists').select('*').eq('user_id', profile.id).eq('is_current', false)
-        .order('created_at', { ascending: false }).limit(10)
-      this.history = hist || []
+      const topList = (currents || []).find(l => l.kind === 'top')
+      const flopList = (currents || []).find(l => l.kind === 'flop')
+
+      if (topList) {
+        const shows = await Promise.all([
+          getShowCard(topList.position_1_tmdb_id),
+          getShowCard(topList.position_2_tmdb_id),
+          getShowCard(topList.position_3_tmdb_id)
+        ])
+        this.currentTop = { ...topList, shows }
+      }
+      if (flopList) {
+        const shows = await Promise.all([
+          getShowCard(flopList.position_1_tmdb_id),
+          getShowCard(flopList.position_2_tmdb_id),
+          getShowCard(flopList.position_3_tmdb_id)
+        ])
+        this.currentFlop = { ...flopList, shows }
+      }
 
       const [{ count: followers }, { count: following }] = await Promise.all([
         supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', profile.id),
