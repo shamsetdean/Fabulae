@@ -12,6 +12,8 @@ import { trendingView } from './views/trending.js'
 import { profileView } from './views/profile.js'
 import { showView } from './views/show.js'
 import { watchlistOnShow, libraryView } from './views/watchlist.js'
+import { notificationsView } from './views/notifications.js'
+import { legalView } from './views/legal.js'
 
 function showFatalError(title, message, details) {
   document.getElementById('app').innerHTML = `
@@ -33,15 +35,12 @@ if (!env.VITE_SUPABASE_ANON_KEY) missing.push('VITE_SUPABASE_ANON_KEY')
 if (!env.VITE_TMDB_TOKEN) missing.push('VITE_TMDB_TOKEN')
 
 if (missing.length > 0) {
-  showFatalError(
-    'Configuration manquante',
+  showFatalError('Configuration manquante',
     'Les variables d\'environnement suivantes ne sont pas définies :',
-    missing.map(v => '• ' + v).join('\n') + '\n\nAjoute-les dans Vercel → Settings → Environment Variables, puis redéploie.'
-  )
+    missing.map(v => '• ' + v).join('\n'))
   throw new Error('Missing env vars: ' + missing.join(', '))
 }
 
-// Expose factories Alpine
 window.authView = authView
 window.onboardingView = onboardingView
 window.feedView = feedView
@@ -51,35 +50,23 @@ window.profileView = profileView
 window.showView = showView
 window.watchlistOnShow = watchlistOnShow
 window.libraryView = libraryView
+window.notificationsView = notificationsView
+window.legalView = legalView
 window.formatDate = formatDate
 
-try {
-  document.getElementById('app').innerHTML = appTemplate
-} catch (e) {
-  showFatalError('Erreur injection template', e.message, e.stack)
-  throw e
-}
+try { document.getElementById('app').innerHTML = appTemplate }
+catch (e) { showFatalError('Erreur injection template', e.message, e.stack); throw e }
 
-try {
-  initStore(Alpine)
-} catch (e) {
-  showFatalError('Erreur init store', e.message, e.stack)
-  throw e
-}
+try { initStore(Alpine) }
+catch (e) { showFatalError('Erreur init store', e.message, e.stack); throw e }
 
 window.Alpine = Alpine
-try {
-  Alpine.start()
-} catch (e) {
-  showFatalError('Erreur Alpine.start', e.message, e.stack)
-  throw e
-}
+try { Alpine.start() }
+catch (e) { showFatalError('Erreur Alpine.start', e.message, e.stack); throw e }
 
 Alpine.store('app').init().catch(err => {
   console.error('[App] init async failed:', err)
-  showFatalError(
-    'Erreur de démarrage',
+  showFatalError('Erreur de démarrage',
     'L\'application n\'a pas pu s\'initialiser correctement.',
-    err.message + '\n\n' + (err.stack || '')
-  )
+    err.message + '\n\n' + (err.stack || ''))
 })
