@@ -11,8 +11,8 @@ import { top3View } from './views/top3.js'
 import { trendingView } from './views/trending.js'
 import { profileView } from './views/profile.js'
 import { showView } from './views/show.js'
+import { watchlistOnShow, libraryView } from './views/watchlist.js'
 
-// Helper pour afficher une erreur dans la page (fond noir, texte lisible)
 function showFatalError(title, message, details) {
   document.getElementById('app').innerHTML = `
     <div style="min-height: 100vh; padding: 2rem; color: #F2E9E4; font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -23,15 +23,9 @@ function showFatalError(title, message, details) {
   `
 }
 
-// Handlers globaux pour attraper toute erreur
-window.addEventListener('error', e => {
-  console.error('[Global error]', e.error || e.message)
-})
-window.addEventListener('unhandledrejection', e => {
-  console.error('[Unhandled rejection]', e.reason)
-})
+window.addEventListener('error', e => console.error('[Global error]', e.error || e.message))
+window.addEventListener('unhandledrejection', e => console.error('[Unhandled rejection]', e.reason))
 
-// 1. Vérification des variables d'environnement
 const env = import.meta.env
 const missing = []
 if (!env.VITE_SUPABASE_URL) missing.push('VITE_SUPABASE_URL')
@@ -47,7 +41,7 @@ if (missing.length > 0) {
   throw new Error('Missing env vars: ' + missing.join(', '))
 }
 
-// 2. Expose les factories Alpine
+// Expose factories Alpine
 window.authView = authView
 window.onboardingView = onboardingView
 window.feedView = feedView
@@ -55,9 +49,10 @@ window.top3View = top3View
 window.trendingView = trendingView
 window.profileView = profileView
 window.showView = showView
+window.watchlistOnShow = watchlistOnShow
+window.libraryView = libraryView
 window.formatDate = formatDate
 
-// 3. Injection du template dans #app
 try {
   document.getElementById('app').innerHTML = appTemplate
 } catch (e) {
@@ -65,7 +60,6 @@ try {
   throw e
 }
 
-// 4. Init du store AVANT Alpine.start (pattern recommandé)
 try {
   initStore(Alpine)
 } catch (e) {
@@ -73,7 +67,6 @@ try {
   throw e
 }
 
-// 5. Démarrage Alpine
 window.Alpine = Alpine
 try {
   Alpine.start()
@@ -82,7 +75,6 @@ try {
   throw e
 }
 
-// 6. Init async du store (auth session, routing)
 Alpine.store('app').init().catch(err => {
   console.error('[App] init async failed:', err)
   showFatalError(
