@@ -4,13 +4,18 @@ export const authView = () => ({
   mode: 'signin',
   email: '',
   password: '',
+  acceptTerms: false,
   loading: false,
   error: null,
 
   async submit() {
     this.error = null
-    if (!this.email || this.password.length < 6) {
-      this.error = 'Email requis, mot de passe 6 caractères minimum.'
+    if (!this.email || this.password.length < 8) {
+      this.error = 'Email requis, mot de passe 8 caractères minimum.'
+      return
+    }
+    if (this.mode === 'signup' && !this.acceptTerms) {
+      this.error = 'Merci de valider les mentions et confirmer avoir au moins 16 ans.'
       return
     }
     this.loading = true
