@@ -1,11 +1,11 @@
-// Template HTML complet avec fallback de chargement et gestion robuste
+// Template HTML complet avec watchlist + bibliothèque sur profil
 export const appTemplate = `
-<!-- Loading state : affiché tant que authReady est false -->
+<!-- Loading state -->
 <div x-show="!$store.app.authReady" class="min-h-dvh flex items-center justify-center">
   <div class="text-cream-300/40 text-sm font-mono">chargement...</div>
 </div>
 
-<!-- Main app : affiché dès que authReady est true -->
+<!-- Main app -->
 <div x-show="$store.app.authReady">
 
   <!-- ============== AUTH ============== -->
@@ -48,8 +48,6 @@ export const appTemplate = `
             </button>
           </form>
         </div>
-
-        <p class="text-xs text-center text-cream-300/40 mt-6">En continuant, tu acceptes les conditions d'utilisation.</p>
       </div>
     </section>
   </template>
@@ -87,7 +85,7 @@ export const appTemplate = `
     </section>
   </template>
 
-  <!-- ============== AUTHENTIFIÉ : LAYOUT ============== -->
+  <!-- ============== AUTHENTIFIÉ ============== -->
   <template x-if="$store.app.isAuthed && !['auth','onboarding'].includes($store.app.route.name)">
     <div>
       <main class="relative z-10 pb-24">
@@ -110,9 +108,7 @@ export const appTemplate = `
 
             <template x-if="loading">
               <div class="space-y-4">
-                <template x-for="i in 3" :key="i">
-                  <div class="card p-5 h-64 animate-pulse bg-ink-800/40"></div>
-                </template>
+                <template x-for="i in 3" :key="i"><div class="card p-5 h-64 animate-pulse bg-ink-800/40"></div></template>
               </div>
             </template>
 
@@ -190,23 +186,19 @@ export const appTemplate = `
 
             <template x-if="loading">
               <div class="space-y-3">
-                <template x-for="i in 5" :key="i">
-                  <div class="card h-20 animate-pulse bg-ink-800/40"></div>
-                </template>
+                <template x-for="i in 5" :key="i"><div class="card h-20 animate-pulse bg-ink-800/40"></div></template>
               </div>
             </template>
 
             <div x-show="!loading && tab === 'community'">
               <template x-if="communityRanking.length === 0">
-                <p class="text-center text-cream-300/50 text-sm py-10">Pas encore assez de Top 3 publiés pour faire un classement. Sois le premier !</p>
+                <p class="text-center text-cream-300/50 text-sm py-10">Pas encore assez de Top 3 publiés. Sois le premier !</p>
               </template>
               <ol class="space-y-3">
                 <template x-for="(show, idx) in communityRanking" :key="show.id">
                   <li>
                     <a :href="'#/show/' + show.id" class="card p-3 flex items-center gap-3 hover:border-flame-500/50 transition-colors">
-                      <div class="w-10 text-right">
-                        <span class="rank-number" :class="idx < 3 ? 'rank-number-filled' : ''" x-text="idx + 1"></span>
-                      </div>
+                      <div class="w-10 text-right"><span class="rank-number" :class="idx < 3 ? 'rank-number-filled' : ''" x-text="idx + 1"></span></div>
                       <img :src="show.poster" :alt="show.name" class="w-12 h-18 rounded-lg bg-ink-800 object-cover flex-shrink-0" />
                       <div class="flex-1 min-w-0">
                         <p class="font-medium text-cream-50 text-sm leading-tight" x-text="show.name"></p>
@@ -224,9 +216,7 @@ export const appTemplate = `
                 <template x-for="(show, idx) in tmdbTrending" :key="show.id">
                   <li>
                     <a :href="'#/show/' + show.id" class="card p-3 flex items-center gap-3 hover:border-flame-500/50 transition-colors">
-                      <div class="w-10 text-right">
-                        <span class="rank-number" :class="idx < 3 ? 'rank-number-filled' : ''" x-text="idx + 1"></span>
-                      </div>
+                      <div class="w-10 text-right"><span class="rank-number" :class="idx < 3 ? 'rank-number-filled' : ''" x-text="idx + 1"></span></div>
                       <img :src="show.poster" :alt="show.name" class="w-12 h-18 rounded-lg bg-ink-800 object-cover flex-shrink-0" />
                       <div class="flex-1 min-w-0">
                         <p class="font-medium text-cream-50 text-sm leading-tight" x-text="show.name"></p>
@@ -314,100 +304,180 @@ export const appTemplate = `
           </section>
         </template>
 
-        <!-- PROFILE (moi ou @username) -->
+        <!-- ============== PROFILE ============== -->
         <template x-if="$store.app.route.name === 'profile' || $store.app.route.name === 'u'">
-          <section :key="$store.app.route.params[0] || 'me'" x-data="profileView()" x-init="init()" class="px-4 pt-4 safe-top animate-fade-in">
-            <template x-if="loading">
-              <div class="text-center text-cream-300/50 py-10">Chargement…</div>
-            </template>
+          <section :key="$store.app.route.params[0] || 'me'" x-data="{ section: 'top3' }" class="px-4 pt-4 safe-top animate-fade-in">
+            <div x-data="profileView()" x-init="init()">
+              <template x-if="loading"><div class="text-center text-cream-300/50 py-10">Chargement…</div></template>
+              <template x-if="error"><div class="text-center text-flame-400 py-10" x-text="error"></div></template>
 
-            <template x-if="error">
-              <div class="text-center text-flame-400 py-10" x-text="error"></div>
-            </template>
-
-            <template x-if="profile">
-              <div>
-                <header class="mb-6">
-                  <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                      <div class="w-16 h-16 rounded-full bg-ink-700 flex items-center justify-center text-2xl display italic text-flame-500">
-                        <span x-text="profile.username?.charAt(0).toUpperCase()"></span>
+              <template x-if="profile">
+                <div>
+                  <!-- Header profil -->
+                  <header class="mb-6">
+                    <div class="flex items-start justify-between mb-4">
+                      <div class="flex items-center gap-3">
+                        <div class="w-16 h-16 rounded-full bg-ink-700 flex items-center justify-center text-2xl display italic text-flame-500">
+                          <span x-text="profile.username?.charAt(0).toUpperCase()"></span>
+                        </div>
+                        <div>
+                          <p class="text-xs text-cream-300/50">Membre</p>
+                          <h1 class="text-2xl display italic" x-text="'@' + profile.username"></h1>
+                        </div>
                       </div>
-                      <div>
-                        <p class="text-xs text-cream-300/50">Membre</p>
-                        <h1 class="text-2xl display italic" x-text="'@' + profile.username"></h1>
-                      </div>
-                    </div>
-                    <template x-if="isMe">
-                      <button @click="$store.app.signOut()" class="btn-ghost text-xs">Déconnexion</button>
-                    </template>
-                    <template x-if="!isMe && $store.app.isAuthed">
-                      <button @click="toggleFollow" :class="isFollowing ? 'btn-secondary' : 'btn-primary'" class="text-sm py-2 px-4">
-                        <span x-text="isFollowing ? 'Abonné' : 'Suivre'"></span>
-                      </button>
-                    </template>
-                  </div>
-
-                  <template x-if="profile.bio">
-                    <p class="text-sm text-cream-200/80 italic mb-3" x-text="profile.bio"></p>
-                  </template>
-
-                  <div class="flex gap-5 text-sm">
-                    <span><strong class="text-cream-50 font-semibold" x-text="counts.followers"></strong> <span class="text-cream-300/60">abonnés</span></span>
-                    <span><strong class="text-cream-50 font-semibold" x-text="counts.following"></strong> <span class="text-cream-300/60">abonnements</span></span>
-                  </div>
-                </header>
-
-                <div class="mb-8">
-                  <h2 class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-3">Top 3 actuel</h2>
-                  <template x-if="!currentTop">
-                    <p class="text-sm text-cream-300/50">Aucun Top 3 publié.</p>
-                  </template>
-                  <template x-if="currentTop">
-                    <div>
-                      <div class="grid grid-cols-3 gap-2 mb-3">
-                        <template x-for="(show, idx) in currentTop.shows" :key="idx">
-                          <div>
-                            <template x-if="show">
-                              <a :href="'#/show/' + show.id" class="block">
-                                <div class="aspect-[2/3] rounded-xl overflow-hidden bg-ink-800 relative">
-                                  <img x-show="show.poster" :src="show.poster" class="w-full h-full object-cover" />
-                                  <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
-                                  <div class="absolute top-1 left-1.5 rank-number" :class="idx === 0 ? 'rank-number-filled' : ''" x-text="idx + 1"></div>
-                                  <p class="absolute bottom-1.5 left-1.5 right-1.5 text-[10px] font-semibold text-cream-50 line-clamp-2 leading-tight" x-text="show.name"></p>
-                                </div>
-                              </a>
-                            </template>
-                          </div>
-                        </template>
-                      </div>
-                      <template x-if="currentTop.comment">
-                        <p class="text-sm italic text-cream-200/80" x-text="'« ' + currentTop.comment + ' »'"></p>
+                      <template x-if="isMe">
+                        <button @click="$store.app.signOut()" class="btn-ghost text-xs">Déconnexion</button>
+                      </template>
+                      <template x-if="!isMe && $store.app.isAuthed">
+                        <button @click="toggleFollow" :class="isFollowing ? 'btn-secondary' : 'btn-primary'" class="text-sm py-2 px-4">
+                          <span x-text="isFollowing ? 'Abonné' : 'Suivre'"></span>
+                        </button>
                       </template>
                     </div>
-                  </template>
 
-                  <template x-if="isMe">
-                    <a href="#/top3" class="block mt-4 text-center btn-secondary text-sm">
-                      <span x-text="currentTop ? 'Mettre à jour mon Top 3' : 'Créer mon Top 3'"></span>
-                    </a>
-                  </template>
+                    <template x-if="profile.bio">
+                      <p class="text-sm text-cream-200/80 italic mb-3" x-text="profile.bio"></p>
+                    </template>
+
+                    <div class="flex gap-5 text-sm">
+                      <span><strong class="text-cream-50 font-semibold" x-text="counts.followers"></strong> <span class="text-cream-300/60">abonnés</span></span>
+                      <span><strong class="text-cream-50 font-semibold" x-text="counts.following"></strong> <span class="text-cream-300/60">abonnements</span></span>
+                    </div>
+                  </header>
+
+                  <!-- Onglets section -->
+                  <div class="flex gap-4 mb-6 border-b border-ink-700">
+                    <button @click="section = 'top3'" :class="section === 'top3' ? 'text-cream-50 border-flame-500' : 'text-cream-300/60 border-transparent'" class="pb-3 px-1 border-b-2 text-sm font-medium transition-colors">Top 3</button>
+                    <button @click="section = 'library'" :class="section === 'library' ? 'text-cream-50 border-flame-500' : 'text-cream-300/60 border-transparent'" class="pb-3 px-1 border-b-2 text-sm font-medium transition-colors">Bibliothèque</button>
+                  </div>
+
+                  <!-- SECTION TOP 3 -->
+                  <div x-show="section === 'top3'">
+                    <template x-if="!currentTop">
+                      <p class="text-sm text-cream-300/50">Aucun Top 3 publié.</p>
+                    </template>
+                    <template x-if="currentTop">
+                      <div>
+                        <div class="grid grid-cols-3 gap-2 mb-3">
+                          <template x-for="(show, idx) in currentTop.shows" :key="idx">
+                            <div>
+                              <template x-if="show">
+                                <a :href="'#/show/' + show.id" class="block">
+                                  <div class="aspect-[2/3] rounded-xl overflow-hidden bg-ink-800 relative">
+                                    <img x-show="show.poster" :src="show.poster" class="w-full h-full object-cover" />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
+                                    <div class="absolute top-1 left-1.5 rank-number" :class="idx === 0 ? 'rank-number-filled' : ''" x-text="idx + 1"></div>
+                                    <p class="absolute bottom-1.5 left-1.5 right-1.5 text-[10px] font-semibold text-cream-50 line-clamp-2 leading-tight" x-text="show.name"></p>
+                                  </div>
+                                </a>
+                              </template>
+                            </div>
+                          </template>
+                        </div>
+                        <template x-if="currentTop.comment">
+                          <p class="text-sm italic text-cream-200/80" x-text="'« ' + currentTop.comment + ' »'"></p>
+                        </template>
+                      </div>
+                    </template>
+
+                    <template x-if="isMe">
+                      <a href="#/top3" class="block mt-4 text-center btn-secondary text-sm">
+                        <span x-text="currentTop ? 'Mettre à jour mon Top 3' : 'Créer mon Top 3'"></span>
+                      </a>
+                    </template>
+                  </div>
+
+                  <!-- SECTION BIBLIOTHÈQUE -->
+                  <div x-show="section === 'library'" x-data="libraryView()" x-init="init()">
+                    <div class="flex gap-2 mb-5 overflow-x-auto pb-1">
+                      <button @click="tab = 'watching'" :class="tab === 'watching' ? 'bg-flame-600 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
+                        📺 En cours <span class="opacity-60" x-text="'(' + (entries.watching?.length || 0) + ')'"></span>
+                      </button>
+                      <button @click="tab = 'want'" :class="tab === 'want' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
+                        📌 À voir <span class="opacity-60" x-text="'(' + (entries.want?.length || 0) + ')'"></span>
+                      </button>
+                      <button @click="tab = 'finished'" :class="tab === 'finished' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
+                        ✓ Terminées <span class="opacity-60" x-text="'(' + (entries.finished?.length || 0) + ')'"></span>
+                      </button>
+                      <button @click="tab = 'abandoned'" :class="tab === 'abandoned' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
+                        ✕ Abandonnées <span class="opacity-60" x-text="'(' + (entries.abandoned?.length || 0) + ')'"></span>
+                      </button>
+                    </div>
+
+                    <template x-if="loading"><div class="text-center text-cream-300/50 py-8 text-sm">Chargement…</div></template>
+
+                    <template x-if="!loading && currentEntries.length === 0">
+                      <p class="text-center text-cream-300/50 text-sm py-10">Rien ici pour l'instant.</p>
+                    </template>
+
+                    <!-- Vue EN COURS (carte détaillée avec saison/épisode + plateforme) -->
+                    <div x-show="tab === 'watching'" class="space-y-3">
+                      <template x-for="entry in currentEntries" :key="entry.id">
+                        <div class="card p-3 flex gap-3">
+                          <a :href="'#/show/' + entry.show.id" class="flex-shrink-0">
+                            <img :src="entry.show.poster" class="w-16 h-24 rounded-lg bg-ink-800 object-cover" />
+                          </a>
+                          <div class="flex-1 min-w-0">
+                            <a :href="'#/show/' + entry.show.id" class="block">
+                              <p class="font-medium text-cream-50 text-sm leading-tight" x-text="entry.show.name"></p>
+                            </a>
+                            <p class="text-xs text-cream-300/60 mt-1">
+                              <span x-text="'S' + (entry.current_season || '?') + ' · E' + (entry.current_episode || '?')"></span>
+                            </p>
+
+                            <!-- Plateforme cliquable -->
+                            <template x-if="entry.provider_name">
+                              <template x-if="providerLink(entry.provider_name, entry.show.name)">
+                                <a :href="providerLink(entry.provider_name, entry.show.name)" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-md bg-ink-800 hover:bg-ink-700 transition-colors">
+                                  <img x-show="entry.provider_logo_path" :src="providerLogoUrl(entry.provider_logo_path)" class="w-4 h-4 rounded" />
+                                  <span class="text-xs text-cream-200" x-text="entry.provider_name"></span>
+                                  <span class="text-xs text-cream-300/40">↗</span>
+                                </a>
+                              </template>
+                              <template x-if="!providerLink(entry.provider_name, entry.show.name)">
+                                <div class="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-md bg-ink-800">
+                                  <img x-show="entry.provider_logo_path" :src="providerLogoUrl(entry.provider_logo_path)" class="w-4 h-4 rounded" />
+                                  <span class="text-xs text-cream-200" x-text="entry.provider_name"></span>
+                                </div>
+                              </template>
+                            </template>
+
+                            <!-- Bouton +1 épisode (seulement pour moi) -->
+                            <template x-if="isMe">
+                              <button @click="incrementEpisode(entry)" class="mt-2 ml-2 text-xs text-flame-500 hover:text-flame-400">+1 épisode</button>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+
+                    <!-- Vues simples (want / finished / abandoned) — grille d'affiches -->
+                    <div x-show="tab !== 'watching'" class="grid grid-cols-3 gap-2">
+                      <template x-for="entry in currentEntries" :key="entry.id">
+                        <a :href="'#/show/' + entry.show.id" class="block">
+                          <div class="aspect-[2/3] rounded-xl overflow-hidden bg-ink-800 relative">
+                            <img x-show="entry.show.poster" :src="entry.show.poster" class="w-full h-full object-cover" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                            <p class="absolute bottom-1.5 left-1.5 right-1.5 text-[10px] font-semibold text-cream-50 line-clamp-2 leading-tight" x-text="entry.show.name"></p>
+                          </div>
+                          <template x-if="entry.verdict">
+                            <p class="text-[11px] text-cream-300/70 italic mt-1 line-clamp-2" x-text="'« ' + entry.verdict + ' »'"></p>
+                          </template>
+                        </a>
+                      </template>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </template>
+              </template>
+            </div>
           </section>
         </template>
 
-        <!-- SHOW DETAIL -->
+        <!-- ============== SHOW DETAIL ============== -->
         <template x-if="$store.app.route.name === 'show'">
           <section :key="$store.app.route.params[0]" x-data="showView()" x-init="init()" class="animate-fade-in">
-            <template x-if="loading">
-              <div class="p-8 text-center text-cream-300/50">Chargement…</div>
-            </template>
-
-            <template x-if="error">
-              <div class="p-8 text-flame-400 text-center" x-text="error"></div>
-            </template>
+            <template x-if="loading"><div class="p-8 text-center text-cream-300/50">Chargement…</div></template>
+            <template x-if="error"><div class="p-8 text-flame-400 text-center" x-text="error"></div></template>
 
             <template x-if="show">
               <div>
@@ -429,6 +499,102 @@ export const appTemplate = `
                     </div>
                   </div>
 
+                  <!-- ============== NOUVELLE SECTION : WATCHLIST ============== -->
+                  <div x-data="watchlistOnShow()" x-init="init()" class="mb-6 card p-4">
+                    <template x-if="loading">
+                      <div class="text-sm text-cream-300/40">Chargement…</div>
+                    </template>
+
+                    <template x-if="!loading">
+                      <div>
+                        <!-- Etat actuel + bouton principal -->
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                          <div>
+                            <p class="text-xs uppercase tracking-wider text-cream-300/60 mb-0.5">Ma bibliothèque</p>
+                            <p class="text-sm font-medium" x-text="statusLabel"></p>
+                          </div>
+                          <template x-if="entry">
+                            <button @click="remove" class="text-xs text-cream-300/50 hover:text-flame-400">Retirer</button>
+                          </template>
+                        </div>
+
+                        <!-- Pas encore dans la biblio → 4 boutons -->
+                        <template x-if="!entry && !showEditor">
+                          <div class="grid grid-cols-2 gap-2">
+                            <button @click="quickAdd('want')" class="text-xs py-2 px-3 rounded-lg bg-ink-800 hover:bg-ink-700 text-cream-100 transition-colors">📌 À voir</button>
+                            <button @click="quickAdd('watching')" class="text-xs py-2 px-3 rounded-lg bg-flame-600 hover:bg-flame-700 text-cream-50 transition-colors font-medium">📺 En cours</button>
+                            <button @click="quickAdd('finished')" class="text-xs py-2 px-3 rounded-lg bg-ink-800 hover:bg-ink-700 text-cream-100 transition-colors">✓ Terminée</button>
+                            <button @click="quickAdd('abandoned')" class="text-xs py-2 px-3 rounded-lg bg-ink-800 hover:bg-ink-700 text-cream-100 transition-colors">✕ Abandonnée</button>
+                          </div>
+                        </template>
+
+                        <!-- Déjà dans la biblio mais pas en cours → possibilité de changer -->
+                        <template x-if="entry && entry.status !== 'watching' && !showEditor">
+                          <div class="flex flex-wrap gap-2">
+                            <template x-if="entry.status !== 'want'"><button @click="quickAdd('want')" class="text-xs py-1.5 px-3 rounded-full bg-ink-800 hover:bg-ink-700">→ À voir</button></template>
+                            <template x-if="entry.status !== 'watching'"><button @click="quickAdd('watching')" class="text-xs py-1.5 px-3 rounded-full bg-ink-800 hover:bg-ink-700">→ En cours</button></template>
+                            <template x-if="entry.status !== 'finished'"><button @click="quickAdd('finished')" class="text-xs py-1.5 px-3 rounded-full bg-ink-800 hover:bg-ink-700">→ Terminée</button></template>
+                            <template x-if="entry.status !== 'abandoned'"><button @click="quickAdd('abandoned')" class="text-xs py-1.5 px-3 rounded-full bg-ink-800 hover:bg-ink-700">→ Abandonnée</button></template>
+                          </div>
+                        </template>
+
+                        <!-- En cours : affichage S/E + plateforme + bouton éditer -->
+                        <template x-if="entry && entry.status === 'watching' && !showEditor">
+                          <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                              <span class="text-cream-50 font-mono text-sm" x-text="'S' + entry.current_season + ' · E' + entry.current_episode"></span>
+                              <template x-if="entry.provider_name">
+                                <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-ink-800">
+                                  <img x-show="entry.provider_logo_path" :src="'https://image.tmdb.org/t/p/w92' + entry.provider_logo_path" class="w-4 h-4 rounded" />
+                                  <span class="text-xs text-cream-200" x-text="entry.provider_name"></span>
+                                </div>
+                              </template>
+                            </div>
+                            <button @click="showEditor = true" class="text-xs text-flame-500 hover:text-flame-400">Modifier</button>
+                          </div>
+                        </template>
+
+                        <!-- Editeur détaillé (saison / épisode / plateforme) -->
+                        <template x-if="showEditor">
+                          <div class="space-y-3 mt-2">
+                            <div class="grid grid-cols-2 gap-3">
+                              <div>
+                                <label class="text-xs text-cream-300/60 block mb-1">Saison</label>
+                                <input type="number" x-model.number="form.current_season" min="1" max="30" class="input py-2" />
+                              </div>
+                              <div>
+                                <label class="text-xs text-cream-300/60 block mb-1">Épisode</label>
+                                <input type="number" x-model.number="form.current_episode" min="1" max="99" class="input py-2" />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label class="text-xs text-cream-300/60 block mb-2">Plateforme</label>
+                              <div class="flex flex-wrap gap-2">
+                                <template x-for="p in providers" :key="p.id">
+                                  <button @click="selectProvider(p)" :class="form.provider_id === p.id ? 'border-flame-500 ring-2 ring-flame-500/30' : 'border-ink-700'" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-ink-800 text-xs">
+                                    <img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-5 h-5 rounded" />
+                                    <span x-text="p.name"></span>
+                                  </button>
+                                </template>
+                                <button @click="selectProvider(null)" :class="form.provider_id === null && form.provider_name !== '' ? 'border-flame-500 ring-2 ring-flame-500/30' : 'border-ink-700'" class="px-2.5 py-1.5 rounded-lg border bg-ink-800 text-xs">Autre</button>
+                              </div>
+                              <template x-if="form.provider_id === null && providers.length >= 0">
+                                <input x-model="form.provider_name" placeholder="Nom de la plateforme (ex: iTunes, VPN...)" class="input py-2 mt-2 text-sm" />
+                              </template>
+                            </div>
+
+                            <div class="flex gap-2 pt-2">
+                              <button @click="saveDetailed" class="btn-primary text-sm py-2 px-4 flex-1">Enregistrer</button>
+                              <button @click="showEditor = false" class="btn-ghost text-sm">Annuler</button>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                  <!-- ============== FIN WATCHLIST ============== -->
+
                   <div class="flex flex-wrap gap-1.5 mb-5">
                     <template x-for="g in show.genres || []" :key="g.id">
                       <span class="chip" x-text="g.name"></span>
@@ -444,11 +610,9 @@ export const appTemplate = `
 
                   <div class="mb-6">
                     <h2 class="text-xs tracking-wider uppercase text-cream-300/60 mb-3">Où regarder en France</h2>
-
                     <template x-if="!providers || allProviders.length === 0">
                       <p class="text-sm text-cream-300/50">Aucune plateforme française listée.</p>
                     </template>
-
                     <template x-if="providers && allProviders.length > 0">
                       <div class="space-y-3">
                         <template x-if="providers.flatrate?.length">
@@ -490,7 +654,6 @@ export const appTemplate = `
                             </div>
                           </div>
                         </template>
-
                         <p class="text-[10px] text-cream-300/40 pt-2">Données JustWatch via TMDB.</p>
                       </div>
                     </template>
@@ -528,12 +691,10 @@ export const appTemplate = `
     </div>
   </template>
 
-  <!-- Guard : non auth et pas sur page publique -> redirect -->
   <template x-if="!$store.app.isAuthed && !['auth','onboarding'].includes($store.app.route.name)">
     <div x-init="window.location.hash = '#/auth'"></div>
   </template>
 
-  <!-- TOAST GLOBAL -->
   <template x-if="$store.app.toast">
     <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 safe-top">
       <div class="card px-4 py-2.5 text-sm animate-slide-up" :class="$store.app.toast.type === 'success' ? 'border-flame-500/50 text-flame-400' : ''" x-text="$store.app.toast.message"></div>
