@@ -1,29 +1,93 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
-  <meta name="theme-color" content="#0A0908" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="My TVShow" />
-  <meta name="description" content="Partage ton Top 3 des séries du moment" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
+    <meta name="theme-color" content="#0A0908" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="My TVShow" />
+    <meta name="description" content="Ton Top 3 des séries du moment, partagé et classé." />
 
-  <!-- Préconnexions critiques : ouvre TCP/TLS en parallèle pendant le parse HTML -->
-  <link rel="preconnect" href="https://api.themoviedb.org" crossorigin />
-  <link rel="preconnect" href="https://image.tmdb.org" crossorigin />
-  <link rel="preconnect" href="https://zkfnfsixqhoaoxjwyjii.supabase.co" crossorigin />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>My TVShow</title>
 
-  <!-- Polices optimisées : 2 familles au lieu de 3, display=swap non-bloquant -->
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Preconnect aux origines critiques pour démarrer la résolution DNS et TLS en parallèle -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://image.tmdb.org" />
+    <link rel="preconnect" href="https://api.themoviedb.org" />
+    <link rel="dns-prefetch" href="https://image.tmdb.org" />
 
-  <title>My TVShow — Ton Top 3 séries</title>
-</head>
-<body class="bg-ink-950 text-cream-100 font-sans antialiased">
-  <div id="app" x-data></div>
-  <script type="module" src="/src/main.js"></script>
-</body>
+    <!-- Polices chargées de façon non bloquante (font-display: swap dans l'URL) -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Onest:wght@400;500;600;700&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Onest:wght@400;500;600;700&display=swap"
+      />
+    </noscript>
+
+    <!-- Splash screen instantané : évite le flash blanc avant que Vite charge le bundle -->
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #0A0908;
+        color: #F5ECE3;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        min-height: 100dvh;
+        -webkit-font-smoothing: antialiased;
+      }
+      #initial-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        background: #0A0908;
+        z-index: 9999;
+        animation: fadeOut 0.3s ease 0.4s forwards;
+      }
+      #initial-splash .logo {
+        font-family: Georgia, serif;
+        font-style: italic;
+        font-size: 2.25rem;
+        color: #F5ECE3;
+        letter-spacing: -0.01em;
+      }
+      #initial-splash .pulse {
+        width: 28px;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #FF6B35, transparent);
+        background-size: 200% 100%;
+        animation: slide 1.4s ease-in-out infinite;
+      }
+      @keyframes slide {
+        0% { background-position: -100% 0; }
+        100% { background-position: 100% 0; }
+      }
+      @keyframes fadeOut {
+        to { opacity: 0; visibility: hidden; }
+      }
+      /* Quand l'app est rendue, on retire le splash via JS aussi (sécurité) */
+      .app-ready #initial-splash { display: none; }
+    </style>
+  </head>
+  <body>
+    <div id="initial-splash">
+      <div class="logo">My TVShow</div>
+      <div class="pulse"></div>
+    </div>
+
+    <div id="app"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>
