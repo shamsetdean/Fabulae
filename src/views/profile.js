@@ -18,6 +18,8 @@ export const profileView = () => ({
   libraryLoading: false,
   libraryFilter: 'all',
   libraryVisible: false,
+  commonSeriesCount: null,
+  commonSeriesLoading: false,
 
   // Analyse des genres
   genreStats: [],          // [{name, count, percent, color}]
@@ -125,6 +127,11 @@ export const profileView = () => ({
       if (this.showAnalysis) {
         this.computeGenreAnalysis()
         this.loadLibrary()
+      }
+
+      // Séries en commun (uniquement si c'est le profil d'un autre utilisateur)
+      if (!this.isMe && me) {
+        this.computeCommonSeries(me, profile.id)
       }
     } catch (e) {
       console.error('[Profile] init error', e)
@@ -238,6 +245,26 @@ export const profileView = () => ({
       return `<path d="${d}" fill="${g.color}" stroke="#0A0908" stroke-width="1.5"><title>${g.name} : ${pct}%</title></path>`
     }).join('')
     return `<svg viewBox="0 0 200 200" width="120" height="120"><g>${paths}</g><circle cx="${cx}" cy="${cy}" r="40" fill="#0A0908"/><text x="${cx}" y="95" text-anchor="middle" fill="#F5ECE3" font-family="Instrument Serif, Georgia, serif" font-style="italic" font-size="22">${nbGenres}</text><text x="${cx}" y="115" text-anchor="middle" fill="#B8A99A" font-size="9" letter-spacing="1">GENRES</text></svg>`
+  },
+
+  async computeCommonSeries(myId, theirId) {
+    this.commonSeriesLoading = true
+    try {
+      const { data, error } = await supabase.rpc('common_series_count', {
+        uid_a: myId < theirId ? myId : theirId,
+        uid_b: myId < theirId ? theirId : myId
+      })
+      if (!error) this.commonSeriesCount = data || 0
+    } catch (e) {
+      console.warn('[Profile] common series error', e)
+      this.commonSeriesCount = 0
+    } finally {
+      this.commonSeriesLoading = false
+    }
+  },
+
+  get canChat() {
+    return this.commonSeriesCount !== null && this.commonSeriesCount >= 5
   },
 
   async loadLibrary() {
