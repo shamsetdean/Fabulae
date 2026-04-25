@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase.js'
-import { tmdbApi } from '../lib/tmdb.js'
+import { tmdbApi, getShowCard } from '../lib/tmdb.js'
 import { generateAlias } from '../lib/alias.js'
 
 export const profileView = () => ({
@@ -13,34 +13,44 @@ export const profileView = () => ({
   loading: true,
   error: null,
 
-  // Bibliothèque publique
+  // Onglets
+  activeTab: 'top', // 'top' | 'library' | 'followers' | 'following'
+
+  // Bibliothèque
   library: [],
   libraryLoading: false,
   libraryFilter: 'all',
   libraryVisible: false,
-  commonSeriesCount: null,
-  commonSeriesLoading: false,
 
-  // Réseau social
+  // Réseau
   followers: [],
   following: [],
   followersLoading: false,
   followingLoading: false,
-  activeTab: 'top',   // 'top' | 'library' | 'followers' | 'following'
   networkLoaded: false,
 
-  // Analyse des genres
-  genreStats: [],          // [{name, count, percent, color}]
-  genreNeverWatched: [],   // [{name, id}]
+  // Séries en commun
+  commonSeriesCount: null,
+  commonSeriesLoading: false,
+
+  // Analyse genres
+  genreStats: [],
+  genreNeverWatched: [],
   totalSeriesAnalyzed: 0,
   analysisLoading: false,
   showAnalysis: false,
   togglingVisibility: false,
 
+  // Upload avatar
+  uploadingAvatar: false,
+
+  // Suppression
+  pendingDeleteId: null,
+  deleting: false,
+
   async init() {
     this.loading = true
     this.error = null
-
     try {
       const store = window.Alpine.store('app')
       const me = store.session?.user?.id
@@ -57,26 +67,18 @@ export const profileView = () => ({
         if (myProfile?.username) targetUsername = myProfile.username
       }
 
-      if (!targetUsername) {
-        this.error = 'Profil introuvable'
-        this.loading = false
-        return
-      }
+      if (!targetUsername) { this.error = 'Profil introuvable'; this.loading = false; return }
 
       const { data: profile, error: pErr } = await supabase
         .from('profiles').select('*').eq('username', targetUsername).maybeSingle()
 
       if (pErr) throw pErr
-      if (!profile) {
-        this.error = 'Utilisateur inconnu'
-        this.loading = false
-        return
-      }
+      if (!profile) { this.error = 'Utilisateur inconnu'; this.loading = false; return }
 
       this.profile = profile
       this.isMe = profile.id === me
 
-      // Top 3 + Flop 3
+      // Top + Flop actuels
       const { data: currents } = await supabase
         .from('top_lists').select('*')
         .eq('user_id', profile.id).eq('is_current', true)
@@ -85,13 +87,11 @@ export const profileView = () => ({
       const flopList = (currents || []).find(l => l.kind === 'flop')
 
       if (topList) {
-        const ids = [topList.position_1_tmdb_id, topList.position_2_tmdb_id, topList.position_3_tmdb_id]
-        const shows = await Promise.all(ids.map(id =>
-          tmdbApi.getShow(id).catch(() => null)
-        ))
+        const shows = await Promise.all([
+          topList.position_1_tmdb_id, topList.position_2_tmdb_id, topList.position_3_tmdb_id
+        ].map(id => tmdbApi.getShow(id).catch(() => null)))
         const cards = shows.map(s => s ? {
-          id: s.id,
-          name: s.name || '',
+          id: s.id, name: s.name || '',
           poster: s.poster_path ? tmdbApi.poster(s.poster_path, 'w154') : null,
           genres: Array.isArray(s.genres) ? s.genres : []
         } : null)
@@ -100,52 +100,40 @@ export const profileView = () => ({
       }
 
       if (flopList) {
-        const ids = [flopList.position_1_tmdb_id, flopList.position_2_tmdb_id, flopList.position_3_tmdb_id]
-        const shows = await Promise.all(ids.map(id =>
-          tmdbApi.getShow(id).catch(() => null)
-        ))
+        const shows = await Promise.all([
+          flopList.position_1_tmdb_id, flopList.position_2_tmdb_id, flopList.position_3_tmdb_id
+        ].map(id => tmdbApi.getShow(id).catch(() => null)))
         this.currentFlop = {
           ...flopList,
           shows: shows.map(s => s ? {
-            id: s.id,
-            name: s.name || '',
+            id: s.id, name: s.name || '',
             poster: s.poster_path ? tmdbApi.poster(s.poster_path, 'w154') : null
           } : null)
         }
       }
 
-      // Followers / following
+      // Compteurs followers/following
       const [followersRes, followingRes] = await Promise.all([
         supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', profile.id),
         supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', profile.id)
       ])
-      this.counts = {
-        followers: followersRes.count || 0,
-        following: followingRes.count || 0
-      }
+      this.counts = { followers: followersRes.count || 0, following: followingRes.count || 0 }
 
       if (me && !this.isMe) {
         const { data: f } = await supabase.from('follows').select('*')
           .eq('follower_id', me).eq('following_id', profile.id).maybeSingle()
         this.isFollowing = !!f
-      }
-
-      // Analyse visible si : c'est mon profil OU le profil est public
-      this.showAnalysis = this.isMe || profile.library_public !== false
-      if (this.showAnalysis) {
-        this.computeGenreAnalysis()
-        this.loadLibrary()
-      }
-
-      // Séries en commun (uniquement si c'est le profil d'un autre utilisateur)
-      if (!this.isMe && me) {
         this.computeCommonSeries(me, profile.id)
       }
 
-      // Pré-charger les listes followers/following si c'est mon profil
-      if (this.isMe) {
-        this.loadNetwork()
+      this.showAnalysis = this.isMe || profile.library_public !== false
+      if (this.showAnalysis) {
+        this.loadLibrary()
+        this.computeGenreAnalysis()
       }
+
+      if (this.isMe) this.loadNetwork()
+
     } catch (e) {
       console.error('[Profile] init error', e)
       this.error = e.message || 'Erreur de chargement du profil'
@@ -154,111 +142,89 @@ export const profileView = () => ({
     }
   },
 
-  // Calcule la répartition des genres à partir de toutes les séries en bibliothèque
-  async computeGenreAnalysis() {
-    if (!this.profile) return
-    this.analysisLoading = true
-    try {
-      const { data: items, error } = await supabase
-        .from('library_items')
-        .select('tmdb_id')
-        .eq('user_id', this.profile.id)
-
-      if (error) throw error
-      this.totalSeriesAnalyzed = (items || []).length
-
-      if (!items || items.length === 0) {
-        this.genreStats = []
-        this.genreNeverWatched = ALL_TV_GENRES.slice()
-        return
-      }
-
-      // Récupération des détails de chaque série (cache TMDB déjà actif)
-      const shows = await Promise.all(
-        items.map(it => tmdbApi.getShow(it.tmdb_id).catch(() => null))
-      )
-
-      // Agrégation : compter chaque genre une seule fois par série
-      const counts = {}
-      const seen = new Set()
-      for (const s of shows) {
-        if (!s || !Array.isArray(s.genres)) continue
-        const inThisShow = new Set()
-        for (const g of s.genres) {
-          if (!g?.id || inThisShow.has(g.id)) continue
-          inThisShow.add(g.id)
-          seen.add(g.id)
-          counts[g.id] = counts[g.id] || { id: g.id, name: g.name, count: 0 }
-          counts[g.id].count += 1
-        }
-      }
-
-      const arr = Object.values(counts).sort((a, b) => b.count - a.count)
-      const total = arr.reduce((sum, g) => sum + g.count, 0)
-      const palette = ['#FF6B35', '#E63946', '#F4A261', '#E9B44C', '#B8A99A', '#8A7D70', '#5C534A', '#3F3A35', '#2A2724', '#1C1A17']
-      this.genreStats = arr.map((g, i) => ({
-        ...g,
-        percent: total > 0 ? (g.count / total) * 100 : 0,
-        color: palette[i % palette.length]
-      }))
-
-      // Genres jamais regardés = liste TMDB complète moins ceux vus
-      this.genreNeverWatched = ALL_TV_GENRES.filter(g => !seen.has(g.id))
-    } catch (e) {
-      console.warn('[Profile] genre analysis error', e)
-      this.genreStats = []
-      this.genreNeverWatched = []
-    } finally {
-      this.analysisLoading = false
+  setTab(tab) {
+    this.activeTab = tab
+    if ((tab === 'followers' || tab === 'following') && !this.networkLoaded) {
+      this.loadNetwork()
     }
   },
 
-  async toggleVisibility() {
-    if (!this.isMe || !this.profile) return
-    this.togglingVisibility = true
-    const next = !this.profile.library_public
+  // ─── AVATAR ────────────────────────────────────────────────────────────────
+
+  async uploadAvatar(event) {
+    const file = event.target.files?.[0]
+    if (!file || !this.profile) return
+    if (file.size > 2 * 1024 * 1024) {
+      window.Alpine.store('app').showToast('Image trop lourde (max 2 Mo)', 'error')
+      return
+    }
+
+    this.uploadingAvatar = true
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ library_public: next })
-        .eq('id', this.profile.id)
-      if (error) throw error
-      this.profile.library_public = next
-      window.Alpine.store('app').showToast(
-        next ? 'Analyse visible par tous' : 'Analyse privée',
-        'success'
-      )
+      const ext = file.name.split('.').pop().toLowerCase()
+      const path = `${this.profile.id}/avatar.${ext}`
+
+      const { error: upErr } = await supabase.storage
+        .from('avatars').upload(path, file, { upsert: true, contentType: file.type })
+      if (upErr) throw upErr
+
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+      const avatarUrl = publicUrl + '?t=' + Date.now()
+
+      const { error: updateErr } = await supabase
+        .from('profiles').update({ avatar_url: avatarUrl }).eq('id', this.profile.id)
+      if (updateErr) throw updateErr
+
+      this.profile = { ...this.profile, avatar_url: avatarUrl }
+      window.Alpine.store('app').profile = { ...window.Alpine.store('app').profile, avatar_url: avatarUrl }
+      window.Alpine.store('app').showToast('Photo mise à jour', 'success')
     } catch (e) {
-      console.warn('[Profile] toggleVisibility error', e)
-      window.Alpine.store('app').showToast('Erreur de sauvegarde')
+      console.warn('[Profile] uploadAvatar error', e)
+      window.Alpine.store('app').showToast('Erreur lors de l\'upload', 'error')
     } finally {
-      this.togglingVisibility = false
+      this.uploadingAvatar = false
     }
   },
 
-  get pieSvgHtml() {
-    if (!this.genreStats.length) return ''
-    const cx = 100, cy = 100, r = 90
-    let cumPercent = 0
-    const nbGenres = this.genreStats.length
-    const paths = this.genreStats.map(g => {
-      const startPercent = cumPercent
-      cumPercent += g.percent
-      const startAngle = (startPercent / 100) * 2 * Math.PI - Math.PI / 2
-      const endAngle = (cumPercent / 100) * 2 * Math.PI - Math.PI / 2
-      const x1 = cx + r * Math.cos(startAngle)
-      const y1 = cy + r * Math.sin(startAngle)
-      const x2 = cx + r * Math.cos(endAngle)
-      const y2 = cy + r * Math.sin(endAngle)
-      const largeArc = g.percent > 50 ? 1 : 0
-      const d = g.percent >= 99.99
-        ? `M ${cx - r},${cy} A ${r},${r} 0 1,1 ${cx + r},${cy} A ${r},${r} 0 1,1 ${cx - r},${cy} Z`
-        : `M ${cx},${cy} L ${x1},${y1} A ${r},${r} 0 ${largeArc},1 ${x2},${y2} Z`
-      const pct = g.percent.toFixed(0)
-      return `<path d="${d}" fill="${g.color}" stroke="#0A0908" stroke-width="1.5"><title>${g.name} : ${pct}%</title></path>`
-    }).join('')
-    return `<svg viewBox="0 0 200 200" width="120" height="120"><g>${paths}</g><circle cx="${cx}" cy="${cy}" r="40" fill="#0A0908"/><text x="${cx}" y="95" text-anchor="middle" fill="#F5ECE3" font-family="Instrument Serif, Georgia, serif" font-style="italic" font-size="22">${nbGenres}</text><text x="${cx}" y="115" text-anchor="middle" fill="#B8A99A" font-size="9" letter-spacing="1">GENRES</text></svg>`
+  get avatarUrl() {
+    return this.profile?.avatar_url || null
   },
+
+  get avatarInitial() {
+    return (this.profile?.username || '?').charAt(0).toUpperCase()
+  },
+
+  // ─── RÉSEAU ─────────────────────────────────────────────────────────────────
+
+  async loadNetwork() {
+    if (this.networkLoaded || !this.profile) return
+    this.networkLoaded = true
+    const profileId = this.profile.id
+
+    this.followersLoading = true
+    try {
+      const { data } = await supabase
+        .from('follows')
+        .select('follower_id, profiles!follows_follower_id_fkey(id, username, avatar_url, library_public)')
+        .eq('following_id', profileId)
+      this.followers = (data || []).map(f => f.profiles).filter(Boolean)
+    } catch (e) { console.warn('[Profile] followers error', e) }
+    finally { this.followersLoading = false }
+
+    this.followingLoading = true
+    try {
+      const { data } = await supabase
+        .from('follows')
+        .select('following_id, profiles!follows_following_id_fkey(id, username, avatar_url, library_public)')
+        .eq('follower_id', profileId)
+      this.following = (data || []).map(f => f.profiles).filter(Boolean)
+    } catch (e) { console.warn('[Profile] following error', e) }
+    finally { this.followingLoading = false }
+  },
+
+  goToProfile(username) { window.location.hash = '#/u/' + username },
+
+  // ─── SÉRIES EN COMMUN ───────────────────────────────────────────────────────
 
   async computeCommonSeries(myId, theirId) {
     this.commonSeriesLoading = true
@@ -268,32 +234,24 @@ export const profileView = () => ({
         uid_b: myId < theirId ? theirId : myId
       })
       if (!error) this.commonSeriesCount = data || 0
-    } catch (e) {
-      console.warn('[Profile] common series error', e)
-      this.commonSeriesCount = 0
-    } finally {
-      this.commonSeriesLoading = false
-    }
+    } catch (e) { this.commonSeriesCount = 0 }
+    finally { this.commonSeriesLoading = false }
   },
 
-  get canChat() {
-    return this.commonSeriesCount !== null && this.commonSeriesCount >= 5
-  },
+  get canChat() { return this.commonSeriesCount !== null && this.commonSeriesCount >= 5 },
+
+  // ─── BIBLIOTHÈQUE ───────────────────────────────────────────────────────────
 
   async loadLibrary() {
     if (!this.profile) return
-    if (!this.showAnalysis) return
     this.libraryLoading = true
     try {
       const { data, error } = await supabase
-        .from('library_items')
-        .select('*')
+        .from('library_items').select('*')
         .eq('user_id', this.profile.id)
         .order('updated_at', { ascending: false })
-
       if (error) throw error
 
-      const { getShowCard } = await import('../lib/tmdb.js')
       const hydrated = await Promise.all((data || []).map(async item => {
         const show = await getShowCard(item.tmdb_id).catch(() => null)
         return show ? { ...item, show } : null
@@ -302,9 +260,7 @@ export const profileView = () => ({
     } catch (e) {
       console.warn('[Profile] loadLibrary error', e)
       this.library = []
-    } finally {
-      this.libraryLoading = false
-    }
+    } finally { this.libraryLoading = false }
   },
 
   get libraryFiltered() {
@@ -323,49 +279,131 @@ export const profileView = () => ({
   },
 
   statusLabel(status) {
-    const map = { watching: 'En cours', finished: 'Terminée', wishlist: 'À voir', abandoned: 'Abandonnée' }
-    return map[status] || status
+    return { watching: 'En cours', finished: 'Terminée', wishlist: 'À voir', abandoned: 'Abandonnée' }[status] || status
   },
 
   statusColor(status) {
-    const map = { watching: 'text-flame-500', finished: 'text-green-400', wishlist: 'text-cream-300/60', abandoned: 'text-red-400' }
-    return map[status] || 'text-cream-300/60'
+    return { watching: 'text-flame-500', finished: 'text-green-400', wishlist: 'text-cream-300/60', abandoned: 'text-red-400' }[status] || 'text-cream-300/60'
   },
 
-  async loadNetwork() {
-    if (this.networkLoaded || !this.profile) return
-    this.networkLoaded = true
-    const profileId = this.profile.id
+  // ─── SUPPRESSION ────────────────────────────────────────────────────────────
 
-    // Followers
-    this.followersLoading = true
+  confirmDelete(itemId) { this.pendingDeleteId = itemId },
+  cancelDelete() { this.pendingDeleteId = null },
+
+  async confirmAndDelete() {
+    if (!this.pendingDeleteId) return
+    this.deleting = true
     try {
-      const { data } = await supabase
-        .from('follows')
-        .select('follower_id, profiles!follows_follower_id_fkey(id, username, library_public)')
-        .eq('following_id', profileId)
-      this.followers = (data || []).map(f => f.profiles).filter(Boolean)
-    } catch (e) { console.warn('[Profile] followers error', e) }
-    finally { this.followersLoading = false }
+      const { error } = await supabase.from('library_items').delete().eq('id', this.pendingDeleteId)
+      if (!error) {
+        this.library = this.library.filter(i => i.id !== this.pendingDeleteId)
+        window.Alpine.store('app').showToast('Série supprimée', 'success')
+      }
+    } catch (e) { console.warn('[Profile] delete error', e) }
+    finally { this.deleting = false; this.pendingDeleteId = null }
+  },
 
-    // Following
-    this.followingLoading = true
+  // ─── SWIPE ──────────────────────────────────────────────────────────────────
+
+  swipeCard(item) {
+    return {
+      _item: item,
+      startX: 0,
+      currentX: 0,
+      swiping: false,
+      THRESHOLD: 80,
+      get swipePercent() { return Math.min(Math.abs(this.currentX) / this.THRESHOLD, 1) },
+      get isRight() { return this.currentX > 20 },
+      get isLeft() { return this.currentX < -20 },
+      onTouchStart(e) { this.startX = e.touches[0].clientX; this.currentX = 0; this.swiping = true },
+      onTouchMove(e) {
+        if (!this.swiping) return
+        this.currentX = Math.max(-120, Math.min(120, e.touches[0].clientX - this.startX))
+      },
+      onTouchEnd(profileView) {
+        this.swiping = false
+        if (this.currentX >= this.THRESHOLD) {
+          this.currentX = 0
+          if (window.openClassifier) window.openClassifier(this._item.tmdb_id, {
+            id: this._item.tmdb_id,
+            name: this._item.show?.name,
+            poster_path: this._item.show?.poster?.replace('https://image.tmdb.org/t/p/w154', '') || null
+          })
+        } else if (this.currentX <= -this.THRESHOLD) {
+          this.currentX = 0
+          profileView.confirmDelete(this._item.id)
+        } else {
+          this.currentX = 0
+        }
+      }
+    }
+  },
+
+  // ─── ANALYSE GENRES ─────────────────────────────────────────────────────────
+
+  async computeGenreAnalysis() {
+    if (!this.profile) return
+    this.analysisLoading = true
     try {
-      const { data } = await supabase
-        .from('follows')
-        .select('following_id, profiles!follows_following_id_fkey(id, username, library_public)')
-        .eq('follower_id', profileId)
-      this.following = (data || []).map(f => f.profiles).filter(Boolean)
-    } catch (e) { console.warn('[Profile] following error', e) }
-    finally { this.followingLoading = false }
+      const { data: items, error } = await supabase
+        .from('library_items').select('tmdb_id').eq('user_id', this.profile.id)
+      if (error) throw error
+      this.totalSeriesAnalyzed = (items || []).length
+      if (!items || items.length === 0) {
+        this.genreStats = []; this.genreNeverWatched = ALL_TV_GENRES.slice(); return
+      }
+      const shows = await Promise.all(items.map(it => tmdbApi.getShow(it.tmdb_id).catch(() => null)))
+      const counts = {}; const seen = new Set()
+      for (const s of shows) {
+        if (!s || !Array.isArray(s.genres)) continue
+        const inThisShow = new Set()
+        for (const g of s.genres) {
+          if (!g?.id || inThisShow.has(g.id)) continue
+          inThisShow.add(g.id); seen.add(g.id)
+          counts[g.id] = counts[g.id] || { id: g.id, name: g.name, count: 0 }
+          counts[g.id].count += 1
+        }
+      }
+      const arr = Object.values(counts).sort((a, b) => b.count - a.count)
+      const total = arr.reduce((sum, g) => sum + g.count, 0)
+      const palette = ['#FF6B35','#E63946','#F4A261','#E9B44C','#B8A99A','#8A7D70','#5C534A','#3F3A35','#2A2724','#1C1A17']
+      this.genreStats = arr.map((g, i) => ({ ...g, percent: total > 0 ? (g.count / total) * 100 : 0, color: palette[i % palette.length] }))
+      this.genreNeverWatched = ALL_TV_GENRES.filter(g => !seen.has(g.id))
+    } catch (e) { this.genreStats = []; this.genreNeverWatched = [] }
+    finally { this.analysisLoading = false }
   },
 
-  async loadNetworkIfNeeded() {
-    if (!this.networkLoaded) await this.loadNetwork()
+  async toggleVisibility() {
+    if (!this.isMe || !this.profile) return
+    this.togglingVisibility = true
+    const next = !this.profile.library_public
+    try {
+      const { error } = await supabase.from('profiles').update({ library_public: next }).eq('id', this.profile.id)
+      if (error) throw error
+      this.profile = { ...this.profile, library_public: next }
+      window.Alpine.store('app').showToast(next ? 'Bibliothèque publique' : 'Bibliothèque privée', 'success')
+    } catch (e) { window.Alpine.store('app').showToast('Erreur de sauvegarde') }
+    finally { this.togglingVisibility = false }
   },
 
-  goToProfile(username) {
-    window.location.hash = '#/u/' + username
+  get pieSvgHtml() {
+    if (!this.genreStats.length) return ''
+    const cx = 100, cy = 100, r = 90
+    let cumPercent = 0
+    const paths = this.genreStats.map(g => {
+      const startPercent = cumPercent; cumPercent += g.percent
+      const startAngle = (startPercent / 100) * 2 * Math.PI - Math.PI / 2
+      const endAngle = (cumPercent / 100) * 2 * Math.PI - Math.PI / 2
+      const x1 = cx + r * Math.cos(startAngle), y1 = cy + r * Math.sin(startAngle)
+      const x2 = cx + r * Math.cos(endAngle), y2 = cy + r * Math.sin(endAngle)
+      const largeArc = g.percent > 50 ? 1 : 0
+      const d = g.percent >= 99.99
+        ? `M ${cx-r},${cy} A ${r},${r} 0 1,1 ${cx+r},${cy} A ${r},${r} 0 1,1 ${cx-r},${cy} Z`
+        : `M ${cx},${cy} L ${x1},${y1} A ${r},${r} 0 ${largeArc},1 ${x2},${y2} Z`
+      return `<path d="${d}" fill="${g.color}" stroke="#0A0908" stroke-width="1.5"><title>${g.name} : ${g.percent.toFixed(0)}%</title></path>`
+    }).join('')
+    return `<svg viewBox="0 0 200 200" width="120" height="120"><g>${paths}</g><circle cx="${cx}" cy="${cy}" r="40" fill="#0A0908"/><text x="${cx}" y="95" text-anchor="middle" fill="#F5ECE3" font-family="Instrument Serif, Georgia, serif" font-style="italic" font-size="22">${this.genreStats.length}</text><text x="${cx}" y="115" text-anchor="middle" fill="#B8A99A" font-size="9" letter-spacing="1">GENRES</text></svg>`
   },
 
   async toggleFollow() {
@@ -373,8 +411,7 @@ export const profileView = () => ({
     if (!me || this.isMe || !this.profile) return
     try {
       if (this.isFollowing) {
-        await supabase.from('follows').delete()
-          .eq('follower_id', me).eq('following_id', this.profile.id)
+        await supabase.from('follows').delete().eq('follower_id', me).eq('following_id', this.profile.id)
         this.isFollowing = false
         this.counts.followers = Math.max(0, this.counts.followers - 1)
       } else {
@@ -382,29 +419,17 @@ export const profileView = () => ({
         this.isFollowing = true
         this.counts.followers += 1
       }
-    } catch (e) {
-      console.error('[Profile] toggleFollow error', e)
-    }
+    } catch (e) { console.error('[Profile] toggleFollow error', e) }
   }
 })
 
-// Liste complète des genres TMDB pour les séries TV
-// Utilisée pour identifier les "jamais regardés"
 const ALL_TV_GENRES = [
-  { id: 10759, name: 'Action & Aventure' },
-  { id: 16, name: 'Animation' },
-  { id: 35, name: 'Comédie' },
-  { id: 80, name: 'Crime' },
-  { id: 99, name: 'Documentaire' },
-  { id: 18, name: 'Drame' },
-  { id: 10751, name: 'Familial' },
-  { id: 10762, name: 'Enfants' },
-  { id: 9648, name: 'Mystère' },
-  { id: 10763, name: 'Actualité' },
-  { id: 10764, name: 'Reality' },
-  { id: 10765, name: 'Sci-Fi & Fantastique' },
-  { id: 10766, name: 'Soap' },
-  { id: 10767, name: 'Talk-show' },
-  { id: 10768, name: 'Guerre & Politique' },
-  { id: 37, name: 'Western' }
+  { id: 10759, name: 'Action & Aventure' }, { id: 16, name: 'Animation' },
+  { id: 35, name: 'Comédie' }, { id: 80, name: 'Crime' },
+  { id: 99, name: 'Documentaire' }, { id: 18, name: 'Drame' },
+  { id: 10751, name: 'Familial' }, { id: 10762, name: 'Enfants' },
+  { id: 9648, name: 'Mystère' }, { id: 10763, name: 'Actualité' },
+  { id: 10764, name: 'Reality' }, { id: 10765, name: 'Sci-Fi & Fantastique' },
+  { id: 10766, name: 'Soap' }, { id: 10767, name: 'Talk-show' },
+  { id: 10768, name: 'Guerre & Politique' }, { id: 37, name: 'Western' }
 ]
