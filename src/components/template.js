@@ -10,7 +10,10 @@ export const appTemplate = `
     <section x-data="authView()" class="min-h-dvh flex flex-col justify-center px-6 py-10 relative z-10">
       <div class="max-w-sm mx-auto w-full animate-slide-up">
         <div class="mb-8 text-center">
-          <span class="beta-banner mb-4">● Bêta privée · phase de test</span>
+          <span class="beta-banner mb-4">
+            <svg width="6" height="6" viewBox="0 0 6 6" fill="currentColor"><circle cx="3" cy="3" r="3"/></svg>
+            Bêta privée · phase de test
+          </span>
           <div class="inline-flex items-center gap-2 text-flame-500 text-xs tracking-[0.3em] uppercase mb-4 mt-4">
             <span class="w-8 h-px bg-flame-500"></span>Saison 1<span class="w-8 h-px bg-flame-500"></span>
           </div>
@@ -93,10 +96,13 @@ export const appTemplate = `
     </section>
   </template>
 
-  <!-- ============== LEGAL (accessible sans auth) ============== -->
+  <!-- ============== LEGAL ============== -->
   <template x-if="$store.app.route.name === 'legal'">
     <section x-data="legalView()" x-init="init()" class="px-5 pt-5 safe-top pb-20 animate-fade-in max-w-xl mx-auto">
-      <a href="javascript:history.back()" class="inline-flex items-center gap-1 text-sm text-cream-300 mb-4 hover:text-cream-100">← Retour</a>
+      <a href="javascript:history.back()" class="inline-flex items-center gap-1 text-sm text-cream-300 mb-4 hover:text-cream-100">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Retour
+      </a>
 
       <h1 class="text-3xl display italic mb-2">Infos légales</h1>
       <p class="text-xs text-cream-300/60 mb-6">Projet personnel en phase de test · Bêta privée</p>
@@ -107,81 +113,50 @@ export const appTemplate = `
         <button @click="tab = 'privacy'" :class="tab === 'privacy' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Confidentialité</button>
       </div>
 
-      <!-- PHASE DE TEST -->
       <div x-show="tab === 'beta'" class="prose-legal">
         <h2>Projet en cours d'élaboration</h2>
-        <p><strong>My TVShow</strong> est un projet personnel actuellement en <strong>phase de test privée</strong>. L'application évolue régulièrement, et des bugs ou interruptions peuvent survenir.</p>
-
-        <p><strong>Diffusion restreinte.</strong> Ce lien t'a été transmis personnellement dans le cadre d'une phase de test. Merci de <strong>ne pas le partager ni le redistribuer publiquement</strong> (réseaux sociaux, forums, etc.).</p>
-
-        <p><strong>Données et contenus.</strong> Les données que tu saisis peuvent être réinitialisées sans préavis pendant cette phase. Ne dépends pas de l'application pour conserver des informations importantes.</p>
-
-        <p><strong>Feedback bienvenu.</strong> Si tu rencontres un bug ou tu as une suggestion, écris-moi directement à <a href="mailto:shamsetdean@gmail.com">shamsetdean@gmail.com</a>.</p>
-
-        <p>Merci de ta participation.</p>
+        <p><strong>My TVShow</strong> est un projet personnel actuellement en <strong>phase de test privée</strong>.</p>
+        <p><strong>Diffusion restreinte.</strong> Merci de <strong>ne pas partager ni redistribuer ce lien</strong> publiquement.</p>
+        <p><strong>Données.</strong> Les données peuvent être réinitialisées sans préavis pendant cette phase.</p>
+        <p><strong>Feedback.</strong> Bug ou suggestion : <a href="mailto:shamsetdean@gmail.com">shamsetdean@gmail.com</a>.</p>
       </div>
 
-      <!-- MENTIONS LÉGALES -->
       <div x-show="tab === 'mentions'" class="prose-legal">
         <h2>Mentions légales</h2>
         <p><strong>Éditeur</strong> : projet personnel non commercial, édité par un particulier.</p>
         <p><strong>Contact</strong> : <a href="mailto:shamsetdean@gmail.com">shamsetdean@gmail.com</a></p>
-        <p><strong>Hébergement</strong> : Vercel Inc. (frontend) et Supabase Inc. (base de données), avec infrastructure localisée en Union Européenne.</p>
-
+        <p><strong>Hébergement</strong> : Vercel Inc. et Supabase Inc. (UE).</p>
         <h2>Propriété intellectuelle</h2>
-        <p>Les métadonnées de séries (titres, synopsis, affiches, notes) proviennent de <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. <em>This product uses the TMDB API but is not endorsed or certified by TMDB.</em></p>
-        <p>Les données de disponibilité streaming sont fournies par JustWatch via TMDB.</p>
-        <p>Le code source et le design de l'application sont la propriété de son auteur. Les contenus publiés par les utilisateurs (Top 3, Flop 3, commentaires) restent leur propriété.</p>
-
+        <p>Métadonnées issues de <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. <em>This product uses the TMDB API but is not endorsed or certified by TMDB.</em></p>
+        <p>Disponibilités streaming via JustWatch.</p>
         <h2>Responsabilité</h2>
-        <p>L'application est fournie « en l'état » pendant sa phase de test. L'éditeur ne saurait être tenu responsable des interruptions, pertes de données, ou erreurs dans les informations diffusées (notamment celles issues de TMDB).</p>
-
-        <h2>Signalement</h2>
-        <p>Tout contenu estimé illicite peut être signalé à l'adresse de contact ci-dessus.</p>
+        <p>Service fourni « en l'état » durant la phase de test.</p>
       </div>
 
-      <!-- POLITIQUE DE CONFIDENTIALITÉ -->
       <div x-show="tab === 'privacy'" class="prose-legal">
         <h2>Politique de confidentialité (simplifiée)</h2>
-        <p>Cette politique décrit les données que nous collectons dans le cadre de l'utilisation de My TVShow et comment elles sont utilisées.</p>
-
         <h2>Données collectées</h2>
         <ul>
-          <li><strong>Email</strong> : nécessaire pour créer ton compte</li>
-          <li><strong>Mot de passe</strong> : stocké sous forme chiffrée, jamais lu en clair</li>
-          <li><strong>Pseudo et bio</strong> : affichés publiquement sur ton profil</li>
-          <li><strong>Contenus publiés</strong> : Top 3, Flop 3, likes, abonnements, bibliothèque</li>
-          <li><strong>Adresse IP</strong> : collectée par Supabase pour la sécurité (logs 30 jours)</li>
+          <li><strong>Email</strong> : création du compte</li>
+          <li><strong>Mot de passe</strong> : haché, jamais lu en clair</li>
+          <li><strong>Pseudo et bio</strong> : publics</li>
+          <li><strong>Contenus publiés</strong> : Top 3, Flop 3, bibliothèque, likes, abonnements</li>
+          <li><strong>Adresse IP</strong> : Supabase, sécurité (logs 30 jours)</li>
         </ul>
-
         <h2>Finalités</h2>
-        <p>Ces données servent uniquement à faire fonctionner l'application. <strong>Aucune donnée n'est vendue, louée, ni utilisée pour de la publicité.</strong> Aucun tracker tiers n'est utilisé (pas de Google Analytics, pas de Meta Pixel, pas de cookie publicitaire).</p>
-
-        <h2>Cookies</h2>
-        <p>L'application utilise uniquement des cookies techniques nécessaires à la connexion (token d'authentification) et un cache local (localStorage) pour les données TMDB. Aucun consentement spécifique n'est requis pour ces cookies strictement nécessaires.</p>
-
+        <p><strong>Aucune donnée vendue ni utilisée pour la publicité.</strong> Aucun tracker tiers.</p>
+        <h2>Tes droits (RGPD)</h2>
+        <ul>
+          <li>Accès, rectification, suppression</li>
+          <li>Portabilité (copie de tes données)</li>
+        </ul>
+        <p>Contact : <a href="mailto:shamsetdean@gmail.com">shamsetdean@gmail.com</a></p>
         <h2>Sous-traitants</h2>
         <ul>
-          <li><strong>Supabase</strong> : base de données et authentification (UE)</li>
-          <li><strong>Vercel</strong> : hébergement du site</li>
-          <li><strong>TMDB</strong> : métadonnées de séries (aucune donnée perso transmise)</li>
+          <li><strong>Supabase</strong> (UE) : base de données et auth</li>
+          <li><strong>Vercel</strong> : hébergement</li>
+          <li><strong>TMDB</strong> : métadonnées (aucune donnée perso transmise)</li>
         </ul>
-
-        <h2>Tes droits</h2>
-        <p>Conformément au RGPD, tu peux à tout moment :</p>
-        <ul>
-          <li>Accéder aux données te concernant</li>
-          <li>Les rectifier ou supprimer</li>
-          <li>Demander une copie (portabilité)</li>
-          <li>Supprimer ton compte</li>
-        </ul>
-        <p>Pour exercer ces droits, contacte <a href="mailto:shamsetdean@gmail.com">shamsetdean@gmail.com</a> depuis ton email de connexion. Réponse sous 30 jours.</p>
-
-        <h2>Conservation</h2>
-        <p>Les données sont conservées tant que ton compte est actif. Si tu supprimes ton compte, elles sont effacées dans un délai de 30 jours (sauf obligations légales de conservation).</p>
-
-        <h2>Réclamation</h2>
-        <p>Tu peux déposer une réclamation auprès de la CNIL : <a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a></p>
       </div>
     </section>
   </template>
@@ -189,20 +164,151 @@ export const appTemplate = `
   <!-- ============== AUTHENTIFIÉ ============== -->
   <template x-if="$store.app.isAuthed && !['auth','onboarding','legal'].includes($store.app.route.name)">
     <div>
+      <!-- HEADER GLOBAL avec cloche notifications -->
+      <header class="header-glass sticky top-0 z-20 safe-top px-4 pb-3 flex items-center justify-between">
+        <a href="#/feed" class="display italic text-xl text-cream-50 leading-none">My TVShow</a>
+        <a href="#/notifications" class="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-50/5 transition-colors" :class="$store.app.route.name === 'notifications' ? 'text-flame-500' : 'text-cream-200'">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span x-show="$store.app.unreadCount > 0" class="notif-dot"></span>
+        </a>
+      </header>
+
       <main class="relative z-10 pb-24">
 
-        <!-- FEED -->
+        <!-- ============== LIBRARY ============== -->
+        <template x-if="$store.app.route.name === 'library'">
+          <section x-data="libraryView()" x-init="init(); window.addEventListener('library:updated', () => load())" class="px-4 pt-4 animate-fade-in">
+            <header class="mb-4 flex items-end justify-between gap-2">
+              <div>
+                <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Mon univers</p>
+                <h1 class="text-3xl display italic text-cream-50 leading-none">Bibliothèque</h1>
+              </div>
+              <span class="pill" x-text="counts.all + ' séries'"></span>
+            </header>
+
+            <div class="mb-4">
+              <input type="search" x-model="search" class="input text-sm" placeholder="Rechercher dans ma bibliothèque..." />
+            </div>
+
+            <!-- Filtres horizontaux scrollables -->
+            <div class="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-4 px-4">
+              <button @click="setFilter('all')" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+                Tout (<span x-text="counts.all"></span>)
+              </button>
+              <button @click="setFilter('watching')" :class="filter === 'watching' ? 'bg-flame-600 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+                En cours (<span x-text="counts.watching"></span>)
+              </button>
+              <button @click="setFilter('finished')" :class="filter === 'finished' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+                Terminées (<span x-text="counts.finished"></span>)
+              </button>
+              <button @click="setFilter('recommended')" :class="filter === 'recommended' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+                Recommandées (<span x-text="counts.recommended"></span>)
+              </button>
+              <button @click="setFilter('not_recommended')" :class="filter === 'not_recommended' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+                Flop (<span x-text="counts.not_recommended"></span>)
+              </button>
+              <button @click="setFilter('abandoned')" :class="filter === 'abandoned' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+                Abandonnées (<span x-text="counts.abandoned"></span>)
+              </button>
+              <button @click="setFilter('wishlist')" :class="filter === 'wishlist' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+                À voir (<span x-text="counts.wishlist"></span>)
+              </button>
+            </div>
+
+            <template x-if="loading">
+              <div class="space-y-2">
+                <template x-for="i in 4" :key="i"><div class="skeleton h-16"></div></template>
+              </div>
+            </template>
+
+            <template x-if="!loading && filtered.length === 0">
+              <div class="text-center py-16 text-cream-300/60">
+                <svg class="mx-auto mb-3 opacity-40" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M4 4h16v16H4zM4 9h16M9 4v16"/>
+                </svg>
+                <p class="text-sm">Rien dans cette catégorie.</p>
+                <p class="text-xs mt-2">Cherche une série pour l'ajouter.</p>
+              </div>
+            </template>
+
+            <ul class="space-y-2">
+              <template x-for="item in filtered" :key="item.id">
+                <li class="card p-2.5 flex gap-2.5">
+                  <a :href="'#/show/' + item.show.id" class="flex-shrink-0">
+                    <img :src="item.show.poster" :alt="item.show.name" loading="lazy" class="w-12 h-18 rounded-md bg-ink-800 object-cover" />
+                  </a>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-2">
+                      <a :href="'#/show/' + item.show.id" class="block min-w-0">
+                        <p class="font-medium text-cream-50 text-sm leading-tight truncate" x-text="item.show.name"></p>
+                        <p class="text-[11px] text-cream-300/50 mt-0.5" x-text="item.show.year"></p>
+                      </a>
+                      <button @click="window.openClassifier(item.tmdb_id)" class="btn-ghost text-[11px] px-2 py-1 flex-shrink-0">Modifier</button>
+                    </div>
+
+                    <!-- Status badges -->
+                    <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      <template x-if="item.status === 'watching'">
+                        <span class="pill pill-active" x-text="'S' + (item.current_season || '?') + ' E' + (item.current_episode || '?')"></span>
+                      </template>
+                      <template x-if="item.status === 'finished'">
+                        <span class="pill">Terminée</span>
+                      </template>
+                      <template x-if="item.status === 'abandoned'">
+                        <span class="pill">Abandonnée</span>
+                      </template>
+                      <template x-if="item.status === 'wishlist'">
+                        <span class="pill">À voir</span>
+                      </template>
+
+                      <template x-if="item.rating">
+                        <span class="pill" :title="item.rating + '/5'">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="#E9B44C"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                          <span x-text="item.rating"></span>
+                        </span>
+                      </template>
+
+                      <template x-if="item.recommendation === 'recommended'">
+                        <span class="pill text-flame-500 border-flame-500/30">Recommandée</span>
+                      </template>
+                      <template x-if="item.recommendation === 'not_recommended'">
+                        <span class="pill">Flop</span>
+                      </template>
+                    </div>
+
+                    <!-- Provider + bouton +1 épisode pour watching -->
+                    <template x-if="item.status === 'watching'">
+                      <div class="flex items-center gap-2 mt-2">
+                        <template x-if="item.provider_name && item.provider_logo_path">
+                          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-ink-800">
+                            <img :src="providerLogoUrl(item.provider_logo_path)" class="w-3.5 h-3.5 rounded" />
+                            <span class="text-[10px] text-cream-200" x-text="item.provider_name"></span>
+                          </span>
+                        </template>
+                        <button @click="incrementEpisode(item)" class="text-[11px] text-flame-500 ml-auto">+1 ép.</button>
+                      </div>
+                    </template>
+                  </div>
+                </li>
+              </template>
+            </ul>
+          </section>
+        </template>
+
+        <!-- ============== FEED ============== -->
         <template x-if="$store.app.route.name === 'feed'">
           <section x-data="feedView()" x-init="init()" class="px-4 pt-4 animate-fade-in">
-            <header class="safe-top mb-4 flex items-end justify-between">
+            <header class="mb-4 flex items-end justify-between">
               <div>
                 <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">À l'affiche</p>
                 <h1 class="text-3xl display italic text-cream-50 leading-none">Le fil</h1>
               </div>
-              <a href="#/top3" class="btn-primary text-sm py-2 px-4">+ Publier</a>
+              <a href="#/top3" class="btn-primary text-sm py-2 px-4">Publier</a>
             </header>
 
-            <!-- Filtres : audience + type -->
             <div class="flex gap-2 mb-3 overflow-x-auto pb-1 -mx-1 px-1">
               <button @click="setFilter('all')" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Tout le monde</button>
               <button @click="setFilter('following')" :class="filter === 'following' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Mes abonnements</button>
@@ -221,7 +327,7 @@ export const appTemplate = `
 
             <template x-if="!loading && lists.length === 0">
               <div class="text-center py-16 text-cream-300/60">
-                <p class="text-sm">Rien pour le moment. Sois le premier à publier.</p>
+                <p class="text-sm">Rien pour le moment.</p>
               </div>
             </template>
 
@@ -241,7 +347,6 @@ export const appTemplate = `
                     <span :class="list.kind === 'flop' ? 'bg-ink-700 text-cream-300' : 'bg-flame-600/20 text-flame-400 border border-flame-600/30'" class="text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded-full" x-text="list.kind === 'flop' ? 'Flop 3' : 'Top 3'"></span>
                   </header>
 
-                  <!-- Cartes compactes : poster réduit + titre dessous -->
                   <div class="grid grid-cols-3 gap-2 mb-3">
                     <template x-for="(show, idx) in list.shows" :key="idx">
                       <div>
@@ -275,9 +380,9 @@ export const appTemplate = `
           </section>
         </template>
 
-        <!-- TRENDING -->
+        <!-- ============== TRENDING ============== -->
         <template x-if="$store.app.route.name === 'trending'">
-          <section x-data="trendingView()" x-init="init()" class="px-4 pt-4 safe-top animate-fade-in">
+          <section x-data="trendingView()" x-init="init()" class="px-4 pt-4 animate-fade-in">
             <header class="mb-5">
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Classement</p>
               <h1 class="text-3xl display italic">Tendances</h1>
@@ -325,7 +430,10 @@ export const appTemplate = `
                       <div class="flex-1 min-w-0">
                         <p class="font-medium text-cream-50 text-sm truncate" x-text="show.name"></p>
                         <p class="text-[11px] text-cream-300/50" x-text="show.year"></p>
-                        <p class="text-[11px] text-gold-500" x-text="'★ ' + show.vote?.toFixed(1)"></p>
+                        <p class="text-[11px] text-gold-500">
+                          <svg class="inline" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                          <span x-text="show.vote?.toFixed(1)"></span>
+                        </p>
                       </div>
                     </a>
                   </li>
@@ -335,22 +443,22 @@ export const appTemplate = `
           </section>
         </template>
 
-        <!-- TOP 3 / FLOP 3 EDITOR -->
+        <!-- ============== TOP 3 / FLOP 3 EDITOR ============== -->
         <template x-if="$store.app.route.name === 'top3'">
-          <section x-data="top3View()" x-init="init()" class="px-4 pt-4 safe-top animate-fade-in">
+          <section x-data="top3View()" x-init="init()" class="px-4 pt-4 animate-fade-in">
             <header class="mb-4">
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Publier un classement</p>
               <h1 class="text-3xl display italic" x-text="'Mon ' + label"></h1>
             </header>
 
-            <!-- Switch Top / Flop -->
             <div class="flex gap-2 mb-5 p-1 bg-ink-900/50 rounded-full border border-ink-700 w-fit">
               <button @click="switchKind('top')" :class="kind === 'top' ? 'bg-flame-600 text-cream-50' : 'text-cream-300'" class="text-xs font-medium px-4 py-1.5 rounded-full transition-colors">Top 3</button>
               <button @click="switchKind('flop')" :class="kind === 'flop' ? 'bg-ink-700 text-cream-100' : 'text-cream-300'" class="text-xs font-medium px-4 py-1.5 rounded-full transition-colors">Flop 3</button>
             </div>
 
-            <p class="text-xs text-cream-300/70 mb-4" x-text="kind === 'top' ? 'Les 3 séries qui te marquent en ce moment.' : 'Les 3 séries qui t\\'ont déçu.'"></p>
+            <p class="text-xs text-cream-300/70 mb-4" x-text="kind === 'top' ? 'Pioche dans tes séries recommandées.' : 'Pioche dans tes séries non recommandées.'"></p>
 
+            <!-- Slots de sélection -->
             <div class="grid grid-cols-3 gap-2 mb-5">
               <template x-for="(slot, i) in selection" :key="i">
                 <button @click="pickSlot(i)" :class="activeSlot === i ? 'border-flame-500 ring-2 ring-flame-500/30' : 'border-ink-700'" class="aspect-[2/3] card border-2 relative overflow-hidden">
@@ -365,7 +473,9 @@ export const appTemplate = `
                       <img :src="slot.poster" :alt="slot.name" class="w-full h-full object-cover" />
                       <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
                       <div class="absolute top-1 left-1.5 rank-number" :class="kind === 'flop' ? 'rank-number-flop' : 'rank-number-filled'" x-text="i + 1"></div>
-                      <span @click.stop="removeSlot(i)" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-ink-950/80 flex items-center justify-center text-cream-100 text-[10px]">✕</span>
+                      <span @click.stop="removeSlot(i)" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-ink-950/80 flex items-center justify-center text-cream-100 text-[10px]">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                      </span>
                       <p class="absolute bottom-1 left-1 right-1 text-[10px] font-medium text-cream-50 line-clamp-2 leading-tight text-left" x-text="slot.name"></p>
                     </div>
                   </template>
@@ -373,32 +483,52 @@ export const appTemplate = `
               </template>
             </div>
 
-            <div class="mb-4">
-              <label class="text-xs text-cream-300/70 uppercase tracking-wider mb-1.5 block">
-                Série pour la position <span class="text-flame-500 font-mono" x-text="activeSlot + 1"></span>
-              </label>
-              <input type="search" x-model="query" @input="onSearch" class="input" placeholder="Severance, The Bear..." />
-            </div>
+            <!-- Alias dynamique -->
+            <template x-if="alias && kind === 'top'">
+              <div class="card-strong p-3 mb-5 text-center">
+                <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-1">Ton alias</p>
+                <p class="display italic text-2xl text-flame-500" x-text="alias"></p>
+                <p class="text-[10px] text-cream-300/50 mt-1">Calculé selon les genres de ton Top 3</p>
+              </div>
+            </template>
 
-            <template x-if="searching"><div class="text-xs text-cream-300/50 text-center py-3">Recherche…</div></template>
+            <!-- Pool de séries éligibles -->
+            <template x-if="loading">
+              <div class="text-xs text-cream-300/50 text-center py-3">Chargement de ta bibliothèque…</div>
+            </template>
 
-            <div class="space-y-2 mb-5">
-              <template x-for="r in results" :key="r.id">
-                <button @click="addToSlot(r)" class="w-full flex gap-2.5 p-2 rounded-xl hover:bg-ink-800 text-left transition-colors">
-                  <img x-show="r.poster" :src="r.poster" class="w-10 h-14 rounded-md bg-ink-800 object-cover flex-shrink-0" />
-                  <div x-show="!r.poster" class="w-10 h-14 rounded-md bg-ink-800 flex-shrink-0"></div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-medium text-cream-100 text-sm truncate" x-text="r.name"></p>
-                    <p class="text-[11px] text-cream-300/50" x-text="r.year"></p>
-                    <p class="text-[11px] text-cream-300/60 line-clamp-2 mt-0.5" x-text="r.overview"></p>
-                  </div>
-                </button>
-              </template>
-            </div>
+            <template x-if="!loading && !canPublish">
+              <div class="card p-4 text-center mb-5">
+                <p class="text-sm text-cream-200 mb-2">Pas assez de séries.</p>
+                <p class="text-xs text-cream-300/70 mb-3" x-text="kind === 'top' ? 'Marque au moins 3 séries comme \\'recommandées\\' dans ta bibliothèque.' : 'Marque au moins 3 séries comme \\'non recommandées\\'.'"></p>
+                <a href="#/library" class="btn-secondary text-xs inline-block">Aller à ma bibliothèque</a>
+              </div>
+            </template>
+
+            <template x-if="!loading && canPublish">
+              <div class="mb-5">
+                <p class="text-xs text-cream-300/70 uppercase tracking-wider mb-2" x-text="'Tes séries éligibles (' + pool.length + ')'"></p>
+                <div class="grid grid-cols-3 gap-2">
+                  <template x-for="show in pool" :key="show.id">
+                    <button @click="addToSlot(show)" class="poster-compact group">
+                      <img :src="show.poster" :alt="show.name" class="group-hover:scale-105 transition-transform" />
+                      <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                      <p class="absolute bottom-1 left-1 right-1 text-[10px] font-medium text-cream-50 line-clamp-2 leading-tight text-left" x-text="show.name"></p>
+                      <template x-if="show.rating">
+                        <span class="absolute top-1 right-1 inline-flex items-center gap-0.5 bg-ink-950/80 rounded px-1 py-0.5 text-[9px] text-gold-500">
+                          <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                          <span x-text="show.rating"></span>
+                        </span>
+                      </template>
+                    </button>
+                  </template>
+                </div>
+              </div>
+            </template>
 
             <div class="mb-4">
               <label class="text-xs text-cream-300/70 uppercase tracking-wider mb-1.5 block">Un mot (optionnel)</label>
-              <textarea x-model="comment" maxlength="280" rows="3" class="input resize-none text-sm" placeholder="Ce que j'ai aimé, ce que je recommande..."></textarea>
+              <textarea x-model="comment" maxlength="280" rows="3" class="input resize-none text-sm" placeholder="Ce que j'en pense..."></textarea>
               <div class="text-[11px] text-cream-300/40 text-right mt-1" x-text="comment.length + '/280'"></div>
             </div>
 
@@ -413,9 +543,9 @@ export const appTemplate = `
           </section>
         </template>
 
-        <!-- NOTIFICATIONS -->
+        <!-- ============== NOTIFICATIONS ============== -->
         <template x-if="$store.app.route.name === 'notifications'">
-          <section x-data="notificationsView()" x-init="init()" class="px-4 pt-4 safe-top animate-fade-in">
+          <section x-data="notificationsView()" x-init="init()" class="px-4 pt-4 animate-fade-in">
             <header class="mb-5">
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Activité</p>
               <h1 class="text-3xl display italic">Notifications</h1>
@@ -428,7 +558,7 @@ export const appTemplate = `
             </template>
 
             <template x-if="!loading && items.length === 0">
-              <p class="text-center text-cream-300/50 text-sm py-10">Aucune notification pour l'instant.</p>
+              <p class="text-center text-cream-300/50 text-sm py-10">Aucune notification.</p>
             </template>
 
             <ul class="space-y-2">
@@ -449,174 +579,115 @@ export const appTemplate = `
           </section>
         </template>
 
-        <!-- PROFIL + BIBLIOTHÈQUE -->
+        <!-- ============== PROFIL ============== -->
         <template x-if="$store.app.route.name === 'profile' || $store.app.route.name === 'u'">
-          <section :key="$store.app.route.params[0] || 'me'" x-data="{ section: 'classements' }" class="px-4 pt-4 safe-top animate-fade-in">
-            <div x-data="profileView()" x-init="init()">
-              <template x-if="loading"><div class="text-center text-cream-300/50 py-10">Chargement…</div></template>
-              <template x-if="error"><div class="text-center text-flame-400 py-10" x-text="error"></div></template>
+          <section :key="$store.app.route.params[0] || 'me'" x-data="profileView()" x-init="init()" class="px-4 pt-4 animate-fade-in">
+            <template x-if="loading"><div class="text-center text-cream-300/50 py-10">Chargement…</div></template>
+            <template x-if="error"><div class="text-center text-flame-400 py-10" x-text="error"></div></template>
 
-              <template x-if="profile">
-                <div>
-                  <header class="mb-5">
-                    <div class="flex items-start justify-between mb-3 gap-3">
-                      <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-14 h-14 rounded-full bg-ink-700 flex items-center justify-center text-2xl display italic text-flame-500 flex-shrink-0">
-                          <span x-text="profile.username?.charAt(0).toUpperCase()"></span>
-                        </div>
-                        <div class="min-w-0">
-                          <p class="text-[11px] text-cream-300/50">Membre</p>
-                          <h1 class="text-xl display italic truncate" x-text="'@' + profile.username"></h1>
-                        </div>
+            <template x-if="profile">
+              <div>
+                <header class="mb-5">
+                  <div class="flex items-start justify-between mb-3 gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div class="w-14 h-14 rounded-full bg-ink-700 flex items-center justify-center text-2xl display italic text-flame-500 flex-shrink-0">
+                        <span x-text="profile.username?.charAt(0).toUpperCase()"></span>
                       </div>
-                      <template x-if="isMe">
-                        <button @click="$store.app.signOut()" class="btn-ghost text-xs flex-shrink-0">Déconnexion</button>
-                      </template>
-                      <template x-if="!isMe && $store.app.isAuthed">
-                        <button @click="toggleFollow" :class="isFollowing ? 'btn-secondary' : 'btn-primary'" class="text-xs py-2 px-3 flex-shrink-0">
-                          <span x-text="isFollowing ? 'Abonné' : 'Suivre'"></span>
-                        </button>
-                      </template>
+                      <div class="min-w-0">
+                        <p class="text-[11px] text-cream-300/50">Membre</p>
+                        <h1 class="text-xl display italic truncate" x-text="'@' + profile.username"></h1>
+                        <template x-if="alias">
+                          <p class="text-[11px] text-flame-500 italic mt-0.5" x-text="alias"></p>
+                        </template>
+                      </div>
                     </div>
-
-                    <template x-if="profile.bio">
-                      <p class="text-sm text-cream-300 italic mb-3" x-text="profile.bio"></p>
-                    </template>
-
-                    <div class="flex gap-4 text-xs">
-                      <span><strong class="text-cream-50" x-text="counts.followers"></strong> <span class="text-cream-300/60">abonnés</span></span>
-                      <span><strong class="text-cream-50" x-text="counts.following"></strong> <span class="text-cream-300/60">abonnements</span></span>
-                    </div>
-                  </header>
-
-                  <div class="flex gap-4 mb-5 border-b border-ink-700">
-                    <button @click="section = 'classements'" :class="section === 'classements' ? 'text-cream-50 border-flame-500' : 'text-cream-300/60 border-transparent'" class="pb-2.5 px-1 border-b-2 text-sm font-medium">Classements</button>
-                    <button @click="section = 'library'" :class="section === 'library' ? 'text-cream-50 border-flame-500' : 'text-cream-300/60 border-transparent'" class="pb-2.5 px-1 border-b-2 text-sm font-medium">Bibliothèque</button>
-                  </div>
-
-                  <!-- SECTION CLASSEMENTS : Top 3 + Flop 3 -->
-                  <div x-show="section === 'classements'" class="space-y-6">
-                    <div>
-                      <h2 class="text-[11px] tracking-[0.25em] text-flame-500 uppercase mb-2.5">Top 3 actuel</h2>
-                      <template x-if="!currentTop"><p class="text-xs text-cream-300/50">Aucun Top 3 publié.</p></template>
-                      <template x-if="currentTop">
-                        <div>
-                          <div class="grid grid-cols-3 gap-2 mb-2">
-                            <template x-for="(show, idx) in currentTop.shows" :key="idx">
-                              <div>
-                                <template x-if="show">
-                                  <a :href="'#/show/' + show.id" class="block">
-                                    <div class="poster-compact">
-                                      <img x-show="show.poster" :src="show.poster" />
-                                      <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                                      <div class="absolute top-1 left-1.5 rank-number" :class="idx === 0 ? 'rank-number-filled' : ''" x-text="idx + 1"></div>
-                                    </div>
-                                    <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1 leading-tight" x-text="show.name"></p>
-                                  </a>
-                                </template>
-                              </div>
-                            </template>
-                          </div>
-                          <template x-if="currentTop.comment">
-                            <p class="text-xs italic text-cream-300" x-text="'« ' + currentTop.comment + ' »'"></p>
-                          </template>
-                        </div>
-                      </template>
-                    </div>
-
-                    <div>
-                      <h2 class="text-[11px] tracking-[0.25em] text-cream-300 uppercase mb-2.5">Flop 3 actuel</h2>
-                      <template x-if="!currentFlop"><p class="text-xs text-cream-300/50">Aucun Flop 3 publié.</p></template>
-                      <template x-if="currentFlop">
-                        <div>
-                          <div class="grid grid-cols-3 gap-2 mb-2">
-                            <template x-for="(show, idx) in currentFlop.shows" :key="idx">
-                              <div>
-                                <template x-if="show">
-                                  <a :href="'#/show/' + show.id" class="block">
-                                    <div class="poster-compact">
-                                      <img x-show="show.poster" :src="show.poster" />
-                                      <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                                      <div class="absolute top-1 left-1.5 rank-number rank-number-flop" x-text="idx + 1"></div>
-                                    </div>
-                                    <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1 leading-tight" x-text="show.name"></p>
-                                  </a>
-                                </template>
-                              </div>
-                            </template>
-                          </div>
-                          <template x-if="currentFlop.comment">
-                            <p class="text-xs italic text-cream-300" x-text="'« ' + currentFlop.comment + ' »'"></p>
-                          </template>
-                        </div>
-                      </template>
-                    </div>
-
                     <template x-if="isMe">
-                      <a href="#/top3" class="block text-center btn-secondary text-sm">Mettre à jour mes classements</a>
+                      <button @click="$store.app.signOut()" class="btn-ghost text-xs flex-shrink-0">Déconnexion</button>
+                    </template>
+                    <template x-if="!isMe && $store.app.isAuthed">
+                      <button @click="toggleFollow" :class="isFollowing ? 'btn-secondary' : 'btn-primary'" class="text-xs py-2 px-3 flex-shrink-0">
+                        <span x-text="isFollowing ? 'Abonné' : 'Suivre'"></span>
+                      </button>
                     </template>
                   </div>
 
-                  <!-- SECTION BIBLIOTHÈQUE -->
-                  <div x-show="section === 'library'" x-data="libraryView()" x-init="init()">
-                    <div class="flex gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1">
-                      <button @click="tab = 'watching'" :class="tab === 'watching' ? 'bg-flame-600 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">En cours (<span x-text="entries.watching?.length || 0"></span>)</button>
-                      <button @click="tab = 'want'" :class="tab === 'want' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">À voir (<span x-text="entries.want?.length || 0"></span>)</button>
-                      <button @click="tab = 'finished'" :class="tab === 'finished' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Terminées (<span x-text="entries.finished?.length || 0"></span>)</button>
-                      <button @click="tab = 'abandoned'" :class="tab === 'abandoned' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Abandonnées (<span x-text="entries.abandoned?.length || 0"></span>)</button>
-                    </div>
+                  <template x-if="profile.bio">
+                    <p class="text-sm text-cream-300 italic mb-3" x-text="profile.bio"></p>
+                  </template>
 
-                    <template x-if="loading"><div class="text-center text-cream-300/50 py-6 text-sm">Chargement…</div></template>
-                    <template x-if="!loading && currentEntries.length === 0">
-                      <p class="text-center text-cream-300/50 text-xs py-8">Rien ici.</p>
-                    </template>
+                  <div class="flex gap-4 text-xs">
+                    <span><strong class="text-cream-50" x-text="counts.followers"></strong> <span class="text-cream-300/60">abonnés</span></span>
+                    <span><strong class="text-cream-50" x-text="counts.following"></strong> <span class="text-cream-300/60">abonnements</span></span>
+                  </div>
+                </header>
 
-                    <div x-show="tab === 'watching'" class="space-y-2.5">
-                      <template x-for="entry in currentEntries" :key="entry.id">
-                        <div class="card p-2.5 flex gap-2.5">
-                          <a :href="'#/show/' + entry.show.id" class="flex-shrink-0">
-                            <img :src="entry.show.poster" class="w-12 h-18 rounded-md bg-ink-800 object-cover" />
-                          </a>
-                          <div class="flex-1 min-w-0">
-                            <a :href="'#/show/' + entry.show.id" class="block">
-                              <p class="font-medium text-cream-50 text-sm leading-tight truncate" x-text="entry.show.name"></p>
-                            </a>
-                            <p class="text-[11px] text-cream-300/60 mt-0.5" x-text="'S' + (entry.current_season || '?') + ' · E' + (entry.current_episode || '?')"></p>
-                            <template x-if="entry.provider_name">
-                              <template x-if="providerLink(entry.provider_name, entry.show.name)">
-                                <a :href="providerLink(entry.provider_name, entry.show.name)" target="_blank" rel="noopener" class="inline-flex items-center gap-1 mt-1.5 px-1.5 py-0.5 rounded-md bg-ink-800 hover:bg-ink-700">
-                                  <img x-show="entry.provider_logo_path" :src="providerLogoUrl(entry.provider_logo_path)" class="w-3.5 h-3.5 rounded" />
-                                  <span class="text-[10px] text-cream-200" x-text="entry.provider_name"></span>
+                <div class="space-y-6">
+                  <div>
+                    <h2 class="text-[11px] tracking-[0.25em] text-flame-500 uppercase mb-2.5">Top 3 actuel</h2>
+                    <template x-if="!currentTop"><p class="text-xs text-cream-300/50">Aucun Top 3 publié.</p></template>
+                    <template x-if="currentTop">
+                      <div>
+                        <div class="grid grid-cols-3 gap-2 mb-2">
+                          <template x-for="(show, idx) in currentTop.shows" :key="idx">
+                            <div>
+                              <template x-if="show">
+                                <a :href="'#/show/' + show.id" class="block">
+                                  <div class="poster-compact">
+                                    <img x-show="show.poster" :src="show.poster" />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                    <div class="absolute top-1 left-1.5 rank-number" :class="idx === 0 ? 'rank-number-filled' : ''" x-text="idx + 1"></div>
+                                  </div>
+                                  <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1 leading-tight" x-text="show.name"></p>
                                 </a>
                               </template>
-                            </template>
-                            <template x-if="isMe">
-                              <button @click="incrementEpisode(entry)" class="ml-2 text-[11px] text-flame-500">+1 épisode</button>
-                            </template>
-                          </div>
+                            </div>
+                          </template>
                         </div>
-                      </template>
-                    </div>
-
-                    <div x-show="tab !== 'watching'" class="grid grid-cols-3 gap-2">
-                      <template x-for="entry in currentEntries" :key="entry.id">
-                        <a :href="'#/show/' + entry.show.id" class="block">
-                          <div class="poster-compact">
-                            <img x-show="entry.show.poster" :src="entry.show.poster" />
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-                          </div>
-                          <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1 leading-tight" x-text="entry.show.name"></p>
-                        </a>
-                      </template>
-                    </div>
+                        <template x-if="currentTop.comment">
+                          <p class="text-xs italic text-cream-300" x-text="'« ' + currentTop.comment + ' »'"></p>
+                        </template>
+                      </div>
+                    </template>
                   </div>
+
+                  <div>
+                    <h2 class="text-[11px] tracking-[0.25em] text-cream-300 uppercase mb-2.5">Flop 3 actuel</h2>
+                    <template x-if="!currentFlop"><p class="text-xs text-cream-300/50">Aucun Flop 3 publié.</p></template>
+                    <template x-if="currentFlop">
+                      <div>
+                        <div class="grid grid-cols-3 gap-2 mb-2">
+                          <template x-for="(show, idx) in currentFlop.shows" :key="idx">
+                            <div>
+                              <template x-if="show">
+                                <a :href="'#/show/' + show.id" class="block">
+                                  <div class="poster-compact">
+                                    <img x-show="show.poster" :src="show.poster" />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                    <div class="absolute top-1 left-1.5 rank-number rank-number-flop" x-text="idx + 1"></div>
+                                  </div>
+                                  <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1 leading-tight" x-text="show.name"></p>
+                                </a>
+                              </template>
+                            </div>
+                          </template>
+                        </div>
+                        <template x-if="currentFlop.comment">
+                          <p class="text-xs italic text-cream-300" x-text="'« ' + currentFlop.comment + ' »'"></p>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+
+                  <template x-if="isMe">
+                    <a href="#/top3" class="block text-center btn-secondary text-sm">Mettre à jour mes classements</a>
+                  </template>
                 </div>
-              </template>
-            </div>
+              </div>
+            </template>
           </section>
         </template>
 
-        <!-- SHOW DETAIL -->
+        <!-- ============== SHOW DETAIL ============== -->
         <template x-if="$store.app.route.name === 'show'">
           <section :key="$store.app.route.params[0]" x-data="showView()" x-init="init()" class="animate-fade-in">
             <template x-if="loading"><div class="p-8 text-center text-cream-300/50">Chargement…</div></template>
@@ -627,7 +698,9 @@ export const appTemplate = `
                 <div class="relative h-64 overflow-hidden">
                   <img x-show="show.backdrop_path" :src="'https://image.tmdb.org/t/p/w780' + show.backdrop_path" class="w-full h-full object-cover" />
                   <div class="absolute inset-0 bg-gradient-to-t from-ink-950 via-ink-950/40 to-ink-950/60"></div>
-                  <a href="javascript:history.back()" class="absolute top-4 left-4 safe-top w-9 h-9 rounded-full bg-ink-950/70 backdrop-blur flex items-center justify-center text-cream-50">←</a>
+                  <a href="javascript:history.back()" class="absolute top-4 left-4 safe-top w-9 h-9 rounded-full bg-ink-950/70 backdrop-blur flex items-center justify-center text-cream-50">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  </a>
                 </div>
 
                 <div class="px-4 -mt-16 relative z-10">
@@ -636,92 +709,38 @@ export const appTemplate = `
                     <div class="flex-1 pt-12 min-w-0">
                       <p class="text-[11px] text-cream-300/60" x-text="(show.first_air_date?.slice(0,4) || '') + ' · ' + (show.number_of_seasons || '?') + ' saisons'"></p>
                       <h1 class="text-2xl display italic leading-tight mt-1" x-text="show.name"></h1>
-                      <span class="text-gold-500 text-xs mt-1 inline-block" x-text="'★ ' + show.vote_average?.toFixed(1)"></span>
+                      <span class="inline-flex items-center gap-1 text-gold-500 text-xs mt-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <span x-text="show.vote_average?.toFixed(1)"></span>
+                      </span>
                     </div>
                   </div>
 
-                  <!-- WATCHLIST -->
-                  <div x-data="watchlistOnShow()" x-init="init()" class="mb-5 card p-3">
-                    <template x-if="loading"><div class="text-xs text-cream-300/40">Chargement…</div></template>
-                    <template x-if="!loading">
-                      <div>
-                        <div class="flex items-center justify-between gap-2 mb-2.5">
-                          <div>
-                            <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-0.5">Ma bibliothèque</p>
-                            <p class="text-sm font-medium" x-text="statusLabel"></p>
-                          </div>
-                          <template x-if="entry">
-                            <button @click="remove" class="text-[11px] text-cream-300/50 hover:text-flame-400">Retirer</button>
-                          </template>
-                        </div>
+                  <!-- Bouton de classement principal -->
+                  <button @click="classify" class="btn-primary w-full mb-4 flex items-center justify-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 11l3 3L22 4"/>
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                    </svg>
+                    <span x-text="myEntry ? 'Modifier · ' + statusLabel : 'Ajouter à ma bibliothèque'"></span>
+                  </button>
 
-                        <template x-if="!entry && !showEditor">
-                          <div class="grid grid-cols-2 gap-1.5">
-                            <button @click="quickAdd('want')" class="text-xs py-1.5 px-2.5 rounded-md bg-ink-800 hover:bg-ink-700">À voir</button>
-                            <button @click="quickAdd('watching')" class="text-xs py-1.5 px-2.5 rounded-md bg-flame-600 hover:bg-flame-700 text-cream-50 font-medium">En cours</button>
-                            <button @click="quickAdd('finished')" class="text-xs py-1.5 px-2.5 rounded-md bg-ink-800 hover:bg-ink-700">Terminée</button>
-                            <button @click="quickAdd('abandoned')" class="text-xs py-1.5 px-2.5 rounded-md bg-ink-800 hover:bg-ink-700">Abandonnée</button>
-                          </div>
-                        </template>
-
-                        <template x-if="entry && entry.status !== 'watching' && !showEditor">
-                          <div class="flex flex-wrap gap-1.5">
-                            <template x-if="entry.status !== 'want'"><button @click="quickAdd('want')" class="text-[11px] py-1 px-2.5 rounded-full bg-ink-800">→ À voir</button></template>
-                            <template x-if="entry.status !== 'watching'"><button @click="quickAdd('watching')" class="text-[11px] py-1 px-2.5 rounded-full bg-ink-800">→ En cours</button></template>
-                            <template x-if="entry.status !== 'finished'"><button @click="quickAdd('finished')" class="text-[11px] py-1 px-2.5 rounded-full bg-ink-800">→ Terminée</button></template>
-                            <template x-if="entry.status !== 'abandoned'"><button @click="quickAdd('abandoned')" class="text-[11px] py-1 px-2.5 rounded-full bg-ink-800">→ Abandonnée</button></template>
-                          </div>
-                        </template>
-
-                        <template x-if="entry && entry.status === 'watching' && !showEditor">
-                          <div class="flex items-center gap-2.5 flex-wrap">
-                            <span class="text-cream-50 font-mono text-xs" x-text="'S' + entry.current_season + ' · E' + entry.current_episode"></span>
-                            <template x-if="entry.provider_name">
-                              <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-ink-800">
-                                <img x-show="entry.provider_logo_path" :src="'https://image.tmdb.org/t/p/w92' + entry.provider_logo_path" class="w-3.5 h-3.5 rounded" />
-                                <span class="text-[10px] text-cream-200" x-text="entry.provider_name"></span>
-                              </div>
-                            </template>
-                            <button @click="showEditor = true" class="text-[11px] text-flame-500">Modifier</button>
-                          </div>
-                        </template>
-
-                        <template x-if="showEditor">
-                          <div class="space-y-2.5 mt-2">
-                            <div class="grid grid-cols-2 gap-2">
-                              <div>
-                                <label class="text-[10px] text-cream-300/60 block mb-1">Saison</label>
-                                <input type="number" x-model.number="form.current_season" min="1" max="30" class="input py-1.5 text-sm" />
-                              </div>
-                              <div>
-                                <label class="text-[10px] text-cream-300/60 block mb-1">Épisode</label>
-                                <input type="number" x-model.number="form.current_episode" min="1" max="99" class="input py-1.5 text-sm" />
-                              </div>
+                  <!-- Recommandations des comptes suivis -->
+                  <template x-if="followedRecommenders.length > 0">
+                    <div class="card p-3 mb-4">
+                      <p class="text-[10px] uppercase tracking-wider text-flame-500 mb-2">Recommandé par tes abonnements</p>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <template x-for="r in followedRecommenders" :key="r.recommender_id">
+                          <a :href="'#/u/' + r.recommender_username" class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-ink-800 text-xs">
+                            <div class="w-5 h-5 rounded-full bg-ink-700 flex items-center justify-center text-[10px] font-mono">
+                              <span x-text="r.recommender_username?.charAt(0).toUpperCase()"></span>
                             </div>
-                            <div>
-                              <label class="text-[10px] text-cream-300/60 block mb-1.5">Plateforme</label>
-                              <div class="flex flex-wrap gap-1.5">
-                                <template x-for="p in providers" :key="p.id">
-                                  <button @click="selectProvider(p)" :class="form.provider_id === p.id ? 'border-flame-500' : 'border-ink-700'" class="flex items-center gap-1 px-2 py-1 rounded-md border bg-ink-800 text-[11px]">
-                                    <img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-4 h-4 rounded" />
-                                    <span x-text="p.name"></span>
-                                  </button>
-                                </template>
-                                <button @click="selectProvider(null)" :class="form.provider_id === null && form.provider_name !== '' ? 'border-flame-500' : 'border-ink-700'" class="px-2 py-1 rounded-md border bg-ink-800 text-[11px]">Autre</button>
-                              </div>
-                              <template x-if="form.provider_id === null">
-                                <input x-model="form.provider_name" placeholder="Nom de la plateforme" class="input py-1.5 mt-1.5 text-sm" />
-                              </template>
-                            </div>
-                            <div class="flex gap-2 pt-1">
-                              <button @click="saveDetailed" class="btn-primary text-xs py-1.5 px-3 flex-1">Enregistrer</button>
-                              <button @click="showEditor = false" class="btn-ghost text-xs py-1.5 px-3">Annuler</button>
-                            </div>
-                          </div>
+                            <span class="text-cream-200" x-text="'@' + r.recommender_username"></span>
+                          </a>
                         </template>
                       </div>
-                    </template>
-                  </div>
+                    </div>
+                  </template>
 
                   <div class="flex flex-wrap gap-1.5 mb-4">
                     <template x-for="g in show.genres || []" :key="g.id"><span class="chip" x-text="g.name"></span></template>
@@ -779,7 +798,7 @@ export const appTemplate = `
 
       </main>
 
-      <!-- FOOTER minimal -->
+      <!-- FOOTER LÉGAL -->
       <footer class="relative z-10 text-center pb-20 pt-4">
         <p class="text-[10px] text-cream-300/30">
           <a href="#/legal/beta" class="hover:text-cream-300/60">Phase de test</a> ·
@@ -788,26 +807,25 @@ export const appTemplate = `
         </p>
       </footer>
 
-      <!-- BOTTOM NAV -->
+      <!-- ============== BOTTOM NAV : 5 onglets ============== -->
       <nav class="fixed bottom-0 left-0 right-0 z-30 nav-glass nav-bottom">
         <div class="flex items-center justify-around max-w-md mx-auto px-2 pt-2">
+          <a href="#/library" :class="$store.app.route.name === 'library' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span class="text-[10px] uppercase tracking-wider font-medium">Biblio</span>
+          </a>
           <a href="#/feed" :class="$store.app.route.name === 'feed' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
             <span class="text-[10px] uppercase tracking-wider font-medium">Fil</span>
-          </a>
-          <a href="#/trending" :class="$store.app.route.name === 'trending' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            <span class="text-[10px] uppercase tracking-wider font-medium">Tendance</span>
           </a>
           <a href="#/top3" class="flex flex-col items-center gap-0.5 p-2 flex-1">
             <div class="w-11 h-11 rounded-full bg-flame-600 flex items-center justify-center text-cream-50 -mt-4 shadow-lg shadow-flame-600/30">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
             </div>
           </a>
-          <a href="#/notifications" class="relative flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors" :class="$store.app.route.name === 'notifications' ? 'text-flame-500' : 'text-cream-300/50'">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <span class="text-[10px] uppercase tracking-wider font-medium">Activité</span>
-            <span x-show="$store.app.unreadCount > 0" class="notif-dot"></span>
+          <a href="#/trending" :class="$store.app.route.name === 'trending' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            <span class="text-[10px] uppercase tracking-wider font-medium">Tendance</span>
           </a>
           <a href="#/profile" :class="$store.app.route.name === 'profile' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
@@ -815,15 +833,137 @@ export const appTemplate = `
           </a>
         </div>
       </nav>
+
+      <!-- ============== MODAL CLASSIFIER (global) ============== -->
+      <div x-data="classifierModal()" @classifier:open.window="openModal($event.detail.tmdbId, $event.detail.showInfo)">
+        <template x-if="open">
+          <div>
+            <div class="modal-backdrop" @click="closeModal"></div>
+            <div class="modal-sheet">
+              <!-- Handle -->
+              <div class="w-10 h-1 bg-cream-50/20 rounded-full mx-auto mb-4"></div>
+
+              <template x-if="loading">
+                <div class="text-center py-8 text-cream-300/50 text-sm">Chargement…</div>
+              </template>
+
+              <template x-if="!loading">
+                <div>
+                  <!-- En-tête série -->
+                  <div class="flex gap-3 mb-5">
+                    <img x-show="showInfo?.poster_path" :src="'https://image.tmdb.org/t/p/w154' + showInfo.poster_path" class="w-16 rounded-md bg-ink-800" />
+                    <div class="flex-1 min-w-0">
+                      <p class="text-[10px] uppercase tracking-wider text-cream-300/60">Classer</p>
+                      <h2 class="display italic text-xl leading-tight" x-text="showInfo?.name"></h2>
+                      <p class="text-[11px] text-cream-300/50" x-text="(showInfo?.first_air_date || '').slice(0,4)"></p>
+                    </div>
+                  </div>
+
+                  <!-- Statut -->
+                  <div class="mb-5">
+                    <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Statut</p>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button @click="setStatus('wishlist')" :class="form.status === 'wishlist' ? 'pill-active border-flame-500/40' : 'pill'" class="text-xs py-2 px-3 rounded-md w-full">À voir</button>
+                      <button @click="setStatus('watching')" :class="form.status === 'watching' ? 'pill-active border-flame-500/40' : 'pill'" class="text-xs py-2 px-3 rounded-md w-full">En cours</button>
+                      <button @click="setStatus('finished')" :class="form.status === 'finished' ? 'pill-active border-flame-500/40' : 'pill'" class="text-xs py-2 px-3 rounded-md w-full">Terminée</button>
+                      <button @click="setStatus('abandoned')" :class="form.status === 'abandoned' ? 'pill-active border-flame-500/40' : 'pill'" class="text-xs py-2 px-3 rounded-md w-full">Abandonnée</button>
+                    </div>
+                  </div>
+
+                  <!-- Progression (si watching) -->
+                  <template x-if="form.status === 'watching'">
+                    <div class="mb-5">
+                      <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Progression</p>
+                      <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                          <label class="text-[10px] text-cream-300/60 block mb-1">Saison</label>
+                          <input type="number" x-model.number="form.current_season" min="1" max="50" class="input py-2 text-sm" />
+                        </div>
+                        <div>
+                          <label class="text-[10px] text-cream-300/60 block mb-1">Épisode</label>
+                          <input type="number" x-model.number="form.current_episode" min="1" max="999" class="input py-2 text-sm" />
+                        </div>
+                      </div>
+                      <p class="text-[10px] text-cream-300/60 mb-1.5">Plateforme</p>
+                      <div class="flex flex-wrap gap-1.5">
+                        <template x-for="p in providers" :key="p.id">
+                          <button @click="selectProvider(p)" :class="form.provider_id === p.id ? 'border-flame-500' : 'border-ink-700'" class="flex items-center gap-1 px-2 py-1 rounded-md border bg-ink-800 text-[11px]">
+                            <img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-4 h-4 rounded" />
+                            <span x-text="p.name"></span>
+                          </button>
+                        </template>
+                        <button @click="selectProvider(null)" class="px-2 py-1 rounded-md border border-ink-700 bg-ink-800 text-[11px]">Aucune</button>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Notation + recommandation (si finished/abandoned) -->
+                  <template x-if="canRate">
+                    <div class="mb-5">
+                      <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Note</p>
+                      <div class="flex items-center gap-1 mb-4">
+                        <template x-for="n in 5" :key="n">
+                          <button @click="setRating(n)" type="button" class="star-btn" :class="form.rating >= n ? 'active' : ''">
+                            <svg width="28" height="28" viewBox="0 0 24 24" :fill="form.rating >= n ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                          </button>
+                        </template>
+                        <template x-if="form.rating">
+                          <button @click="form.rating = null" class="ml-2 text-[10px] text-cream-300/50">Effacer</button>
+                        </template>
+                      </div>
+
+                      <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Avis</p>
+                      <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button @click="setRecommendation('recommended')" :class="form.recommendation === 'recommended' ? 'pill-active border-flame-500/40' : 'pill'" class="text-xs py-2 px-3 rounded-md w-full flex items-center justify-center gap-1.5">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v12M15 5.88L14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H7"/></svg>
+                          Je recommande
+                        </button>
+                        <button @click="setRecommendation('not_recommended')" :class="form.recommendation === 'not_recommended' ? 'pill-active border-flame-500/40' : 'pill'" class="text-xs py-2 px-3 rounded-md w-full flex items-center justify-center gap-1.5">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 14V2M9 18.12L10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H17"/></svg>
+                          Je déconseille
+                        </button>
+                      </div>
+
+                      <div>
+                        <label class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-1.5 block">Verdict (optionnel, 1 phrase)</label>
+                        <textarea x-model="form.verdict" maxlength="200" rows="2" class="input text-sm resize-none" placeholder="Ce que tu en retiens..."></textarea>
+                      </div>
+                    </div>
+                  </template>
+
+                  <template x-if="error">
+                    <div class="text-sm text-flame-400 bg-flame-600/10 border border-flame-600/30 rounded-lg px-3 py-2 mb-3" x-text="error"></div>
+                  </template>
+
+                  <div class="flex gap-2">
+                    <template x-if="entry">
+                      <button @click="remove" :disabled="saving" class="btn-ghost text-sm flex-1">Retirer</button>
+                    </template>
+                    <button @click="closeModal" class="btn-ghost text-sm flex-1">Annuler</button>
+                    <button @click="save" :disabled="saving" class="btn-primary text-sm flex-1">
+                      <span x-show="!saving">Enregistrer</span>
+                      <span x-show="saving">…</span>
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
     </div>
   </template>
 
+  <!-- Pas connecté → vers auth -->
   <template x-if="!$store.app.isAuthed && !['auth','onboarding','legal'].includes($store.app.route.name)">
     <div x-init="window.location.hash = '#/auth'"></div>
   </template>
 
+  <!-- Toast global -->
   <template x-if="$store.app.toast">
-    <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 safe-top">
+    <div class="fixed top-4 left-1/2 -translate-x-1/2 z-[200] safe-top">
       <div class="card-strong px-4 py-2.5 text-sm animate-slide-up" :class="$store.app.toast.type === 'success' ? 'border-flame-500/50 text-flame-400' : ''" x-text="$store.app.toast.message"></div>
     </div>
   </template>
