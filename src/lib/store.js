@@ -9,7 +9,9 @@ function parseHash() {
   return { name, params }
 }
 
-// Routes qui n'exigent pas de profil complet
+// Routes publiques accessibles sans authentification
+const PUBLIC_ROUTES = ['auth', 'legal']
+// Routes qui n'exigent pas un profil complet
 const PROFILE_EXEMPT_ROUTES = ['auth', 'onboarding', 'legal']
 
 export function initStore(Alpine) {
@@ -17,13 +19,58 @@ export function initStore(Alpine) {
     session: null,
     profile: null,
     authReady: false,
-    profileReady: false,     // nouveau : permet de distinguer "pas de profil" vs "en cours de chargement"
+    profileReady: false,
     route: parseHash(),
     toast: null,
     unreadCount: 0,
     _unreadInterval: null,
 
     async init() {
+      // 1. Marquer authReady IMMÉDIATEMENT pour débloquer le rendu UI
+      // Le splash screen disparaît dès que authReady = true
+      // La session sera chargée en arrière-plan
+      this._removeSplash()
+
+      // 2. Lancer la résolution de session sans bloquer le rendu
+      this._loadSessionAsync()
+
+      // 3. Listener sur les changements d'auth
+      supabase.auth.onAuthStateChange(async (_event, session) => {
+        this.session = session
+        if (session) {
+          await this.loadProfile()
+          this.refreshUnreadCount()
+          if (!this._unreadInterval) {
+            this._unreadInterval = setInterval(() => this.refreshUnreadCount(), 30000)
+          }
+        } else {
+          this.profile = null
+          this.profileReady = false
+          this.unreadCount = 0
+          if (this._unreadInterval) {
+            clearInterval(this._unreadInterval)
+            this._unreadInterval = null
+          }
+        }
+      })
+
+      // 4. Routing
+      window.addEventListener('hashchange', () => {
+        this.route = parseHash()
+        window.scrollTo({ top: 0, behavior: 'instant' })
+        if (this.session) this.refreshUnreadCount()
+      })
+
+      // 5. Redirection initiale si hash vide (dépend de session, donc en post-load)
+      if (!window.location.hash) {
+        // On attend juste 1 tick pour laisser la session se résoudre
+        await Promise.resolve()
+        window.location.hash = this.session ? '#/feed' : '#/auth'
+      }
+    },
+
+    // Charge la session de manière non-bloquante
+    async _loadSessionAsync() {
       try {
         const { data } = await supabase.auth.getSession()
         this.session = data.session
@@ -36,57 +83,35 @@ export function initStore(Alpine) {
         console.warn('[Store] init session error', e)
       } finally {
         this.authReady = true
-      }
-
-      // Listener sur les changements d'auth
-      supabase.auth.onAuthStateChange(async (event, session) => {
-        this.session = session
-        if (session) {
-          await this.loadProfile()
-          this.refreshUnreadCount()
-        } else {
-          this.profile = null
-          this.profileReady = false
-          this.unreadCount = 0
-          if (this._unreadInterval) clearInterval(this._unreadInterval)
-        }
-      })
-
-      window.addEventListener('hashchange', () => {
-        this.route = parseHash()
-        window.scrollTo({ top: 0, behavior: 'instant' })
-        if (this.session) this.refreshUnreadCount()
-      })
-
-      // Redirection initiale (une seule fois au démarrage)
-      if (!window.location.hash) {
-        window.location.hash = this.session ? '#/feed' : '#/auth'
-      } else {
-        // Gestion cohérente des redirections après chargement initial
         this._enforceGuards()
       }
     },
 
-    /**
-     * Force la bonne route selon l'état auth/profil.
-     * N'intervient que si on est bloqué dans un état incohérent.
-     */
+    _removeSplash() {
+      // Retire le splash screen HTML après le premier rendu
+      requestAnimationFrame(() => {
+        document.body.classList.add('app-ready')
+        const splash = document.getElementById('initial-splash')
+        if (splash) {
+          // Le splash a déjà sa propre animation fadeOut, on le retire physiquement après
+          setTimeout(() => splash.remove(), 700)
+        }
+      })
+    },
+
     _enforceGuards() {
       const r = this.route.name
 
-      // Non authentifié → forcer auth sauf pour routes publiques
-      if (!this.session && !['auth', 'legal'].includes(r)) {
+      if (!this.session && !PUBLIC_ROUTES.includes(r)) {
         window.location.hash = '#/auth'
         return
       }
 
-      // Authentifié mais sans profil → forcer onboarding sauf si déjà dessus ou sur legal
-      if (this.session && this.profileReady && !this.profile && !['onboarding', 'legal', 'auth'].includes(r)) {
+      if (this.session && this.profileReady && !this.profile && !PROFILE_EXEMPT_ROUTES.includes(r)) {
         window.location.hash = '#/onboarding'
         return
       }
 
-      // Authentifié + profil OK mais sur onboarding → rediriger vers feed
       if (this.session && this.profile && r === 'onboarding') {
         window.location.hash = '#/feed'
       }
@@ -114,7 +139,6 @@ export function initStore(Alpine) {
         this.profile = null
       } finally {
         this.profileReady = true
-        // Après chargement, on applique les guards si besoin
         this._enforceGuards()
       }
     },
@@ -123,7 +147,7 @@ export function initStore(Alpine) {
       try {
         this.unreadCount = await fetchUnreadCount()
       } catch (e) {
-        // Silencieux : ne casse pas l'app si les notifs échouent
+        // Silencieux : ne casse pas l'app
       }
     },
 
@@ -135,7 +159,10 @@ export function initStore(Alpine) {
     },
 
     async signOut() {
-      if (this._unreadInterval) clearInterval(this._unreadInterval)
+      if (this._unreadInterval) {
+        clearInterval(this._unreadInterval)
+        this._unreadInterval = null
+      }
       await supabase.auth.signOut()
       window.location.hash = '#/auth'
     },
