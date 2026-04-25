@@ -119,7 +119,7 @@ export const appTemplate = `
 
       <div x-show="tab === 'beta'" class="prose-legal">
         <h2>Projet en cours d'élaboration</h2>
-        <p><strong>My TVShow</strong> est un projet personnel actuellement en <strong>phase de test privée</strong>.</p>
+        <p><strong>Fabulae</strong> est un projet personnel actuellement en <strong>phase de test privée</strong>.</p>
         <p><strong>Diffusion restreinte.</strong> Merci de <strong>ne pas partager ni redistribuer ce lien</strong> publiquement.</p>
         <p><strong>Données.</strong> Les données peuvent être réinitialisées sans préavis pendant cette phase.</p>
         <p><strong>Feedback.</strong> Bug ou suggestion : <a href="mailto:shamsetdean@gmail.com">shamsetdean@gmail.com</a>.</p>
@@ -170,7 +170,7 @@ export const appTemplate = `
     <div>
       <!-- HEADER GLOBAL avec cloche notifications -->
       <header class="header-glass sticky top-0 z-20 safe-top px-4 pb-3 flex items-center justify-between">
-        <a href="#/feed" class="display italic text-xl text-cream-50 leading-none">My TVShow</a>
+        <a href="#/feed" class="display italic text-xl text-cream-50 leading-none">Fabulae</a>
         <a href="#/notifications" class="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-50/5 transition-colors" :class="$store.app.route.name === 'notifications' ? 'text-flame-500' : 'text-cream-200'">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -204,7 +204,7 @@ export const appTemplate = `
             <!-- ZONE RECHERCHE TMDB (slide down) -->
             <div x-show="searchOpen" x-transition.duration.200ms class="mb-4 card p-3">
               <div class="relative mb-3">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
                 <input
                   id="library-search-input"
                   type="search"
@@ -681,7 +681,7 @@ export const appTemplate = `
 
         <!-- ============== PROFIL ============== -->
         <template x-if="$store.app.route.name === 'profile' || $store.app.route.name === 'u'">
-          <section :key="$store.app.route.params[0] || 'me'" x-data="profileView()" x-init="init()" class="pb-24 animate-fade-in">
+          <section x-data="profileView()" x-init="init()" x-effect="($store.app.route.name === 'u' || $store.app.route.name === 'profile') && init()" class="pb-24 animate-fade-in">
 
             <!-- Loading / Error -->
             <template x-if="loading"><div class="text-center text-cream-300/50 py-20">Chargement…</div></template>
@@ -708,7 +708,7 @@ export const appTemplate = `
                       <!-- Bouton upload (uniquement sur mon profil) -->
                       <template x-if="isMe">
                         <label class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-flame-600 flex items-center justify-center cursor-pointer hover:bg-flame-500 transition-colors" :class="uploadingAvatar ? 'opacity-50 pointer-events-none' : ''">
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                           <input type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="uploadAvatar($event)" />
                         </label>
                       </template>
@@ -909,12 +909,12 @@ export const appTemplate = `
 
                               <!-- Fond swipe gauche (supprimer) -->
                               <div class="absolute inset-0 flex items-center justify-end pr-5 rounded-xl bg-red-600/90" :style="'opacity: ' + (isLeft ? swipePercent : 0)">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                               </div>
 
                               <!-- Fond swipe droit (éditer) -->
                               <div class="absolute inset-0 flex items-center pl-5 rounded-xl bg-flame-600/90" :style="'opacity: ' + (isRight ? swipePercent : 0)">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                               </div>
 
                               <!-- Carte (glissante) -->
@@ -1017,9 +1017,9 @@ export const appTemplate = `
                             </template>
                           </div>
                           <div class="flex gap-2">
-                            <button @click="goToProfile(user.username)" class="text-[11px] px-3 py-1.5 rounded-lg bg-ink-700 text-cream-200 hover:bg-ink-600 transition-colors">Profil</button>
+                            <a :href="'#/u/' + user.username" class="text-[11px] px-3 py-1.5 rounded-lg bg-ink-700 text-cream-200 hover:bg-ink-600 transition-colors">Profil</a>
                             <template x-if="user.library_public">
-                              <button @click="goToProfile(user.username)" class="text-[11px] px-3 py-1.5 rounded-lg bg-flame-600/20 text-flame-400 border border-flame-600/30 hover:bg-flame-600/30 transition-colors">Biblio</button>
+                              <a :href="'#/u/' + user.username + '?tab=library'" @click="$store.app.navigate('#/u/' + user.username)" class="text-[11px] px-3 py-1.5 rounded-lg bg-flame-600/20 text-flame-400 border border-flame-600/30 hover:bg-flame-600/30 transition-colors">Biblio</a>
                             </template>
                           </div>
                         </div>
@@ -1053,9 +1053,9 @@ export const appTemplate = `
                             </template>
                           </div>
                           <div class="flex gap-2">
-                            <button @click="goToProfile(user.username)" class="text-[11px] px-3 py-1.5 rounded-lg bg-ink-700 text-cream-200 hover:bg-ink-600 transition-colors">Profil</button>
+                            <a :href="'#/u/' + user.username" class="text-[11px] px-3 py-1.5 rounded-lg bg-ink-700 text-cream-200 hover:bg-ink-600 transition-colors">Profil</a>
                             <template x-if="user.library_public">
-                              <button @click="goToProfile(user.username)" class="text-[11px] px-3 py-1.5 rounded-lg bg-flame-600/20 text-flame-400 border border-flame-600/30 hover:bg-flame-600/30 transition-colors">Biblio</button>
+                              <a :href="'#/u/' + user.username + '?tab=library'" @click="$store.app.navigate('#/u/' + user.username)" class="text-[11px] px-3 py-1.5 rounded-lg bg-flame-600/20 text-flame-400 border border-flame-600/30 hover:bg-flame-600/30 transition-colors">Biblio</a>
                             </template>
                           </div>
                         </div>
@@ -1210,21 +1210,25 @@ export const appTemplate = `
       <!-- ============== BOTTOM NAV : 5 onglets ============== -->
       <nav class="fixed bottom-0 left-0 right-0 z-30 nav-glass nav-bottom">
         <div class="flex items-center justify-around max-w-md mx-auto px-2 pt-2">
+          <!-- Biblio — Lucide: book-open -->
           <a href="#/library" :class="$store.app.route.name === 'library' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             <span class="text-[10px] uppercase tracking-wider font-medium">Biblio</span>
           </a>
+          <!-- Fil — Lucide: layout-list -->
           <a href="#/feed" :class="$store.app.route.name === 'feed' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="M13 5h8M13 9h5M3 15h18M3 19h14"/></svg>
             <span class="text-[10px] uppercase tracking-wider font-medium">Fil</span>
           </a>
+          <!-- Publier — Lucide: circle-plus -->
           <a href="#/top3" class="flex flex-col items-center gap-0.5 p-2 flex-1">
             <div class="w-11 h-11 rounded-full bg-flame-600 flex items-center justify-center text-cream-50 -mt-4 shadow-lg shadow-flame-600/30">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
             </div>
           </a>
+          <!-- Tendances — Lucide: trending-up -->
           <a href="#/trending" :class="$store.app.route.name === 'trending' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
             <span class="text-[10px] uppercase tracking-wider font-medium">Tendance</span>
           </a>
           <a href="#/profile" :class="$store.app.route.name === 'profile' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
