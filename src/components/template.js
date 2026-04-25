@@ -17,8 +17,7 @@ export const appTemplate = `
           <div class="inline-flex items-center gap-2 text-flame-500 text-xs tracking-[0.3em] uppercase mb-4 mt-4">
             <span class="w-8 h-px bg-flame-500"></span>Saison 1<span class="w-8 h-px bg-flame-500"></span>
           </div>
-          <h1 class="text-5xl display text-cream-50 italic">Fabulae</h1>
-          <p class="mt-2 text-cream-300/70 text-[11px] tracking-[0.2em] uppercase italic">L'art de ne jamais perdre le fil</p>
+          <h1 class="text-5xl display text-cream-50 italic">My TVShow</h1>
           <p class="mt-3 text-cream-300 text-sm">Ton Top 3 des séries du moment.<br>Partagé. Classé. Débattu.</p>
         </div>
 
@@ -116,7 +115,7 @@ export const appTemplate = `
 
       <div x-show="tab === 'beta'" class="prose-legal">
         <h2>Projet en cours d'élaboration</h2>
-        <p><strong>Fabulae</strong> est un projet personnel actuellement en <strong>phase de test privée</strong>.</p>
+        <p><strong>My TVShow</strong> est un projet personnel actuellement en <strong>phase de test privée</strong>.</p>
         <p><strong>Diffusion restreinte.</strong> Merci de <strong>ne pas partager ni redistribuer ce lien</strong> publiquement.</p>
         <p><strong>Données.</strong> Les données peuvent être réinitialisées sans préavis pendant cette phase.</p>
         <p><strong>Feedback.</strong> Bug ou suggestion : <a href="mailto:shamsetdean@gmail.com">shamsetdean@gmail.com</a>.</p>
@@ -167,7 +166,7 @@ export const appTemplate = `
     <div>
       <!-- HEADER GLOBAL avec cloche notifications -->
       <header class="header-glass sticky top-0 z-20 safe-top px-4 pb-3 flex items-center justify-between">
-        <a href="#/feed" class="display italic text-xl text-cream-50 leading-none">Fabulae</a>
+        <a href="#/feed" class="display italic text-xl text-cream-50 leading-none">My TVShow</a>
         <a href="#/notifications" class="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-50/5 transition-colors" :class="$store.app.route.name === 'notifications' ? 'text-flame-500' : 'text-cream-200'">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -811,19 +810,9 @@ export const appTemplate = `
                           <p class="text-[11px] text-cream-300/60 mb-3" x-text="totalSeriesAnalyzed + ' série(s) analysée(s)'"></p>
 
                           <!-- Camembert SVG + légende -->
+                          <!-- x-html utilisé au lieu de x-for dans SVG : x-for n'est pas supporté dans le namespace SVG sur Safari -->
                           <div class="flex items-center gap-4 mb-4">
-                            <div class="flex-shrink-0 relative">
-                              <svg viewBox="0 0 200 200" width="120" height="120" class="drop-shadow-lg">
-                                <template x-for="(slice, i) in pieSlices" :key="i">
-                                  <path :d="slice.path" :fill="slice.color" stroke="#0A0908" stroke-width="1.5" class="hover:opacity-80 transition-opacity">
-                                    <title x-text="slice.name + ' : ' + slice.percent + '%'"></title>
-                                  </path>
-                                </template>
-                                <circle cx="100" cy="100" r="40" fill="#0A0908" />
-                                <text x="100" y="95" text-anchor="middle" fill="#F5ECE3" font-family="Instrument Serif, Georgia, serif" font-style="italic" font-size="22" x-text="genreStats.length"></text>
-                                <text x="100" y="115" text-anchor="middle" fill="#B8A99A" font-size="9" letter-spacing="1">GENRES</text>
-                              </svg>
-                            </div>
+                            <div class="flex-shrink-0 relative" x-html="pieSvgHtml"></div>
 
                             <div class="flex-1 min-w-0 space-y-1">
                               <template x-for="(g, i) in genreStats.slice(0, 5)" :key="g.id">
