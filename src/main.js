@@ -11,7 +11,8 @@ import { top3View } from './views/top3.js'
 import { trendingView } from './views/trending.js'
 import { profileView } from './views/profile.js'
 import { showView } from './views/show.js'
-import { watchlistOnShow, libraryView } from './views/watchlist.js'
+import { libraryView } from './views/library.js'
+import { classifierModal } from './views/classifier.js'
 import { notificationsView } from './views/notifications.js'
 import { legalView } from './views/legal.js'
 
@@ -41,6 +42,7 @@ if (missing.length > 0) {
   throw new Error('Missing env vars: ' + missing.join(', '))
 }
 
+// Exposition des vues à Alpine
 window.authView = authView
 window.onboardingView = onboardingView
 window.feedView = feedView
@@ -48,8 +50,8 @@ window.top3View = top3View
 window.trendingView = trendingView
 window.profileView = profileView
 window.showView = showView
-window.watchlistOnShow = watchlistOnShow
 window.libraryView = libraryView
+window.classifierModal = classifierModal
 window.notificationsView = notificationsView
 window.legalView = legalView
 window.formatDate = formatDate
