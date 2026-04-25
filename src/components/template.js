@@ -69,33 +69,165 @@ export const appTemplate = `
 
   <!-- ============== ONBOARDING ============== -->
   <template x-if="$store.app.route.name === 'onboarding'">
-    <section x-data="onboardingView()" class="min-h-dvh flex flex-col justify-center px-6 py-10 relative z-10">
-      <div class="max-w-sm mx-auto w-full animate-slide-up">
-        <h1 class="text-4xl display italic mb-2">Choisis ton pseudo.</h1>
-        <p class="text-cream-300 text-sm mb-8">C'est ce que les autres verront sur tes Top 3.</p>
+    <section x-data="onboardingView()" x-init="init()" class="min-h-dvh flex flex-col px-5 py-8 relative z-10">
+      <div class="max-w-sm mx-auto w-full animate-slide-up flex flex-col min-h-dvh">
 
-        <form @submit.prevent="submit" class="card p-6 space-y-4">
-          <div>
-            <label class="text-xs text-cream-300/70 uppercase tracking-wider mb-1.5 block">Pseudo</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-cream-300/50">@</span>
-              <input x-model="username" maxlength="20" required class="input pl-8" placeholder="seriesfan" />
+        <!-- Barre de progression -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-cream-300/60" x-text="'Étape ' + step + ' sur ' + totalSteps"></span>
+            <span class="text-xs text-flame-500 font-medium" x-text="progressPercent + '%'"></span>
+          </div>
+          <div class="h-1 bg-ink-800 rounded-full overflow-hidden">
+            <div class="h-full bg-flame-500 rounded-full transition-all duration-500" :style="'width: ' + progressPercent + '%'"></div>
+          </div>
+        </div>
+
+        <!-- ── ÉTAPE 1 : Profil ── -->
+        <template x-if="step === 1">
+          <div class="flex-1 flex flex-col">
+            <h1 class="text-4xl display italic mb-2 text-cream-50">Choisis ton pseudo.</h1>
+            <p class="text-cream-300 text-sm mb-6">C'est ce que les autres verront sur tes classements.</p>
+
+            <div class="card p-5 space-y-4 mb-4">
+              <div>
+                <label class="text-xs text-cream-300/70 uppercase tracking-wider mb-1.5 block">Pseudo</label>
+                <div class="relative">
+                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-cream-300/50 text-sm">@</span>
+                  <input x-model="username" maxlength="20" class="input pl-8 text-sm" placeholder="seriesfan" @input="username = username.toLowerCase().replace(/[^a-z0-9_]/g, '')" />
+                </div>
+                <p class="text-[11px] text-cream-300/40 mt-1">3 à 20 caractères, lettres minuscules, chiffres, _</p>
+              </div>
+              <div>
+                <label class="text-xs text-cream-300/70 uppercase tracking-wider mb-1.5 block">Bio <span class="normal-case text-cream-300/40">(optionnel)</span></label>
+                <textarea x-model="bio" maxlength="140" rows="2" class="input resize-none text-sm" placeholder="Amateur de thrillers scandinaves…"></textarea>
+              </div>
+              <template x-if="error">
+                <div class="text-sm text-flame-400 bg-flame-600/10 border border-flame-600/30 rounded-lg px-3 py-2" x-text="error"></div>
+              </template>
+            </div>
+
+            <button @click="saveProfile" :disabled="saving || !canProceedStep1" class="btn-primary w-full mt-auto">
+              <span x-show="!saving">Continuer →</span>
+              <span x-show="saving">…</span>
+            </button>
+          </div>
+        </template>
+
+        <!-- ── ÉTAPE 2 : Chercher des séries ── -->
+        <template x-if="step === 2">
+          <div class="flex-1 flex flex-col">
+            <div class="mb-1 flex items-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <h2 class="text-2xl display italic text-cream-50">Ajoute des séries</h2>
+            </div>
+            <p class="text-cream-300 text-sm mb-5">Commence à construire ta bibliothèque.</p>
+
+            <div class="relative mb-3">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" x-model="searchQuery" @input="onSearchInput" class="input pl-9 text-sm" placeholder="Cherche une série…" autocomplete="off" />
+            </div>
+
+            <template x-if="searching">
+              <p class="text-xs text-cream-300/50 text-center py-3">Recherche…</p>
+            </template>
+
+            <div class="space-y-1.5 flex-1 overflow-y-auto mb-4">
+              <template x-for="show in searchResults" :key="show.id">
+                <div class="card p-2.5 flex items-center gap-3">
+                  <template x-if="show.poster">
+                    <img :src="show.poster" :alt="show.name" class="w-9 h-12 rounded object-cover flex-shrink-0" loading="lazy" />
+                  </template>
+                  <template x-if="!show.poster">
+                    <div class="w-9 h-12 rounded bg-ink-800 flex-shrink-0"></div>
+                  </template>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-cream-100 truncate" x-text="show.name"></p>
+                    <p class="text-[11px] text-cream-300/50" x-text="show.year"></p>
+                  </div>
+                  <button @click="addShow(show)" :disabled="isAdded(show.id) || addingId === show.id" class="flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg transition-colors" :class="isAdded(show.id) ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-flame-600 text-cream-50 hover:bg-flame-500'">
+                    <span x-text="isAdded(show.id) ? '✓ Ajoutée' : (addingId === show.id ? '…' : '+ Ajouter')"></span>
+                  </button>
+                </div>
+              </template>
+            </div>
+
+            <template x-if="addedShows.length > 0">
+              <p class="text-xs text-cream-300/60 text-center mb-3" x-text="addedShows.length + ' série(s) ajoutée(s)'"></p>
+            </template>
+
+            <div class="flex gap-3 mt-auto">
+              <button @click="proceedStep2" class="flex-1 py-3 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">
+                Passer
+              </button>
+              <button @click="proceedStep2" class="flex-2 btn-primary px-6">
+                Continuer →
+              </button>
             </div>
           </div>
-          <div>
-            <label class="text-xs text-cream-300/70 uppercase tracking-wider mb-1.5 block">Bio (optionnel)</label>
-            <textarea x-model="bio" maxlength="140" rows="3" class="input resize-none" placeholder="Amateur de thrillers scandinaves et de comédies italiennes."></textarea>
+        </template>
+
+        <!-- ── ÉTAPE 3 : Suivre des utilisateurs ── -->
+        <template x-if="step === 3">
+          <div class="flex-1 flex flex-col">
+            <div class="mb-1 flex items-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <h2 class="text-2xl display italic text-cream-50">Suis des membres</h2>
+            </div>
+            <p class="text-cream-300 text-sm mb-5">Découvre les classements de la communauté.</p>
+
+            <template x-if="loadingUsers">
+              <div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-14 rounded-xl"></div></template></div>
+            </template>
+
+            <div class="space-y-2 flex-1 overflow-y-auto mb-4">
+              <template x-for="user in suggestedUsers" :key="user.id">
+                <div class="card p-3 flex items-center gap-3">
+                  <template x-if="user.avatar_url">
+                    <img :src="user.avatar_url" :alt="user.username" class="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                  </template>
+                  <template x-if="!user.avatar_url">
+                    <div class="w-10 h-10 rounded-full bg-ink-700 flex items-center justify-center text-sm font-mono text-cream-200 flex-shrink-0" x-text="user.username?.charAt(0).toUpperCase()"></div>
+                  </template>
+                  <p class="text-sm font-medium text-cream-100 flex-1 truncate" x-text="'@' + user.username"></p>
+                  <button @click="toggleFollowUser(user.id)" :disabled="followingId === user.id" class="flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg transition-colors" :class="isFollowed(user.id) ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-flame-600 text-cream-50 hover:bg-flame-500'">
+                    <span x-text="isFollowed(user.id) ? '✓ Suivi' : (followingId === user.id ? '…' : 'Suivre')"></span>
+                  </button>
+                </div>
+              </template>
+            </div>
+
+            <template x-if="followedIds.size > 0">
+              <p class="text-xs text-cream-300/60 text-center mb-3" x-text="followedIds.size + ' membre(s) suivi(s)'"></p>
+            </template>
+
+            <div class="flex gap-3 mt-auto">
+              <button @click="proceedStep3" class="flex-1 py-3 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Passer</button>
+              <button @click="proceedStep3" class="flex-2 btn-primary px-6">Continuer →</button>
+            </div>
           </div>
+        </template>
 
-          <template x-if="error">
-            <div class="text-sm text-flame-400 bg-flame-600/10 border border-flame-600/30 rounded-lg px-3 py-2" x-text="error"></div>
-          </template>
+        <!-- ── ÉTAPE 4 : Publier son Top 3 ── -->
+        <template x-if="step === 4">
+          <div class="flex-1 flex flex-col items-center justify-center text-center">
+            <div class="w-20 h-20 rounded-full bg-flame-600/20 flex items-center justify-center mb-6">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+            </div>
+            <h2 class="text-3xl display italic text-cream-50 mb-3">Tout est prêt !</h2>
+            <p class="text-cream-300 text-sm mb-8 max-w-xs">Tu fais partie de la communauté Fabulae. Publie ton premier Top 3 et montre tes goûts.</p>
 
-          <button type="submit" :disabled="loading" class="btn-primary w-full">
-            <span x-show="!loading">Commencer</span>
-            <span x-show="loading">…</span>
-          </button>
-        </form>
+            <div class="w-full space-y-3">
+              <button @click="finish(true)" class="btn-primary w-full text-sm py-3">
+                Publier mon Top 3 maintenant
+              </button>
+              <button @click="finish(false)" class="w-full py-3 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">
+                Explorer l'application d'abord
+              </button>
+            </div>
+          </div>
+        </template>
+
       </div>
     </section>
   </template>
@@ -869,7 +1001,19 @@ export const appTemplate = `
                     </template>
 
                     <template x-if="isMe">
-                      <a href="#/top3" class="block text-center btn-secondary text-sm">Mettre à jour mes classements</a>
+                      <a href="#/top3" class="block text-center btn-secondary text-sm mb-4">Mettre à jour mes classements</a>
+                      <div class="pt-4 border-t border-ink-700/40 space-y-2">
+                        <button @click="showDeleteAccountModal = true" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-red-400 bg-red-600/10 border border-red-600/20 text-xs hover:bg-red-600/20 transition-colors">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                          Supprimer mon compte
+                        </button>
+                      </div>
+                    </template>
+                    <template x-if="!isMe">
+                      <button @click="showReportModal = true" class="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-cream-300/50 text-xs hover:text-cream-300/80 transition-colors mt-2">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                        Signaler cet utilisateur
+                      </button>
                     </template>
                   </div>
                 </template>
@@ -1067,7 +1211,7 @@ export const appTemplate = `
               </div>
             </template>
 
-            <!-- ─── MODAL CONFIRMATION SUPPRESSION ─── -->
+            <!-- ─── MODAL CONFIRMATION SUPPRESSION SÉRIE ─── -->
             <template x-if="pendingDeleteId">
               <div class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="cancelDelete()">
                 <div class="w-full max-w-sm bg-ink-900 rounded-2xl p-6 border border-ink-700/50 animate-slide-up">
@@ -1078,6 +1222,76 @@ export const appTemplate = `
                     <button @click="confirmAndDelete()" :disabled="deleting" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500 transition-colors disabled:opacity-50">
                       <span x-show="!deleting">Supprimer</span>
                       <span x-show="deleting">…</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- ─── MODAL SIGNALEMENT ─── -->
+            <template x-if="showReportModal">
+              <div class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showReportModal = false">
+                <div class="w-full max-w-sm bg-ink-900 rounded-2xl p-6 border border-ink-700/50 animate-slide-up">
+                  <template x-if="!reportSent">
+                    <div>
+                      <h3 class="text-base font-semibold text-cream-50 mb-1">Signaler cet utilisateur</h3>
+                      <p class="text-xs text-cream-300/60 mb-4">Ton signalement sera traité de façon confidentielle.</p>
+                      <div class="mb-3">
+                        <label class="text-xs text-cream-300/70 uppercase tracking-wider mb-2 block">Catégorie</label>
+                        <div class="grid grid-cols-2 gap-2">
+                          <template x-for="cat in [{id:'inappropriate',label:'Contenu inapproprié'},{id:'spam',label:'Spam'},{id:'harassment',label:'Harcèlement'},{id:'misinformation',label:'Désinformation'},{id:'other',label:'Autre'}]" :key="cat.id">
+                            <button @click="reportCategory = cat.id" :class="reportCategory === cat.id ? 'bg-flame-600/20 text-flame-400 border-flame-600/40' : 'bg-ink-800 text-cream-300/60 border-ink-700'" class="text-[11px] px-3 py-2 rounded-lg border text-left transition-colors" x-text="cat.label"></button>
+                          </template>
+                        </div>
+                      </div>
+                      <div class="mb-4">
+                        <label class="text-xs text-cream-300/70 uppercase tracking-wider mb-1.5 block">Détails</label>
+                        <textarea x-model="reportReason" maxlength="500" rows="3" class="input resize-none text-sm" placeholder="Décris le problème…"></textarea>
+                      </div>
+                      <div class="flex gap-3">
+                        <button @click="showReportModal = false" class="flex-1 py-2.5 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Annuler</button>
+                        <button @click="submitReport()" :disabled="reportSending || !reportReason.trim()" class="flex-1 py-2.5 rounded-xl bg-flame-600 text-cream-50 text-sm font-semibold hover:bg-flame-500 transition-colors disabled:opacity-50">
+                          <span x-show="!reportSending">Signaler</span>
+                          <span x-show="reportSending">…</span>
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+                  <template x-if="reportSent">
+                    <div class="text-center py-4">
+                      <svg class="mx-auto mb-3 text-green-400" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <p class="text-sm font-medium text-cream-50">Signalement envoyé</p>
+                      <p class="text-xs text-cream-300/60 mt-1">Merci pour ta contribution.</p>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <!-- ─── MODAL SUPPRESSION DE COMPTE ─── -->
+            <template x-if="showDeleteAccountModal">
+              <div class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showDeleteAccountModal = false; deleteConfirmText = ''">
+                <div class="w-full max-w-sm bg-ink-900 rounded-2xl p-6 border border-red-900/50 animate-slide-up">
+                  <div class="flex items-center gap-2 mb-3">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <h3 class="text-base font-semibold text-red-400">Supprimer mon compte</h3>
+                  </div>
+                  <p class="text-sm text-cream-300/70 mb-2">Cette action est <strong class="text-cream-100">définitive et irréversible</strong>. Toutes tes données seront supprimées :</p>
+                  <ul class="text-xs text-cream-300/60 mb-4 space-y-1 ml-3">
+                    <li>• Ton profil et tes informations</li>
+                    <li>• Ta bibliothèque de séries</li>
+                    <li>• Tes Top 3 et Flop 3</li>
+                    <li>• Tes abonnements et abonnés</li>
+                  </ul>
+                  <div class="mb-4">
+                    <label class="text-xs text-cream-300/70 mb-1.5 block">Tape <strong class="text-red-400">SUPPRIMER</strong> pour confirmer</label>
+                    <input x-model="deleteConfirmText" type="text" class="input text-sm" placeholder="SUPPRIMER" />
+                  </div>
+                  <div class="flex gap-3">
+                    <button @click="showDeleteAccountModal = false; deleteConfirmText = ''" class="flex-1 py-2.5 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Annuler</button>
+                    <button @click="deleteAccount()" :disabled="deletingAccount || deleteConfirmText !== 'SUPPRIMER'" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500 transition-colors disabled:opacity-50">
+                      <span x-show="!deletingAccount">Supprimer</span>
+                      <span x-show="deletingAccount">Suppression…</span>
                     </button>
                   </div>
                 </div>
