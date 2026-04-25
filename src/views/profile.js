@@ -13,6 +13,12 @@ export const profileView = () => ({
   loading: true,
   error: null,
 
+  // Bibliothèque publique
+  library: [],
+  libraryLoading: false,
+  libraryFilter: 'all',
+  libraryVisible: false,
+
   // Analyse des genres
   genreStats: [],          // [{name, count, percent, color}]
   genreNeverWatched: [],   // [{name, id}]
@@ -118,6 +124,7 @@ export const profileView = () => ({
       this.showAnalysis = this.isMe || profile.library_public !== false
       if (this.showAnalysis) {
         this.computeGenreAnalysis()
+        this.loadLibrary()
       }
     } catch (e) {
       console.error('[Profile] init error', e)
@@ -231,6 +238,58 @@ export const profileView = () => ({
       return `<path d="${d}" fill="${g.color}" stroke="#0A0908" stroke-width="1.5"><title>${g.name} : ${pct}%</title></path>`
     }).join('')
     return `<svg viewBox="0 0 200 200" width="120" height="120"><g>${paths}</g><circle cx="${cx}" cy="${cy}" r="40" fill="#0A0908"/><text x="${cx}" y="95" text-anchor="middle" fill="#F5ECE3" font-family="Instrument Serif, Georgia, serif" font-style="italic" font-size="22">${nbGenres}</text><text x="${cx}" y="115" text-anchor="middle" fill="#B8A99A" font-size="9" letter-spacing="1">GENRES</text></svg>`
+  },
+
+  async loadLibrary() {
+    if (!this.profile) return
+    if (!this.showAnalysis) return
+    this.libraryLoading = true
+    try {
+      const { data, error } = await supabase
+        .from('library_items')
+        .select('*')
+        .eq('user_id', this.profile.id)
+        .order('updated_at', { ascending: false })
+
+      if (error) throw error
+
+      const { getShowCard } = await import('../lib/tmdb.js')
+      const hydrated = await Promise.all((data || []).map(async item => {
+        const show = await getShowCard(item.tmdb_id).catch(() => null)
+        return show ? { ...item, show } : null
+      }))
+      this.library = hydrated.filter(Boolean)
+    } catch (e) {
+      console.warn('[Profile] loadLibrary error', e)
+      this.library = []
+    } finally {
+      this.libraryLoading = false
+    }
+  },
+
+  get libraryFiltered() {
+    if (this.libraryFilter === 'all') return this.library
+    return this.library.filter(i => i.status === this.libraryFilter)
+  },
+
+  get libraryCounts() {
+    return {
+      all: this.library.length,
+      watching: this.library.filter(i => i.status === 'watching').length,
+      finished: this.library.filter(i => i.status === 'finished').length,
+      wishlist: this.library.filter(i => i.status === 'wishlist').length,
+      abandoned: this.library.filter(i => i.status === 'abandoned').length,
+    }
+  },
+
+  statusLabel(status) {
+    const map = { watching: 'En cours', finished: 'Terminée', wishlist: 'À voir', abandoned: 'Abandonnée' }
+    return map[status] || status
+  },
+
+  statusColor(status) {
+    const map = { watching: 'text-flame-500', finished: 'text-green-400', wishlist: 'text-cream-300/60', abandoned: 'text-red-400' }
+    return map[status] || 'text-cream-300/60'
   },
 
   async toggleFollow() {
