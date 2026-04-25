@@ -681,186 +681,409 @@ export const appTemplate = `
 
         <!-- ============== PROFIL ============== -->
         <template x-if="$store.app.route.name === 'profile' || $store.app.route.name === 'u'">
-          <section :key="$store.app.route.params[0] || 'me'" x-data="profileView()" x-init="init()" class="px-4 pt-4 animate-fade-in">
-            <template x-if="loading"><div class="text-center text-cream-300/50 py-10">Chargement…</div></template>
-            <template x-if="error"><div class="text-center text-flame-400 py-10" x-text="error"></div></template>
+          <section :key="$store.app.route.params[0] || 'me'" x-data="profileView()" x-init="init()" class="pb-24 animate-fade-in">
+
+            <!-- Loading / Error -->
+            <template x-if="loading"><div class="text-center text-cream-300/50 py-20">Chargement…</div></template>
+            <template x-if="error"><div class="text-center text-flame-400 py-20" x-text="error"></div></template>
 
             <template x-if="profile">
               <div>
-                <header class="mb-5">
-                  <div class="flex items-start justify-between mb-3 gap-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                      <div class="w-14 h-14 rounded-full bg-ink-700 flex items-center justify-center text-2xl display italic text-flame-500 flex-shrink-0">
-                        <span x-text="profile.username?.charAt(0).toUpperCase()"></span>
-                      </div>
-                      <div class="min-w-0">
-                        <p class="text-[11px] text-cream-300/50">Membre</p>
-                        <h1 class="text-xl display italic truncate" x-text="'@' + profile.username"></h1>
-                        <template x-if="alias">
-                          <p class="text-[11px] text-flame-500 italic mt-0.5" x-text="alias"></p>
-                        </template>
+
+                <!-- ─── HEADER PROFIL ─── -->
+                <div class="relative px-4 pt-6 pb-4 bg-gradient-to-b from-ink-900/80 to-transparent">
+
+                  <!-- Photo de profil + infos -->
+                  <div class="flex items-end gap-4 mb-4">
+
+                    <!-- Avatar avec upload si c'est moi -->
+                    <div class="relative flex-shrink-0">
+                      <template x-if="avatarUrl">
+                        <img :src="avatarUrl" alt="Avatar" class="w-20 h-20 rounded-full object-cover border-2 border-flame-500/40" />
+                      </template>
+                      <template x-if="!avatarUrl">
+                        <div class="w-20 h-20 rounded-full bg-ink-700 border-2 border-flame-500/40 flex items-center justify-center text-2xl font-mono text-cream-200" x-text="avatarInitial"></div>
+                      </template>
+
+                      <!-- Bouton upload (uniquement sur mon profil) -->
+                      <template x-if="isMe">
+                        <label class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-flame-600 flex items-center justify-center cursor-pointer hover:bg-flame-500 transition-colors" :class="uploadingAvatar ? 'opacity-50 pointer-events-none' : ''">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          <input type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="uploadAvatar($event)" />
+                        </label>
+                      </template>
+
+                      <template x-if="uploadingAvatar">
+                        <div class="absolute inset-0 rounded-full bg-ink-900/70 flex items-center justify-center">
+                          <svg class="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.3"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+                        </div>
+                      </template>
+                    </div>
+
+                    <!-- Nom + alias + stats -->
+                    <div class="flex-1 min-w-0">
+                      <h1 class="text-xl font-bold text-cream-50 truncate" x-text="'@' + profile.username"></h1>
+                      <template x-if="alias">
+                        <p class="text-xs text-flame-500 italic mt-0.5" x-text="alias"></p>
+                      </template>
+                      <template x-if="profile.bio">
+                        <p class="text-xs text-cream-300/70 mt-1 line-clamp-2" x-text="profile.bio"></p>
+                      </template>
+
+                      <!-- Compteurs followers / following -->
+                      <div class="flex gap-4 mt-2">
+                        <button @click="setTab('followers')" class="text-left">
+                          <span class="text-sm font-bold text-cream-50" x-text="counts.followers"></span>
+                          <span class="text-xs text-cream-300/60 ml-1">abonnés</span>
+                        </button>
+                        <button @click="setTab('following')" class="text-left">
+                          <span class="text-sm font-bold text-cream-50" x-text="counts.following"></span>
+                          <span class="text-xs text-cream-300/60 ml-1">abonnements</span>
+                        </button>
                       </div>
                     </div>
-                    <template x-if="isMe">
-                      <button @click="$store.app.signOut()" class="btn-ghost text-xs flex-shrink-0">Déconnexion</button>
-                    </template>
-                    <template x-if="!isMe && $store.app.isAuthed">
-                      <button @click="toggleFollow" :class="isFollowing ? 'btn-secondary' : 'btn-primary'" class="text-xs py-2 px-3 flex-shrink-0">
-                        <span x-text="isFollowing ? 'Abonné' : 'Suivre'"></span>
+
+                    <!-- Bouton follow (si pas mon profil) -->
+                    <template x-if="!isMe">
+                      <button @click="toggleFollow" :class="isFollowing ? 'btn-secondary' : 'btn-primary'" class="text-xs py-2 px-4 flex-shrink-0">
+                        <span x-text="isFollowing ? 'Suivi' : 'Suivre'"></span>
                       </button>
                     </template>
                   </div>
 
-                  <template x-if="profile.bio">
-                    <p class="text-sm text-cream-300 italic mb-3" x-text="profile.bio"></p>
+                  <!-- Séries en commun (si pas mon profil) -->
+                  <template x-if="!isMe">
+                    <div class="flex items-center gap-2 mb-3">
+                      <template x-if="commonSeriesLoading">
+                        <span class="text-xs text-cream-300/50">Calcul des séries en commun…</span>
+                      </template>
+                      <template x-if="!commonSeriesLoading && commonSeriesCount !== null">
+                        <div class="flex items-center gap-2">
+                          <div :class="canChat ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-ink-800 text-cream-300/60 border-ink-700'" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                            <span x-text="commonSeriesCount + ' série' + (commonSeriesCount > 1 ? 's' : '') + ' en commun'"></span>
+                          </div>
+                          <template x-if="canChat">
+                            <span class="text-[10px] text-green-400">· Chat disponible bientôt</span>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
                   </template>
 
-                  <div class="flex gap-4 text-xs">
-                    <span><strong class="text-cream-50" x-text="counts.followers"></strong> <span class="text-cream-300/60">abonnés</span></span>
-                    <span><strong class="text-cream-50" x-text="counts.following"></strong> <span class="text-cream-300/60">abonnements</span></span>
-                  </div>
-                </header>
+                  <!-- Toggle visibilité bibliothèque (mon profil) -->
+                  <template x-if="isMe">
+                    <button @click="toggleVisibility" :disabled="togglingVisibility" class="flex items-center gap-1.5 text-[11px] text-cream-300/60 hover:text-cream-100 transition-colors mb-2">
+                      <template x-if="profile.library_public">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </template>
+                      <template x-if="!profile.library_public">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      </template>
+                      <span x-text="profile.library_public ? 'Bibliothèque publique' : 'Bibliothèque privée'"></span>
+                    </button>
+                  </template>
+                </div>
 
-                <div class="space-y-6">
-                  <div>
-                    <h2 class="text-[11px] tracking-[0.25em] text-flame-500 uppercase mb-2.5">Top 3 actuel</h2>
-                    <template x-if="!currentTop"><p class="text-xs text-cream-300/50">Aucun Top 3 publié.</p></template>
+                <!-- ─── ONGLETS ─── -->
+                <div class="flex border-b border-ink-700/50 mb-4 px-4 overflow-x-auto">
+                  <button @click="setTab('top')" :class="activeTab === 'top' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">Top 3</button>
+                  <template x-if="showAnalysis">
+                    <button @click="setTab('library')" :class="activeTab === 'library' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
+                      Bibliothèque
+                      <span x-show="library.length > 0" class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + library.length + ')'"></span>
+                    </button>
+                  </template>
+                  <template x-if="isMe">
+                    <button @click="setTab('followers')" :class="activeTab === 'followers' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
+                      Abonnés
+                      <span class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + counts.followers + ')'"></span>
+                    </button>
+                  </template>
+                  <template x-if="isMe">
+                    <button @click="setTab('following')" :class="activeTab === 'following' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
+                      Abonnements
+                      <span class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + counts.following + ')'"></span>
+                    </button>
+                  </template>
+                </div>
+
+                <!-- ─── ONGLET TOP 3 ─── -->
+                <template x-if="activeTab === 'top'">
+                  <div class="px-4 space-y-5">
+
+                    <!-- Top 3 actuel -->
                     <template x-if="currentTop">
                       <div>
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-2">Top 3</p>
                         <div class="grid grid-cols-3 gap-2 mb-2">
-                          <template x-for="(show, idx) in currentTop.shows" :key="idx">
+                          <template x-for="(show, idx) in currentTop.shows" :key="'t'+idx">
                             <div>
                               <template x-if="show">
-                                <a :href="'#/show/' + show.id" class="block">
-                                  <div class="poster-compact">
-                                    <img x-show="show.poster" :src="show.poster" />
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                <a :href="'#/show/' + show.id" class="block group">
+                                  <div class="poster-compact relative">
+                                    <img x-show="show.poster" :src="show.poster" :alt="show.name" loading="lazy" class="group-hover:scale-105 transition-transform duration-500" />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
                                     <div class="absolute top-1 left-1.5 rank-number" :class="idx === 0 ? 'rank-number-filled' : ''" x-text="idx + 1"></div>
                                   </div>
-                                  <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1 leading-tight" x-text="show.name"></p>
+                                  <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1.5 leading-tight" x-text="show.name"></p>
                                 </a>
                               </template>
                             </div>
                           </template>
                         </div>
                         <template x-if="currentTop.comment">
-                          <p class="text-xs italic text-cream-300" x-text="'« ' + currentTop.comment + ' »'"></p>
+                          <p class="text-xs text-cream-300 italic" x-text="'« ' + currentTop.comment + ' »'"></p>
                         </template>
                       </div>
                     </template>
-                  </div>
 
-                  <div>
-                    <h2 class="text-[11px] tracking-[0.25em] text-cream-300 uppercase mb-2.5">Flop 3 actuel</h2>
-                    <template x-if="!currentFlop"><p class="text-xs text-cream-300/50">Aucun Flop 3 publié.</p></template>
+                    <!-- Flop 3 actuel -->
                     <template x-if="currentFlop">
                       <div>
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-cream-300/60 font-semibold mb-2">Flop 3</p>
                         <div class="grid grid-cols-3 gap-2 mb-2">
-                          <template x-for="(show, idx) in currentFlop.shows" :key="idx">
+                          <template x-for="(show, idx) in currentFlop.shows" :key="'f'+idx">
                             <div>
                               <template x-if="show">
-                                <a :href="'#/show/' + show.id" class="block">
-                                  <div class="poster-compact">
-                                    <img x-show="show.poster" :src="show.poster" />
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                <a :href="'#/show/' + show.id" class="block group">
+                                  <div class="poster-compact relative">
+                                    <img x-show="show.poster" :src="show.poster" :alt="show.name" loading="lazy" class="grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500" />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
                                     <div class="absolute top-1 left-1.5 rank-number rank-number-flop" x-text="idx + 1"></div>
                                   </div>
-                                  <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1 leading-tight" x-text="show.name"></p>
+                                  <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1.5 leading-tight" x-text="show.name"></p>
                                 </a>
                               </template>
                             </div>
                           </template>
                         </div>
                         <template x-if="currentFlop.comment">
-                          <p class="text-xs italic text-cream-300" x-text="'« ' + currentFlop.comment + ' »'"></p>
+                          <p class="text-xs text-cream-300 italic" x-text="'« ' + currentFlop.comment + ' »'"></p>
                         </template>
                       </div>
                     </template>
+
+                    <template x-if="!currentTop && !currentFlop">
+                      <p class="text-sm text-cream-300/50 text-center py-6">Aucun classement publié.</p>
+                    </template>
+
+                    <template x-if="isMe">
+                      <a href="#/top3" class="block text-center btn-secondary text-sm">Mettre à jour mes classements</a>
+                    </template>
                   </div>
+                </template>
 
-                  <!-- ANALYSE DES GENRES -->
-                  <template x-if="showAnalysis">
-                    <div>
-                      <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-[11px] tracking-[0.25em] text-flame-500 uppercase">Mes habitudes</h2>
-                        <template x-if="isMe">
-                          <button @click="toggleVisibility" :disabled="togglingVisibility" class="flex items-center gap-1.5 text-[11px] text-cream-300/70 hover:text-cream-100 transition-colors">
-                            <template x-if="profile.library_public">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </template>
-                            <template x-if="!profile.library_public">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                            </template>
-                            <span x-text="profile.library_public ? 'Public' : 'Privé'"></span>
-                          </button>
-                        </template>
+                <!-- ─── ONGLET BIBLIOTHÈQUE ─── -->
+                <template x-if="activeTab === 'library'">
+                  <div class="px-4">
+                    <template x-if="!showAnalysis">
+                      <div class="card p-6 text-center">
+                        <p class="text-sm text-cream-300/60">Bibliothèque privée</p>
                       </div>
+                    </template>
 
-                      <template x-if="analysisLoading">
-                        <div class="card p-4 text-center text-cream-300/50 text-xs">Analyse en cours…</div>
-                      </template>
-
-                      <template x-if="!analysisLoading && totalSeriesAnalyzed === 0">
-                        <div class="card p-4 text-center text-cream-300/50 text-xs">
-                          <p>Aucune série dans la bibliothèque.</p>
-                          <template x-if="isMe">
-                            <a href="#/library" class="inline-block text-flame-500 mt-2">Ajouter ma première série</a>
-                          </template>
+                    <template x-if="showAnalysis">
+                      <div>
+                        <!-- Filtres -->
+                        <div class="flex gap-2 overflow-x-auto pb-2 mb-3 -mx-1 px-1">
+                          <button @click="libraryFilter = 'all'" :class="libraryFilter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0" x-text="'Tout (' + libraryCounts.all + ')'"></button>
+                          <button @click="libraryFilter = 'watching'" :class="libraryFilter === 'watching' ? 'bg-flame-500 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0" x-text="'En cours (' + libraryCounts.watching + ')'"></button>
+                          <button @click="libraryFilter = 'finished'" :class="libraryFilter === 'finished' ? 'bg-green-600 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0" x-text="'Terminées (' + libraryCounts.finished + ')'"></button>
+                          <button @click="libraryFilter = 'wishlist'" :class="libraryFilter === 'wishlist' ? 'bg-ink-600 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0" x-text="'À voir (' + libraryCounts.wishlist + ')'"></button>
+                          <button @click="libraryFilter = 'abandoned'" :class="libraryFilter === 'abandoned' ? 'bg-red-700 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0" x-text="'Abandonnées (' + libraryCounts.abandoned + ')'"></button>
                         </div>
-                      </template>
 
-                      <template x-if="!analysisLoading && totalSeriesAnalyzed > 0">
-                        <div class="card p-4">
-                          <p class="text-[11px] text-cream-300/60 mb-3" x-text="totalSeriesAnalyzed + ' série(s) analysée(s)'"></p>
+                        <template x-if="libraryLoading">
+                          <div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-16 rounded-xl"></div></template></div>
+                        </template>
 
-                          <!-- Camembert SVG + légende -->
-                          <!-- x-html utilisé au lieu de x-for dans SVG : x-for n'est pas supporté dans le namespace SVG sur Safari -->
-                          <div class="flex items-center gap-4 mb-4">
-                            <div class="flex-shrink-0 relative" x-html="pieSvgHtml"></div>
+                        <template x-if="!libraryLoading && libraryFiltered.length === 0">
+                          <p class="text-sm text-cream-300/50 text-center py-8">Aucune série dans cette catégorie.</p>
+                        </template>
 
-                            <div class="flex-1 min-w-0 space-y-1">
-                              <template x-for="(g, i) in genreStats.slice(0, 5)" :key="g.id">
-                                <div class="flex items-center gap-2 text-xs">
-                                  <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" :style="'background:' + g.color"></span>
-                                  <span class="truncate text-cream-100" x-text="g.name"></span>
-                                  <span class="ml-auto text-cream-300/60 font-mono" x-text="g.percent.toFixed(0) + '%'"></span>
+                        <!-- Cartes avec swipe (uniquement sur mon profil) -->
+                        <div class="space-y-2">
+                          <template x-for="item in libraryFiltered" :key="item.id">
+                            <div x-data="swipeCard(item)" class="relative overflow-hidden rounded-xl">
+
+                              <!-- Fond swipe gauche (supprimer) -->
+                              <div class="absolute inset-0 flex items-center justify-end pr-5 rounded-xl bg-red-600/90" :style="'opacity: ' + (isLeft ? swipePercent : 0)">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                              </div>
+
+                              <!-- Fond swipe droit (éditer) -->
+                              <div class="absolute inset-0 flex items-center pl-5 rounded-xl bg-flame-600/90" :style="'opacity: ' + (isRight ? swipePercent : 0)">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                              </div>
+
+                              <!-- Carte (glissante) -->
+                              <div
+                                class="relative card p-3 flex gap-3 items-center touch-pan-y select-none"
+                                :style="'transform: translateX(' + offset + 'px); transition: ' + (swiping ? 'none' : 'transform 0.25s ease') + ';'"
+                                @touchstart.passive="onTouchStart($event)"
+                                @touchmove.passive="onTouchMove($event)"
+                                @touchend="onTouchEnd($root)"
+                              >
+                                <template x-if="item.show?.poster">
+                                  <img :src="item.show.poster" :alt="item.show.name" class="w-10 h-14 rounded-md object-cover flex-shrink-0" loading="lazy" />
+                                </template>
+                                <template x-if="!item.show?.poster">
+                                  <div class="w-10 h-14 rounded-md bg-ink-800 flex-shrink-0"></div>
+                                </template>
+                                <div class="flex-1 min-w-0">
+                                  <p class="text-sm font-medium text-cream-100 truncate" x-text="item.show?.name"></p>
+                                  <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                                    <span :class="statusColor(item.status)" class="text-[11px]" x-text="statusLabel(item.status)"></span>
+                                    <template x-if="item.rating">
+                                      <span class="text-[11px] text-cream-300/60">
+                                        <template x-for="s in item.rating" :key="s">★</template>
+                                      </span>
+                                    </template>
+                                    <template x-if="item.recommendation === 'recommended'">
+                                      <span class="text-[10px] text-green-400">Je recommande</span>
+                                    </template>
+                                    <template x-if="item.recommendation === 'not_recommended'">
+                                      <span class="text-[10px] text-red-400">Déconseillé</span>
+                                    </template>
+                                  </div>
                                 </div>
-                              </template>
-                              <template x-if="genreStats.length > 5">
-                                <p class="text-[10px] text-cream-300/40 pt-1" x-text="'+ ' + (genreStats.length - 5) + ' autre(s) genre(s)'"></p>
-                              </template>
-                            </div>
-                          </div>
-
-                          <!-- Genres jamais regardés -->
-                          <template x-if="genreNeverWatched.length > 0">
-                            <div class="pt-3 border-t border-ink-700/50">
-                              <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Jamais explorés</p>
-                              <div class="flex flex-wrap gap-1.5">
-                                <template x-for="g in genreNeverWatched" :key="g.id">
-                                  <span class="chip text-[11px]" x-text="g.name"></span>
+                                <!-- Hint swipe uniquement sur mon profil -->
+                                <template x-if="$root.isMe">
+                                  <svg class="flex-shrink-0 text-cream-300/20" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                                 </template>
                               </div>
                             </div>
                           </template>
                         </div>
+
+                        <!-- Analyse genres -->
+                        <template x-if="!libraryLoading && library.length > 0">
+                          <div class="mt-6 pt-5 border-t border-ink-700/40">
+                            <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 mb-3">Profil de goûts</p>
+                            <div class="card p-4">
+                              <div class="flex items-center gap-4 mb-3">
+                                <div x-html="pieSvgHtml"></div>
+                                <div class="flex-1 min-w-0 space-y-1">
+                                  <template x-for="(g, i) in genreStats.slice(0, 5)" :key="g.id">
+                                    <div class="flex items-center gap-2 text-xs">
+                                      <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" :style="'background:' + g.color"></span>
+                                      <span class="truncate text-cream-100" x-text="g.name"></span>
+                                      <span class="ml-auto text-cream-300/60 font-mono" x-text="g.percent.toFixed(0) + '%'"></span>
+                                    </div>
+                                  </template>
+                                </div>
+                              </div>
+                              <template x-if="genreNeverWatched.length > 0">
+                                <div class="pt-3 border-t border-ink-700/40">
+                                  <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Jamais explorés</p>
+                                  <div class="flex flex-wrap gap-1.5">
+                                    <template x-for="g in genreNeverWatched" :key="g.id">
+                                      <span class="chip text-[11px]" x-text="g.name"></span>
+                                    </template>
+                                  </div>
+                                </div>
+                              </template>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+
+                <!-- ─── ONGLET ABONNÉS ─── -->
+                <template x-if="activeTab === 'followers'">
+                  <div class="px-4">
+                    <template x-if="followersLoading">
+                      <div class="space-y-3"><template x-for="i in 4" :key="i"><div class="skeleton h-14 rounded-xl"></div></template></div>
+                    </template>
+                    <template x-if="!followersLoading && followers.length === 0">
+                      <p class="text-sm text-cream-300/50 text-center py-8">Aucun abonné pour le moment.</p>
+                    </template>
+                    <div class="space-y-2">
+                      <template x-for="user in followers" :key="user.id">
+                        <div class="card p-3 flex items-center gap-3">
+                          <template x-if="user.avatar_url">
+                            <img :src="user.avatar_url" :alt="user.username" class="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                          </template>
+                          <template x-if="!user.avatar_url">
+                            <div class="w-10 h-10 rounded-full bg-ink-700 flex items-center justify-center text-sm font-mono text-cream-200 flex-shrink-0" x-text="user.username?.charAt(0).toUpperCase()"></div>
+                          </template>
+                          <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-cream-100 truncate" x-text="'@' + user.username"></p>
+                            <template x-if="user.library_public">
+                              <p class="text-[11px] text-cream-300/50">Bibliothèque publique</p>
+                            </template>
+                          </div>
+                          <div class="flex gap-2">
+                            <button @click="goToProfile(user.username)" class="text-[11px] px-3 py-1.5 rounded-lg bg-ink-700 text-cream-200 hover:bg-ink-600 transition-colors">Profil</button>
+                            <template x-if="user.library_public">
+                              <button @click="goToProfile(user.username)" class="text-[11px] px-3 py-1.5 rounded-lg bg-flame-600/20 text-flame-400 border border-flame-600/30 hover:bg-flame-600/30 transition-colors">Biblio</button>
+                            </template>
+                          </div>
+                        </div>
                       </template>
                     </div>
-                  </template>
+                  </div>
+                </template>
 
-                  <template x-if="!showAnalysis">
-                    <div class="card p-4 text-center">
-                      <svg class="mx-auto mb-2 text-cream-300/40" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                      <p class="text-xs text-cream-300/60">Analyse privée</p>
+                <!-- ─── ONGLET ABONNEMENTS ─── -->
+                <template x-if="activeTab === 'following'">
+                  <div class="px-4">
+                    <template x-if="followingLoading">
+                      <div class="space-y-3"><template x-for="i in 4" :key="i"><div class="skeleton h-14 rounded-xl"></div></template></div>
+                    </template>
+                    <template x-if="!followingLoading && following.length === 0">
+                      <p class="text-sm text-cream-300/50 text-center py-8">Vous ne suivez personne pour le moment.</p>
+                    </template>
+                    <div class="space-y-2">
+                      <template x-for="user in following" :key="user.id">
+                        <div class="card p-3 flex items-center gap-3">
+                          <template x-if="user.avatar_url">
+                            <img :src="user.avatar_url" :alt="user.username" class="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                          </template>
+                          <template x-if="!user.avatar_url">
+                            <div class="w-10 h-10 rounded-full bg-ink-700 flex items-center justify-center text-sm font-mono text-cream-200 flex-shrink-0" x-text="user.username?.charAt(0).toUpperCase()"></div>
+                          </template>
+                          <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-cream-100 truncate" x-text="'@' + user.username"></p>
+                            <template x-if="user.library_public">
+                              <p class="text-[11px] text-cream-300/50">Bibliothèque publique</p>
+                            </template>
+                          </div>
+                          <div class="flex gap-2">
+                            <button @click="goToProfile(user.username)" class="text-[11px] px-3 py-1.5 rounded-lg bg-ink-700 text-cream-200 hover:bg-ink-600 transition-colors">Profil</button>
+                            <template x-if="user.library_public">
+                              <button @click="goToProfile(user.username)" class="text-[11px] px-3 py-1.5 rounded-lg bg-flame-600/20 text-flame-400 border border-flame-600/30 hover:bg-flame-600/30 transition-colors">Biblio</button>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
                     </div>
-                  </template>
+                  </div>
+                </template>
 
-                  <template x-if="isMe">
-                    <a href="#/top3" class="block text-center btn-secondary text-sm">Mettre à jour mes classements</a>
-                  </template>
+              </div>
+            </template>
+
+            <!-- ─── MODAL CONFIRMATION SUPPRESSION ─── -->
+            <template x-if="pendingDeleteId">
+              <div class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="cancelDelete()">
+                <div class="w-full max-w-sm bg-ink-900 rounded-2xl p-6 border border-ink-700/50 animate-slide-up">
+                  <h3 class="text-base font-semibold text-cream-50 mb-2">Supprimer cette série ?</h3>
+                  <p class="text-sm text-cream-300/70 mb-5">Cette action est irréversible. La série sera retirée de ta bibliothèque.</p>
+                  <div class="flex gap-3">
+                    <button @click="cancelDelete()" class="flex-1 py-2.5 rounded-xl bg-ink-700 text-cream-200 text-sm font-medium hover:bg-ink-600 transition-colors">Annuler</button>
+                    <button @click="confirmAndDelete()" :disabled="deleting" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500 transition-colors disabled:opacity-50">
+                      <span x-show="!deleting">Supprimer</span>
+                      <span x-show="deleting">…</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </template>
+
           </section>
         </template>
 
