@@ -17,7 +17,8 @@ export const appTemplate = `
           <div class="inline-flex items-center gap-2 text-flame-500 text-xs tracking-[0.3em] uppercase mb-4 mt-4">
             <span class="w-8 h-px bg-flame-500"></span>Saison 1<span class="w-8 h-px bg-flame-500"></span>
           </div>
-          <h1 class="text-5xl display text-cream-50 italic">My TVShow</h1>
+          <h1 class="text-5xl display text-cream-50 italic">Fabulae</h1>
+          <p class="mt-2 text-cream-300/70 text-[11px] tracking-[0.2em] uppercase italic">L'art de ne jamais perdre le fil</p>
           <p class="mt-3 text-cream-300 text-sm">Ton Top 3 des séries du moment.<br>Partagé. Classé. Débattu.</p>
         </div>
 
@@ -115,7 +116,7 @@ export const appTemplate = `
 
       <div x-show="tab === 'beta'" class="prose-legal">
         <h2>Projet en cours d'élaboration</h2>
-        <p><strong>My TVShow</strong> est un projet personnel actuellement en <strong>phase de test privée</strong>.</p>
+        <p><strong>Fabulae</strong> est un projet personnel actuellement en <strong>phase de test privée</strong>.</p>
         <p><strong>Diffusion restreinte.</strong> Merci de <strong>ne pas partager ni redistribuer ce lien</strong> publiquement.</p>
         <p><strong>Données.</strong> Les données peuvent être réinitialisées sans préavis pendant cette phase.</p>
         <p><strong>Feedback.</strong> Bug ou suggestion : <a href="mailto:shamsetdean@gmail.com">shamsetdean@gmail.com</a>.</p>
@@ -166,7 +167,7 @@ export const appTemplate = `
     <div>
       <!-- HEADER GLOBAL avec cloche notifications -->
       <header class="header-glass sticky top-0 z-20 safe-top px-4 pb-3 flex items-center justify-between">
-        <a href="#/feed" class="display italic text-xl text-cream-50 leading-none">My TVShow</a>
+        <a href="#/feed" class="display italic text-xl text-cream-50 leading-none">Fabulae</a>
         <a href="#/notifications" class="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-50/5 transition-colors" :class="$store.app.route.name === 'notifications' ? 'text-flame-500' : 'text-cream-200'">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
