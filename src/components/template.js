@@ -8,23 +8,27 @@ export const appTemplate = `
   <!-- ============== AUTH ============== -->
   <template x-if="$store.app.route.name === 'auth'">
     <section x-data="authView()" class="min-h-dvh flex flex-col justify-center px-6 py-10 relative z-10">
+      <!-- Badge bêta en haut à gauche -->
+      <div class="absolute top-4 left-4">
+        <span class="flex items-center gap-1.5 text-[10px] text-cream-300/60 bg-ink-800/80 px-2.5 py-1 rounded-full border border-ink-700/50">
+          <svg width="5" height="5" viewBox="0 0 6 6" fill="currentColor"><circle cx="3" cy="3" r="3"/></svg>
+          Bêta privée · phase de test
+        </span>
+      </div>
+
       <div class="max-w-sm mx-auto w-full animate-slide-up">
         <div class="mb-8 text-center">
-          <span class="beta-banner mb-4">
-            <svg width="6" height="6" viewBox="0 0 6 6" fill="currentColor"><circle cx="3" cy="3" r="3"/></svg>
-            Bêta privée · phase de test
-          </span>
-          <div class="inline-flex items-center gap-2 text-flame-500 text-xs tracking-[0.3em] uppercase mb-4 mt-4">
+          <div class="flex items-center justify-center gap-2 text-flame-500 text-xs tracking-[0.3em] uppercase mb-4">
             <span class="w-8 h-px bg-flame-500"></span>Saison 1<span class="w-8 h-px bg-flame-500"></span>
           </div>
-          <h1 class="text-5xl display text-cream-50 italic">My TVShow</h1>
-          <p class="mt-3 text-cream-300 text-sm">Ton Top 3 des séries du moment.<br>Partagé. Classé. Débattu.</p>
+          <h1 class="text-5xl display text-cream-50 italic">Fabulae</h1>
+          <p class="mt-2 text-[11px] tracking-[0.18em] uppercase text-cream-300/60 italic">L'art de ne jamais perdre le fil</p>
         </div>
 
         <div class="card p-6 space-y-4">
           <div class="flex gap-2">
-            <button @click="mode = 'signin'" :class="mode === 'signin' ? 'bg-flame-600 text-cream-50' : 'text-cream-200'" class="flex-1 py-2.5 rounded-full text-sm font-medium transition-colors">Connexion</button>
-            <button @click="mode = 'signup'" :class="mode === 'signup' ? 'bg-flame-600 text-cream-50' : 'text-cream-200'" class="flex-1 py-2.5 rounded-full text-sm font-medium transition-colors">Créer un compte</button>
+            <button @click="mode = 'signin'" :class="mode === 'signin' ? 'bg-emerald-600 text-cream-50' : 'text-cream-200'" class="flex-1 py-2.5 rounded-full text-sm font-medium transition-colors">Connexion</button>
+            <button @click="mode = 'signup'" :class="mode === 'signup' ? 'bg-emerald-600 text-cream-50' : 'text-cream-200'" class="flex-1 py-2.5 rounded-full text-sm font-medium transition-colors">Créer un compte</button>
           </div>
 
           <form @submit.prevent="submit" class="space-y-3">
@@ -49,7 +53,7 @@ export const appTemplate = `
               <div class="text-sm text-flame-400 bg-flame-600/10 border border-flame-600/30 rounded-lg px-3 py-2" x-text="error"></div>
             </template>
 
-            <button type="submit" :disabled="loading" class="btn-primary w-full">
+            <button type="submit" :disabled="loading" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-cream-50 font-semibold transition-colors disabled:opacity-50">
               <span x-show="!loading" x-text="mode === 'signup' ? 'Créer mon compte' : 'Entrer'"></span>
               <span x-show="loading">…</span>
             </button>
