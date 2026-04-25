@@ -12,6 +12,7 @@ export const profileView = () => ({
   isFollowing: false,
   loading: true,
   error: null,
+  _routeKey: null,
 
   // Onglets
   activeTab: 'top', // 'top' | 'library' | 'followers' | 'following'
@@ -49,10 +50,23 @@ export const profileView = () => ({
   deleting: false,
 
   async init() {
+    const store = window.Alpine.store('app')
+    const currentKey = store.route?.params?.[0] || 'me'
+    if (this._routeKey === currentKey && this.profile) return
+    this._routeKey = currentKey
+
     this.loading = true
     this.error = null
+    this.profile = null
+    this.currentTop = null
+    this.currentFlop = null
+    this.library = []
+    this.followers = []
+    this.following = []
+    this.networkLoaded = false
+    this.commonSeriesCount = null
+
     try {
-      const store = window.Alpine.store('app')
       const me = store.session?.user?.id
       const route = store.route
 
