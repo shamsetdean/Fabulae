@@ -774,6 +774,93 @@ export const appTemplate = `
                     </template>
                   </div>
 
+                  <!-- ANALYSE DES GENRES -->
+                  <template x-if="showAnalysis">
+                    <div>
+                      <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-[11px] tracking-[0.25em] text-flame-500 uppercase">Mes habitudes</h2>
+                        <template x-if="isMe">
+                          <button @click="toggleVisibility" :disabled="togglingVisibility" class="flex items-center gap-1.5 text-[11px] text-cream-300/70 hover:text-cream-100 transition-colors">
+                            <template x-if="profile.library_public">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </template>
+                            <template x-if="!profile.library_public">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </template>
+                            <span x-text="profile.library_public ? 'Public' : 'Privé'"></span>
+                          </button>
+                        </template>
+                      </div>
+
+                      <template x-if="analysisLoading">
+                        <div class="card p-4 text-center text-cream-300/50 text-xs">Analyse en cours…</div>
+                      </template>
+
+                      <template x-if="!analysisLoading && totalSeriesAnalyzed === 0">
+                        <div class="card p-4 text-center text-cream-300/50 text-xs">
+                          <p>Aucune série dans la bibliothèque.</p>
+                          <template x-if="isMe">
+                            <a href="#/library" class="inline-block text-flame-500 mt-2">Ajouter ma première série</a>
+                          </template>
+                        </div>
+                      </template>
+
+                      <template x-if="!analysisLoading && totalSeriesAnalyzed > 0">
+                        <div class="card p-4">
+                          <p class="text-[11px] text-cream-300/60 mb-3" x-text="totalSeriesAnalyzed + ' série(s) analysée(s)'"></p>
+
+                          <!-- Camembert SVG + légende -->
+                          <div class="flex items-center gap-4 mb-4">
+                            <div class="flex-shrink-0 relative">
+                              <svg viewBox="0 0 200 200" width="120" height="120" class="drop-shadow-lg">
+                                <template x-for="(slice, i) in pieSlices" :key="i">
+                                  <path :d="slice.path" :fill="slice.color" stroke="#0A0908" stroke-width="1.5" class="hover:opacity-80 transition-opacity">
+                                    <title x-text="slice.name + ' : ' + slice.percent + '%'"></title>
+                                  </path>
+                                </template>
+                                <circle cx="100" cy="100" r="40" fill="#0A0908" />
+                                <text x="100" y="95" text-anchor="middle" fill="#F5ECE3" font-family="Instrument Serif, Georgia, serif" font-style="italic" font-size="22" x-text="genreStats.length"></text>
+                                <text x="100" y="115" text-anchor="middle" fill="#B8A99A" font-size="9" letter-spacing="1">GENRES</text>
+                              </svg>
+                            </div>
+
+                            <div class="flex-1 min-w-0 space-y-1">
+                              <template x-for="(g, i) in genreStats.slice(0, 5)" :key="g.id">
+                                <div class="flex items-center gap-2 text-xs">
+                                  <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" :style="'background:' + g.color"></span>
+                                  <span class="truncate text-cream-100" x-text="g.name"></span>
+                                  <span class="ml-auto text-cream-300/60 font-mono" x-text="g.percent.toFixed(0) + '%'"></span>
+                                </div>
+                              </template>
+                              <template x-if="genreStats.length > 5">
+                                <p class="text-[10px] text-cream-300/40 pt-1" x-text="'+ ' + (genreStats.length - 5) + ' autre(s) genre(s)'"></p>
+                              </template>
+                            </div>
+                          </div>
+
+                          <!-- Genres jamais regardés -->
+                          <template x-if="genreNeverWatched.length > 0">
+                            <div class="pt-3 border-t border-ink-700/50">
+                              <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Jamais explorés</p>
+                              <div class="flex flex-wrap gap-1.5">
+                                <template x-for="g in genreNeverWatched" :key="g.id">
+                                  <span class="chip text-[11px]" x-text="g.name"></span>
+                                </template>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+
+                  <template x-if="!showAnalysis">
+                    <div class="card p-4 text-center">
+                      <svg class="mx-auto mb-2 text-cream-300/40" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      <p class="text-xs text-cream-300/60">Analyse privée</p>
+                    </div>
+                  </template>
+
                   <template x-if="isMe">
                     <a href="#/top3" class="block text-center btn-secondary text-sm">Mettre à jour mes classements</a>
                   </template>
