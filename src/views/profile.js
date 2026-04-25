@@ -21,6 +21,14 @@ export const profileView = () => ({
   commonSeriesCount: null,
   commonSeriesLoading: false,
 
+  // Réseau social
+  followers: [],
+  following: [],
+  followersLoading: false,
+  followingLoading: false,
+  activeTab: 'top',   // 'top' | 'library' | 'followers' | 'following'
+  networkLoaded: false,
+
   // Analyse des genres
   genreStats: [],          // [{name, count, percent, color}]
   genreNeverWatched: [],   // [{name, id}]
@@ -132,6 +140,11 @@ export const profileView = () => ({
       // Séries en commun (uniquement si c'est le profil d'un autre utilisateur)
       if (!this.isMe && me) {
         this.computeCommonSeries(me, profile.id)
+      }
+
+      // Pré-charger les listes followers/following si c'est mon profil
+      if (this.isMe) {
+        this.loadNetwork()
       }
     } catch (e) {
       console.error('[Profile] init error', e)
@@ -317,6 +330,42 @@ export const profileView = () => ({
   statusColor(status) {
     const map = { watching: 'text-flame-500', finished: 'text-green-400', wishlist: 'text-cream-300/60', abandoned: 'text-red-400' }
     return map[status] || 'text-cream-300/60'
+  },
+
+  async loadNetwork() {
+    if (this.networkLoaded || !this.profile) return
+    this.networkLoaded = true
+    const profileId = this.profile.id
+
+    // Followers
+    this.followersLoading = true
+    try {
+      const { data } = await supabase
+        .from('follows')
+        .select('follower_id, profiles!follows_follower_id_fkey(id, username, library_public)')
+        .eq('following_id', profileId)
+      this.followers = (data || []).map(f => f.profiles).filter(Boolean)
+    } catch (e) { console.warn('[Profile] followers error', e) }
+    finally { this.followersLoading = false }
+
+    // Following
+    this.followingLoading = true
+    try {
+      const { data } = await supabase
+        .from('follows')
+        .select('following_id, profiles!follows_following_id_fkey(id, username, library_public)')
+        .eq('follower_id', profileId)
+      this.following = (data || []).map(f => f.profiles).filter(Boolean)
+    } catch (e) { console.warn('[Profile] following error', e) }
+    finally { this.followingLoading = false }
+  },
+
+  async loadNetworkIfNeeded() {
+    if (!this.networkLoaded) await this.loadNetwork()
+  },
+
+  goToProfile(username) {
+    window.location.hash = '#/u/' + username
   },
 
   async toggleFollow() {
