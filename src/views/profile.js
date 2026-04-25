@@ -1,10 +1,12 @@
 import { supabase } from '../lib/supabase.js'
-import { getShowCard } from '../lib/tmdb.js'
+import { tmdbApi } from '../lib/tmdb.js'
+import { generateAlias } from '../lib/alias.js'
 
 export const profileView = () => ({
   profile: null,
   currentTop: null,
   currentFlop: null,
+  alias: null,
   counts: { followers: 0, following: 0 },
   isMe: false,
   isFollowing: false,
@@ -14,14 +16,9 @@ export const profileView = () => ({
   async init() {
     const me = window.Alpine.store('app').session?.user?.id
     const route = window.Alpine.store('app').route
-    let targetUsername = null
-
-    if (route.name === 'u') {
-      targetUsername = route.params[0]
-    } else {
-      const myProfile = window.Alpine.store('app').profile
-      targetUsername = myProfile?.username
-    }
+    let targetUsername = route.name === 'u'
+      ? route.params[0]
+      : window.Alpine.store('app').profile?.username
 
     if (!targetUsername) { this.error = 'Profil introuvable'; this.loading = false; return }
 
@@ -33,7 +30,6 @@ export const profileView = () => ({
       this.profile = profile
       this.isMe = profile.id === me
 
-      // Récupérer Top 3 ET Flop 3 courants
       const { data: currents } = await supabase
         .from('top_lists').select('*')
         .eq('user_id', profile.id).eq('is_current', true)
@@ -42,20 +38,28 @@ export const profileView = () => ({
       const flopList = (currents || []).find(l => l.kind === 'flop')
 
       if (topList) {
-        const shows = await Promise.all([
-          getShowCard(topList.position_1_tmdb_id),
-          getShowCard(topList.position_2_tmdb_id),
-          getShowCard(topList.position_3_tmdb_id)
-        ])
-        this.currentTop = { ...topList, shows }
+        const ids = [topList.position_1_tmdb_id, topList.position_2_tmdb_id, topList.position_3_tmdb_id]
+        const shows = await Promise.all(ids.map(id => tmdbApi.getShow(id).catch(() => null)))
+        const cards = shows.map(s => s ? {
+          id: s.id,
+          name: s.name,
+          poster: tmdbApi.poster(s.poster_path, 'w154'),
+          genres: s.genres || []
+        } : null)
+        this.currentTop = { ...topList, shows: cards }
+        this.alias = generateAlias(cards.filter(Boolean))
       }
       if (flopList) {
-        const shows = await Promise.all([
-          getShowCard(flopList.position_1_tmdb_id),
-          getShowCard(flopList.position_2_tmdb_id),
-          getShowCard(flopList.position_3_tmdb_id)
-        ])
-        this.currentFlop = { ...flopList, shows }
+        const ids = [flopList.position_1_tmdb_id, flopList.position_2_tmdb_id, flopList.position_3_tmdb_id]
+        const shows = await Promise.all(ids.map(id => tmdbApi.getShow(id).catch(() => null)))
+        this.currentFlop = {
+          ...flopList,
+          shows: shows.map(s => s ? {
+            id: s.id,
+            name: s.name,
+            poster: tmdbApi.poster(s.poster_path, 'w154')
+          } : null)
+        }
       }
 
       const [{ count: followers }, { count: following }] = await Promise.all([
