@@ -45,9 +45,21 @@ export const profileView = () => ({
   // Upload avatar
   uploadingAvatar: false,
 
-  // Suppression
+  // Suppression item bibliothèque
   pendingDeleteId: null,
   deleting: false,
+
+  // Suppression de compte
+  showDeleteAccountModal: false,
+  deletingAccount: false,
+  deleteConfirmText: '',
+
+  // Signalement
+  showReportModal: false,
+  reportCategory: 'inappropriate',
+  reportReason: '',
+  reportSending: false,
+  reportSent: false,
 
   async init() {
     const store = window.Alpine.store('app')
@@ -418,6 +430,68 @@ export const profileView = () => ({
       return `<path d="${d}" fill="${g.color}" stroke="#0A0908" stroke-width="1.5"><title>${g.name} : ${g.percent.toFixed(0)}%</title></path>`
     }).join('')
     return `<svg viewBox="0 0 200 200" width="120" height="120"><g>${paths}</g><circle cx="${cx}" cy="${cy}" r="40" fill="#0A0908"/><text x="${cx}" y="95" text-anchor="middle" fill="#F5ECE3" font-family="Instrument Serif, Georgia, serif" font-style="italic" font-size="22">${this.genreStats.length}</text><text x="${cx}" y="115" text-anchor="middle" fill="#B8A99A" font-size="9" letter-spacing="1">GENRES</text></svg>`
+  },
+
+  // ─── SUPPRESSION DE COMPTE ──────────────────────────────────────────────────
+
+  async deleteAccount() {
+    if (this.deleteConfirmText !== 'SUPPRIMER') return
+    this.deletingAccount = true
+    try {
+      const session = window.Alpine.store('app').session
+      const { error } = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      ).then(r => r.json()).then(data => ({ error: data.error || null }))
+
+      if (error) throw new Error(error)
+
+      // Nettoyer et rediriger
+      localStorage.clear()
+      window.location.hash = '#/auth'
+      window.location.reload()
+    } catch (e) {
+      console.error('[Profile] deleteAccount error', e)
+      window.Alpine.store('app').showToast('Erreur lors de la suppression', 'error')
+    } finally {
+      this.deletingAccount = false
+      this.showDeleteAccountModal = false
+    }
+  },
+
+  // ─── SIGNALEMENT ─────────────────────────────────────────────────────────────
+
+  async submitReport() {
+    if (!this.reportReason.trim() || !this.profile) return
+    this.reportSending = true
+    try {
+      const me = window.Alpine.store('app').session?.user?.id
+      const { error } = await supabase.from('reports').insert({
+        reporter_id: me,
+        reported_user_id: this.profile.id,
+        category: this.reportCategory,
+        reason: this.reportReason.trim()
+      })
+      if (error) throw error
+      this.reportSent = true
+      setTimeout(() => {
+        this.showReportModal = false
+        this.reportSent = false
+        this.reportReason = ''
+        this.reportCategory = 'inappropriate'
+      }, 2000)
+    } catch (e) {
+      console.warn('[Profile] report error', e)
+      window.Alpine.store('app').showToast('Erreur lors du signalement', 'error')
+    } finally {
+      this.reportSending = false
+    }
   },
 
   async toggleFollow() {
