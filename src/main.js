@@ -26,8 +26,63 @@ function showFatalError(title, message, details) {
   `
 }
 
-window.addEventListener('error', e => console.error('[Global error]', e.error || e.message))
-window.addEventListener('unhandledrejection', e => console.error('[Unhandled rejection]', e.reason))
+let _reloaded = false
+function reloadOnce(reason) {
+  if (_reloaded) return
+  if (sessionStorage.getItem('__fabulae_reloaded') === '1') return
+  _reloaded = true
+  sessionStorage.setItem('__fabulae_reloaded', '1')
+  console.warn('[Bootstrap] reloading due to:', reason)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister().catch(() => {}))
+      if ('caches' in window) {
+        caches.keys().then(keys => {
+          Promise.all(keys.map(k => caches.delete(k))).finally(() => location.reload())
+        })
+      } else {
+        location.reload()
+      }
+    }).catch(() => location.reload())
+  } else {
+    location.reload()
+  }
+}
+
+window.addEventListener('error', e => {
+  const msg = (e?.error?.message || e?.message || '').toLowerCase()
+  if (msg.includes('failed to fetch dynamically imported module') ||
+      msg.includes("can't find variable") ||
+      msg.includes('importing a module script failed') ||
+      msg.includes('failed to load module')) {
+    reloadOnce('module-load-error')
+    return
+  }
+  console.error('[Global error]', e.error || e.message)
+})
+
+window.addEventListener('unhandledrejection', e => {
+  const reason = e?.reason
+  const msg = (reason?.message || String(reason || '')).toLowerCase()
+  if (msg.includes('failed to fetch dynamically imported module') ||
+      msg.includes('importing a module script failed') ||
+      msg.includes('failed to load module')) {
+    reloadOnce('module-import-rejection')
+    return
+  }
+  console.error('[Unhandled rejection]', reason)
+})
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (sessionStorage.getItem('__fabulae_sw_seen') !== '1') {
+      sessionStorage.setItem('__fabulae_sw_seen', '1')
+    } else {
+      sessionStorage.removeItem('__fabulae_reloaded')
+      location.reload()
+    }
+  })
+}
 
 const env = import.meta.env
 const missing = []
@@ -87,6 +142,8 @@ function bootstrap() {
       'L\'application n\'a pas pu s\'initialiser correctement.',
       err.message + '\n\n' + (err.stack || ''))
   })
+
+  setTimeout(() => sessionStorage.removeItem('__fabulae_reloaded'), 5000)
 }
 
 if (document.readyState === 'loading') {
