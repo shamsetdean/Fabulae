@@ -1,275 +1,238 @@
-# My TVShow
+# Fabulae
 
-Réseau social minimaliste pour partager ses **Top 3 séries du moment**, suivre sa progression, et découvrir où regarder chaque série en France.
+**L'art de ne jamais perdre le fil.**
 
-**Stack** : Vite · Alpine.js · Tailwind CSS · Supabase · TMDB API · PWA
+Réseau social minimaliste autour des séries TV. Chaque utilisateur publie son **Top 3** et son **Flop 3** du moment, suit d'autres membres, découvre les tendances et gère sa bibliothèque personnelle.
+
+🔗 [fabulae.vercel.app](https://fabulae.vercel.app)
 
 ---
 
 ## Fonctionnalités
 
 ### Social
-- **Top 3 des séries du moment** : publie tes 3 séries favorites avec un commentaire optionnel
-- **Fil d'actualité** filtrable : tout le monde ou uniquement tes abonnements
-- **Likes** sur les Top 3
-- **Follow / Unfollow** d'autres membres
-- **Profils publics** avec Top 3 actuel et historique (`/u/pseudo`)
-- **Classement communautaire** pondéré (position 1 = 3 pts, 2 = 2 pts, 3 = 1 pt)
-- **Tendances mondiales** TMDB (semaine)
+- **Top 3 / Flop 3** — Publication de ses classements du moment avec un alias généré dynamiquement depuis les genres
+- **Fil d'actualité** — Cartes regroupées (Top + Flop d'un même utilisateur dans une seule carte), filtrables par abonnements
+- **Likes** — Like indépendant sur le Top et le Flop
+- **Profils publics** — Avatar, alias, classements actuels, analyse des habitudes, bibliothèque
+- **Abonnements** — Suivre / ne plus suivre un utilisateur
+- **Notifications** — Alertes en temps réel pour nouveaux classements des comptes suivis
 
 ### Bibliothèque personnelle
-- Ajoute n'importe quelle série à ta **bibliothèque** avec 4 statuts : à voir, en cours, terminée, abandonnée
-- Pour les séries **en cours** : suivi de la saison et de l'épisode actuel
-- **Plateforme de reprise** : indique où tu regardes (Netflix, Prime, Disney+, Canal+...) avec lien direct vers la recherche sur leur site
-- Bouton **+1 épisode** pour avancer rapidement ta progression
-- **Verdict en 1 phrase** optionnel quand tu termines une série
+- **Ajout de séries** via recherche TMDB inline (debounce 300ms, zéro latence)
+- **Statuts** : À voir · En cours · Terminée · Abandonnée
+- **Notes** : 1 à 5 étoiles
+- **Recommandation** : Je recommande / Je ne recommande pas
+- **Visibilité** : Publique (accessible aux followers) ou Privée
+- **Filtres** par statut, recherche textuelle, compteurs
 
-### Fiche série
-- Synopsis, genres, saisons, note TMDB
-- **Plateformes de streaming FR** (abonnement, gratuit, location/achat) via JustWatch
-- Ajout à la bibliothèque en 1 clic
+### Tendances
+- Classement des séries les plus populaires parmi tous les utilisateurs
+- Watch providers disponibles en France
 
-### Mobile-first
-- **PWA installable** sur iOS et Android
-- Navigation bottom-bar style app native
-- Optimisée pour les écrans de téléphone
-- Cache offline des images déjà consultées
+### Analyse du profil
+- Camembert SVG des genres préférés (calculé côté client, 0 appel API supplémentaire)
+- Liste des genres jamais explorés
+- Visibilité paramétrable (Public / Privé)
 
----
-
-## Mise en route (15-20 min)
-
-### 1. Cloner et installer
-
-```bash
-git clone https://github.com/<ton-username>/<ton-repo>.git
-cd my-tvshow
-npm install
-```
-
-### 2. Créer un projet Supabase
-
-1. Crée un compte sur [supabase.com](https://supabase.com)
-2. **New project** → nom `my-tvshow`, région `West EU (Ireland)` ou `Central EU (Frankfurt)`
-3. Attends ~2 min que le projet se provisionne
-4. **SQL Editor** → **New query** → colle le contenu de `supabase/schema.sql` → **Run**
-5. **SQL Editor** → nouvelle query → colle `supabase/migration-watchlist.sql` → **Run**
-6. Vérifie dans **Table Editor** que tu as 5 tables : `profiles`, `top_lists`, `likes`, `follows`, `watchlist`
-
-### 3. Récupérer les clés Supabase
-
-**Settings** → **API Keys** :
-- **Publishable key** (commence par `sb_publishable_...`) → c'est ta `VITE_SUPABASE_ANON_KEY`
-
-**Settings** → **Data API** (ou écran d'accueil du projet) :
-- **URL** du projet (forme `https://xxxxx.supabase.co`) → c'est ta `VITE_SUPABASE_URL`
-
-### 4. Désactiver la confirmation email (dev)
-
-**Authentication** → **Sign In / Providers** → **Email** → désactive **"Confirm email"** → Save.
-
-À réactiver en prod.
-
-### 5. Obtenir un token TMDB
-
-1. Crée un compte sur [themoviedb.org/signup](https://www.themoviedb.org/signup)
-2. Vérifie ton email, puis va sur [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api)
-3. **Request an API Key** → **Developer** → remplis le formulaire (usage personnel, URL peu importe)
-4. Une fois approuvé (instantané), copie l'**API Read Access Token** (long token commençant par `eyJ...`)
-
-**Important** : prends le Read Access Token v4, pas la clé v3 (sinon erreur 401 à chaque requête).
-
-### 6. Variables d'environnement
-
-```bash
-cp .env.example .env.local
-```
-
-Édite `.env.local` :
-
-```env
-VITE_SUPABASE_URL=https://xxxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_xxxxx...
-VITE_TMDB_TOKEN=eyJhbGci...
-```
-
-### 7. Lancer en local
-
-```bash
-npm run dev
-```
-
-Ouvre [http://localhost:5173](http://localhost:5173). Crée un compte, choisis un pseudo, publie ton premier Top 3.
+### PWA
+- Installable sur iPhone et Android
+- Service Worker avec mise à jour automatique
+- Mode standalone (sans barre de navigation du navigateur)
 
 ---
 
-## Déploiement Vercel
+## Stack technique
 
-### Via l'interface web (recommandé)
+| Couche | Technologie |
+|---|---|
+| Frontend | [Alpine.js](https://alpinejs.dev) v3 + HTML/CSS |
+| Style | [Tailwind CSS](https://tailwindcss.com) v3 |
+| Build | [Vite](https://vitejs.dev) + [vite-plugin-pwa](https://vite-pwa-org.netlify.app) |
+| Backend / Auth / BDD | [Supabase](https://supabase.com) (PostgreSQL + RLS + Realtime) |
+| API séries TV | [TMDB](https://www.themoviedb.org/documentation/api) v4 |
+| Déploiement | [Vercel](https://vercel.com) (auto-deploy sur push `main`) |
 
-1. Push ton code sur GitHub
-2. [vercel.com/new](https://vercel.com/new) → importe ton repo
-3. Vercel détecte Vite automatiquement — laisse les paramètres par défaut
-4. **Environment Variables** : ajoute les 3 variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_TMDB_TOKEN`)
-5. **Deploy**
-
-### Ajuster Supabase pour la prod
-
-Une fois ton URL Vercel obtenue (ex: `my-tvshow.vercel.app`) :
-
-**Supabase** → **Authentication** → **URL Configuration** :
-- **Site URL** : `https://my-tvshow.vercel.app`
-- **Redirect URLs** : `https://my-tvshow.vercel.app` et `https://my-tvshow.vercel.app/**`
+### Typographie
+- **Instrument Serif** (italic) — Titres, headlines, identité éditoriale
+- **Onest** — Interface, textes courants, navigation
 
 ---
 
-## Architecture
+## Architecture des fichiers
 
 ```
 src/
-├── main.js                # Point d'entrée : injection template + démarrage Alpine
-├── style.css              # Tailwind + design tokens (glassmorphism)
+├── components/
+│   └── template.js       # Template HTML unique de l'application (SPA)
 ├── lib/
-│   ├── supabase.js        # Client Supabase
-│   ├── tmdb.js            # Client TMDB avec cache localStorage 24h
-│   └── store.js           # Store Alpine global (session, profile, routing)
-├── views/                 # Logique/état par route (pas de HTML)
-│   ├── auth.js
-│   ├── onboarding.js
-│   ├── feed.js
-│   ├── top3.js
-│   ├── trending.js
-│   ├── profile.js
-│   ├── show.js
-│   └── watchlist.js       # Bibliothèque personnelle
-└── components/
-    └── template.js        # Tout le HTML de l'app (un gros template string)
+│   ├── alias.js          # Générateur d'alias depuis les genres TMDB
+│   ├── store.js          # Store Alpine global (session, profil, routing, guards)
+│   ├── supabase.js       # Client Supabase avec lock auth désactivé (fix iOS)
+│   └── tmdb.js           # Wrapper TMDB API v4 avec cache localStorage
+├── views/
+│   ├── auth.js           # Connexion / inscription
+│   ├── classifier.js     # Modal universel d'ajout/classification de série
+│   ├── feed.js           # Fil d'actualité (Top + Flop regroupés par utilisateur)
+│   ├── legal.js          # Pages légales (mentions, RGPD, bêta)
+│   ├── library.js        # Bibliothèque personnelle + recherche TMDB inline
+│   ├── notifications.js  # Centre de notifications
+│   ├── onboarding.js     # Création du profil (pseudo, bio)
+│   ├── profile.js        # Profil utilisateur + bibliothèque publique + analyse genres
+│   ├── show.js           # Fiche série
+│   ├── top3.js           # Publication Top 3 / Flop 3
+│   └── trending.js       # Tendances communautaires
+├── main.js               # Bootstrap Alpine (injection template, initTree, store)
+└── style.css             # Variables CSS, composants globaux
+
+public/
+├── icons/                # Icônes PWA (192, 512, apple-touch-icon)
+├── favicon.svg           # Masque de théâtre aux couleurs Fabulae
+└── og-image.png          # Image Open Graph 1200×630
 
 supabase/
-├── schema.sql               # Tables principales + RLS
-└── migration-watchlist.sql  # Ajout de la watchlist
+├── schema.sql            # Schéma complet de la base de données
+├── migration-v3.sql      # Bibliothèque unifiée (library_items)
+├── migration-v4.sql      # Colonne library_public sur profiles
+└── migration-v5.sql      # RLS bibliothèque : accès followers
 ```
 
-**Routing** : hash-based (`#/feed`, `#/u/:username`, `#/show/:tmdb_id`). Parseur dans `lib/store.js`.
-
-**Sécurité** : Row Level Security activée sur toutes les tables. Policies garantissent que chacun ne modifie que ses propres données. Lecture publique (réseau social).
-
-**Cache** :
-- Mémoire + localStorage 24h pour TMDB (persistant entre rechargements)
-- Service worker PWA pour les images TMDB (30 jours)
-
 ---
 
-## Schéma de base de données
+## Base de données
 
-| Table | Rôle |
+### Tables principales
+
+| Table | Description |
 |---|---|
-| `profiles` | Profils utilisateur (username, bio, lié à auth.users) |
-| `top_lists` | Top 3 publiés, avec flag `is_current` pour l'historique |
-| `likes` | Likes sur les top lists (contrainte unique user+top) |
-| `follows` | Relations follower → following |
-| `watchlist` | Bibliothèque perso (status, saison/épisode, plateforme) |
+| `profiles` | Profils utilisateurs (username, bio, avatar, library_public) |
+| `top_lists` | Classements Top 3 / Flop 3 (kind: top/flop, is_current) |
+| `library_items` | Bibliothèque personnelle (status, rating, recommendation) |
+| `follows` | Relations follower / following |
+| `likes` | Likes sur les classements |
+| `notifications` | Notifications (new_list) |
 
-**Vues SQL** :
-- `top_lists_with_profile` : fil enrichi (username, like_count, liked_by_me)
-- `community_trending` : classement pondéré 3-2-1 sur les Top 3 actifs
+### Vues
 
----
+| Vue | Description |
+|---|---|
+| `top_lists_with_profile` | Classements enrichis avec données du profil |
+| `community_trending` | Tendances agrégées par série |
+| `followed_recommendations` | Recommandations des abonnements |
 
-## Optimisations de performance
-
-- **Preconnect** aux API critiques dans `<head>` (TMDB, Supabase, Google Fonts)
-- **`font-display: swap`** : polices non-bloquantes pour le rendu initial
-- **Cache TMDB persistant** (localStorage, 24h) — les séries déjà vues ne refont pas d'appel
-- **Tailles d'images adaptatives** : w92 pour vignettes, w154 pour cartes, w342 pour fiches
-- **Lazy loading** sur toutes les images
-- **Code splitting Vite** automatique
-- **Service worker PWA** pour cache offline
-- **Bundle** : ~80 KB gzippé (JS) + ~5 KB gzippé (CSS)
+### Sécurité (RLS)
+Row Level Security activé sur toutes les tables. Chaque utilisateur ne peut lire/écrire que ses propres données, à l'exception :
+- Des profils publics (visibles par tous)
+- Des classements publics (visibles par tous)
+- Des bibliothèques dont `library_public = true` (visibles par tous les utilisateurs connectés)
 
 ---
 
-## Design system
+## Variables d'environnement
 
-**Palette** (sombre, inspirée magazine cinéma)
-- Fond : `#0A0908` (noir profond)
-- Accent primaire : `#FF6B35` → `#E63946` (gradient rouge-orange)
-- Texte principal : `#F5ECE3` (crème, contraste WCAG AA)
-- Texte secondaire : `#B8A99A`
+À configurer dans Vercel (Settings → Environment Variables) :
 
-**Typographie**
-- **Display** : Instrument Serif italique (titres, numéros de rang)
-- **Corps** : Onest (500, 600)
-- **Mono** : system `ui-monospace`
-
-**Composants glass**
-- Cartes translucides (`rgba(255,255,255,0.035)` + `backdrop-filter: blur(20px)`)
-- Bordures arrondies (20px pour cartes, 14px pour boutons)
-- Ombres douces avec inner highlight
-- Animations : shimmer pour loading, slide-up pour apparitions
+```env
+VITE_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_...
+VITE_TMDB_TOKEN=eyJ...   # Token Bearer v4 (pas la clé API v3)
+```
 
 ---
 
-## Coûts
+## Installation locale
 
-**Gratuit jusqu'à ~1000 utilisateurs actifs** :
+```bash
+git clone https://github.com/shamsetdean/Fabulae.git
+cd Fabulae
+npm install
 
-| Service | Free tier | Scaling |
-|---|---|---|
-| Supabase | 500 MB DB, 50k MAU, 1 GB storage | $25/mois (Pro) |
-| Vercel | 100 GB bande passante/mois | $20/mois (Pro) |
-| TMDB | Illimité (non-commercial) | — |
+# Créer un fichier .env.local
+cp .env.example .env.local
+# Renseigner les 3 variables d'environnement
 
----
-
-## Tester rapidement
-
-1. Crée 2 comptes (navigation privée pour le 2e)
-2. Sur chaque compte, publie un Top 3 différent
-3. Depuis l'un, va sur `#/u/pseudo_de_l_autre` → clique **Suivre**
-4. Retour au fil → bascule sur **Mes abonnements** → tu dois voir son Top 3
-5. Ajoute une série à ta bibliothèque en mode **En cours** avec saison/épisode + plateforme
-6. Profil → onglet **Bibliothèque** → sous-onglet **En cours** → tu vois ta série
-7. Clique la pastille plateforme → tu es redirigé vers Netflix/Prime/etc.
+npm run dev
+```
 
 ---
 
-## Dépannage
+## Déploiement
 
-**"Invalid API key" au chargement**
-→ `.env.local` absent ou mal nommé. Les variables doivent commencer par `VITE_`.
+Le projet se déploie automatiquement sur Vercel à chaque push sur la branche `main`.
 
-**"Failed to fetch" sur TMDB**
-→ Tu as utilisé la clé v3 au lieu du **Read Access Token v4**.
+```bash
+git add .
+git commit -m "feat: description"
+git push
+```
 
-**Signup bloque sans message**
-→ Confirm email activé dans Supabase → Authentication → Email providers. Désactive-le en dev.
-
-**"NetworkError when attempting to fetch resource"**
-→ URL Supabase incorrecte dans les variables d'env. Vérifie qu'il n'y a **pas de `/rest/v1/`** à la fin, et pas de faute de frappe.
-
-**"Email not confirmed"**
-→ Confirm email activé (cf. ci-dessus), ou clique le lien de vérification dans ta boîte mail.
-
-**Écran noir sur Vercel**
-→ Variables d'env manquantes ou mal nommées. Va dans Settings → Environment Variables, vérifie les 3 valeurs, puis Deployments → dernier deploy → ... → Redeploy (sans cache).
+Vercel détecte Vite automatiquement. Aucune configuration supplémentaire requise.
 
 ---
 
-## Évolutions possibles
+## Statut du projet
 
-- Upload d'avatar (Supabase Storage dans le free tier)
-- Commentaires sous les Top 3
-- Notifications realtime (follow, like) via Supabase Realtime
-- Partage d'un Top 3 via lien + image Open Graph dynamique
-- Suggestions de follow basées sur les goûts communs
-- Modération (signalements + dashboard admin)
-- Internationalisation
+🔒 **Bêta privée — Saison 1**
+
+Projet personnel en phase de test. Le lien n'est pas destiné à être partagé publiquement pour le moment.
 
 ---
 
-## Licence et attribution
+## Roadmap
 
-- Ce code t'appartient.
-- TMDB exige mention : "This product uses the TMDB API but is not endorsed or certified by TMDB."
-- Données de disponibilité streaming : fournies par JustWatch via TMDB.
+- [ ] Suppression de compte + export RGPD
+- [ ] Système de signalement (LCEN)
+- [ ] Recherche d'utilisateurs
+- [ ] Partage de Top 3 par lien avec image OG dynamique
+- [ ] Statistiques avancées (épisodes vus, temps total)
+- [ ] Suggestions de comptes à suivre
+- [ ] Commentaires sur les classements
+- [ ] Confirmation email (avant ouverture publique)
+
+---
+
+## 📜 Copyright et Mentions Légales
+
+© 2026 Fabulae. Tous droits réservés.
+
+Fabulae est une application propriétaire. L'intégralité du code source, de l'interface utilisateur, du design, de l'architecture, des fonctionnalités, de la documentation ainsi que l'ensemble des éléments graphiques et textuels sont protégés par le Code de la propriété intellectuelle, les conventions internationales et les lois applicables.
+
+> ⚠️ Ce projet est un projet personnel en cours d'élaboration *(work in progress)* et peut être amené à évoluer sans préavis.
+
+### Propriété Intellectuelle
+
+Toute reproduction, représentation, diffusion, adaptation, modification, traduction, commercialisation ou exploitation, totale ou partielle, du projet, de son code source ou de l'un de ses composants, sans autorisation écrite préalable de l'auteur, est strictement interdite.
+
+Toute violation de ces droits pourra entraîner des poursuites civiles et pénales conformément aux dispositions du Code de la propriété intellectuelle.
+
+### Licence d'Utilisation
+
+Ce dépôt GitHub est publié uniquement à des fins de présentation, d'évaluation ou de démonstration technique.
+
+Aucune licence open source n'est accordée. Aucun droit d'utilisation, de copie, de modification, de distribution ou d'exploitation commerciale n'est concédé sans autorisation expresse et écrite de l'auteur.
+
+### Marques et Contenus Tiers
+
+Les noms, logos, affiches, images, marques, séries télévisées, films et autres contenus référencés dans l'application demeurent la propriété exclusive de leurs détenteurs respectifs.
+
+Leur utilisation dans Fabulae s'inscrit exclusivement dans un cadre informatif, éditorial et non commercial.
+
+### Limitation de Responsabilité
+
+Le logiciel est fourni « en l'état », sans garantie expresse ou implicite.
+
+L'auteur ne saurait être tenu responsable de tout dommage direct, indirect, accessoire ou consécutif résultant de l'utilisation ou de l'impossibilité d'utiliser ce projet.
+
+### Signalement d'Abus
+
+Toute utilisation non autorisée, reproduction ou distribution du présent projet pourra faire l'objet d'une demande de retrait immédiat, d'un signalement auprès de GitHub et, le cas échéant, de poursuites judiciaires.
+
+### Contact
+
+Pour toute demande d'autorisation, de partenariat ou toute question juridique :
+
+**Email :** [shamsetdean@gmail.com](mailto:shamsetdean@gmail.com)
+
+---
+
+*Fabulae™ est une marque et une application propriétaire. Toute utilisation non autorisée est strictement interdite.*
