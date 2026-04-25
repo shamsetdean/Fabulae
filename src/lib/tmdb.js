@@ -1,151 +1,177 @@
-// Client TMDB — avec cache localStorage persistant (24h) pour performance
-// Doc: https://developer.themoviedb.org/reference/intro/getting-started
+import { supabase } from './supabase.js'
 
-const TOKEN = import.meta.env.VITE_TMDB_TOKEN
-const BASE = 'https://api.themoviedb.org/3'
-const IMG = 'https://image.tmdb.org/t/p'
+const TMDB_BASE = 'https://api.themoviedb.org/3'
+const TMDB_IMAGE = 'https://image.tmdb.org/t/p'
+const CACHE_TTL_HOURS = 24
+const MEM_CACHE = new Map()
 
-const CACHE_KEY = 'tmdb_cache_v1'
-const CACHE_TTL_MS = 1000 * 60 * 60 * 24  // 24h
-
-if (!TOKEN) {
-  console.error('[TMDB] VITE_TMDB_TOKEN manquant.')
+function getToken() {
+  return import.meta.env.VITE_TMDB_TOKEN
 }
 
-// Cache persistant localStorage — survit aux rechargements
-// Structure : { [url]: { at: timestamp, data: ... } }
-let cache = {}
-try {
-  const raw = localStorage.getItem(CACHE_KEY)
-  if (raw) {
-    cache = JSON.parse(raw)
-    // Nettoyage des entrées expirées au chargement
-    const now = Date.now()
-    let cleaned = false
-    for (const k of Object.keys(cache)) {
-      if (!cache[k] || now - cache[k].at > CACHE_TTL_MS) {
-        delete cache[k]
-        cleaned = true
-      }
-    }
-    if (cleaned) persistCache()
-  }
-} catch (e) {
-  console.warn('[TMDB] Cache corrompu, reset.', e)
-  cache = {}
-}
-
-// Throttle de persistance pour éviter trop d'écritures
-let persistTimer = null
-function persistCache() {
-  clearTimeout(persistTimer)
-  persistTimer = setTimeout(() => {
-    try {
-      // Limite : 4 MB pour rester sous la quota localStorage
-      const str = JSON.stringify(cache)
-      if (str.length < 4_000_000) {
-        localStorage.setItem(CACHE_KEY, str)
-      } else {
-        // Si trop gros, on garde seulement les 100 entrées les plus récentes
-        const entries = Object.entries(cache)
-          .sort((a, b) => b[1].at - a[1].at)
-          .slice(0, 100)
-        cache = Object.fromEntries(entries)
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cache))
-      }
-    } catch (e) {
-      console.warn('[TMDB] Échec persistance cache', e)
-    }
-  }, 500)
-}
-
-async function tmdb(path, params = {}) {
-  const url = new URL(BASE + path)
+async function tmdbFetch(path, params = {}) {
+  const url = new URL(TMDB_BASE + path)
   url.searchParams.set('language', 'fr-FR')
-  for (const [k, v] of Object.entries(params)) {
-    if (v !== undefined && v !== null) url.searchParams.set(k, v)
-  }
-  const key = url.toString()
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
 
-  const hit = cache[key]
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.data
-
-  const res = await fetch(url, {
+  const res = await fetch(url.toString(), {
     headers: {
-      Authorization: `Bearer ${TOKEN}`,
-      Accept: 'application/json'
+      Authorization: `Bearer ${getToken()}`,
+      'Content-Type': 'application/json'
     }
   })
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error(`TMDB ${res.status}: ${text}`)
-  }
-  const data = await res.json()
-  cache[key] = { at: Date.now(), data }
-  persistCache()
-  return data
+  if (!res.ok) throw new Error(`TMDB ${res.status}: ${path}`)
+  return res.json()
 }
 
+// ─── Cache Supabase ─────────────────────────────────────────────────────────
+
+async function getFromSupabaseCache(tmdbId) {
+  try {
+    const { data } = await supabase
+      .from('tmdb_cache')
+      .select('data, cached_at')
+      .eq('tmdb_id', String(tmdbId))
+      .maybeSingle()
+
+    if (!data) return null
+    const ageHours = (Date.now() - new Date(data.cached_at).getTime()) / 3600000
+    if (ageHours > CACHE_TTL_HOURS) return null
+    return data.data
+  } catch (e) {
+    return null
+  }
+}
+
+async function writeToSupabaseCache(tmdbId, data) {
+  try {
+    await supabase.from('tmdb_cache').upsert({
+      tmdb_id: String(tmdbId),
+      data,
+      cached_at: new Date().toISOString()
+    }, { onConflict: 'tmdb_id' })
+  } catch (e) {
+    // Silencieux — le cache est optionnel
+  }
+}
+
+// ─── API principale ─────────────────────────────────────────────────────────
+
 export const tmdbApi = {
-  searchTv(query, page = 1) {
-    return tmdb('/search/tv', { query, page, include_adult: 'false' })
+  poster(path, size = 'w342') {
+    if (!path) return null
+    return `${TMDB_IMAGE}/${size}${path}`
   },
 
-  getShow(id) {
-    return tmdb(`/tv/${id}`, { append_to_response: 'credits,videos' })
-  },
+  async getShow(id) {
+    if (!id) return null
+    const key = `show_${id}`
 
-  async getProvidersFR(id) {
+    // 1. Cache mémoire (instantané)
+    if (MEM_CACHE.has(key)) return MEM_CACHE.get(key)
+
+    // 2. Cache Supabase (serveur, ~60% des cas après première visite)
+    const cached = await getFromSupabaseCache(key)
+    if (cached) {
+      MEM_CACHE.set(key, cached)
+      return cached
+    }
+
+    // 3. Fetch TMDB
     try {
-      const data = await tmdb(`/tv/${id}/watch/providers`)
-      return data.results?.FR ?? null
-    } catch {
+      const data = await tmdbFetch(`/tv/${id}`, {
+        append_to_response: 'watch/providers'
+      })
+      MEM_CACHE.set(key, data)
+      writeToSupabaseCache(key, data) // fire-and-forget
+      return data
+    } catch (e) {
+      console.warn('[TMDB] getShow error', id, e)
       return null
     }
   },
 
-  trending(timeWindow = 'week', page = 1) {
-    return tmdb(`/trending/tv/${timeWindow}`, { page })
+  async searchTv(query) {
+    if (!query?.trim()) return { results: [] }
+    try {
+      return await tmdbFetch('/search/tv', { query: query.trim() })
+    } catch (e) {
+      console.warn('[TMDB] search error', e)
+      return { results: [] }
+    }
   },
 
-  popular(page = 1) {
-    return tmdb('/tv/popular', { page, region: 'FR' })
+  async getTrending() {
+    const key = 'trending_tv'
+    if (MEM_CACHE.has(key)) return MEM_CACHE.get(key)
+
+    const cached = await getFromSupabaseCache(key)
+    if (cached) {
+      MEM_CACHE.set(key, cached)
+      return cached
+    }
+
+    try {
+      const data = await tmdbFetch('/trending/tv/week')
+      MEM_CACHE.set(key, data)
+      writeToSupabaseCache(key, data)
+      return data
+    } catch (e) {
+      console.warn('[TMDB] trending error', e)
+      return { results: [] }
+    }
   },
 
-  /**
-   * Helpers URL images — tailles optimisées par usage
-   * w92   : logos plateformes, mini vignettes (<40px)
-   * w154  : vignettes recherche, cartes feed (60-120px)
-   * w342  : posters fiche série, affichage moyen (120-220px)
-   * w500+ : backdrops fullscreen uniquement
-   */
-  poster(path, size = 'w154') {
-    return path ? `${IMG}/${size}${path}` : null
-  },
-  backdrop(path, size = 'w780') {
-    return path ? `${IMG}/${size}${path}` : null
-  },
-  providerLogo(path, size = 'w92') {
-    return path ? `${IMG}/${size}${path}` : null
+  async getPopular() {
+    const key = 'popular_tv'
+    if (MEM_CACHE.has(key)) return MEM_CACHE.get(key)
+
+    const cached = await getFromSupabaseCache(key)
+    if (cached) {
+      MEM_CACHE.set(key, cached)
+      return cached
+    }
+
+    try {
+      const data = await tmdbFetch('/tv/popular')
+      MEM_CACHE.set(key, data)
+      writeToSupabaseCache(key, data)
+      return data
+    } catch (e) {
+      console.warn('[TMDB] popular error', e)
+      return { results: [] }
+    }
   }
 }
 
-/** Raccourci : infos minimales pour afficher une série dans une carte */
+// ─── Helper : carte série normalisée ────────────────────────────────────────
+
+const SHOW_CARD_CACHE = new Map()
+
 export async function getShowCard(id) {
-  try {
-    const show = await tmdbApi.getShow(id)
-    return {
-      id: show.id,
-      name: show.name,
-      poster: tmdbApi.poster(show.poster_path, 'w154'),  // taille optimisée pour cartes
-      backdrop: tmdbApi.backdrop(show.backdrop_path),
-      year: show.first_air_date ? show.first_air_date.slice(0, 4) : '',
-      overview: show.overview,
-      genres: show.genres?.map(g => g.name) ?? [],
-      vote: show.vote_average
-    }
-  } catch (e) {
-    console.warn('getShowCard failed for', id, e)
-    return null
+  if (!id) return null
+  if (SHOW_CARD_CACHE.has(id)) return SHOW_CARD_CACHE.get(id)
+
+  const show = await tmdbApi.getShow(id)
+  if (!show) return null
+
+  const providers = show['watch/providers']?.results?.FR
+  const card = {
+    id: show.id,
+    name: show.name || '',
+    poster: show.poster_path ? tmdbApi.poster(show.poster_path, 'w154') : null,
+    backdrop: show.backdrop_path ? tmdbApi.poster(show.backdrop_path, 'w780') : null,
+    overview: show.overview || '',
+    genres: Array.isArray(show.genres) ? show.genres : [],
+    vote_average: show.vote_average || 0,
+    first_air_date: show.first_air_date || '',
+    number_of_seasons: show.number_of_seasons || 0,
+    status: show.status || '',
+    networks: Array.isArray(show.networks) ? show.networks : [],
+    flatrate: providers?.flatrate || [],
+    free: providers?.free || []
   }
+
+  SHOW_CARD_CACHE.set(id, card)
+  return card
 }
