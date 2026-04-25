@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
         name: 'My TVShow',
@@ -22,10 +23,33 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,webp}'],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigationPreload: true,
+        navigateFallback: null,
+        globPatterns: ['**/*.{js,css,html,png,svg,webp,woff,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/image\.tmdb\.org\/t\/p\/.*/i,
+            urlPattern: ({ request }) => request.mode === 'navigate' || request.destination === 'document',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages',
+              networkTimeoutSeconds: 4,
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 }
+            }
+          },
+          {
+            urlPattern: ({ request }) => request.destination === 'script' || request.destination === 'style',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'assets',
+              networkTimeoutSeconds: 4,
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 7 }
+            }
+          },
+          {
+            urlPattern: ({ url }) => url.origin === 'https://image.tmdb.org',
             handler: 'CacheFirst',
             options: {
               cacheName: 'tmdb-images',
@@ -34,13 +58,27 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            urlPattern: ({ url }) => url.origin === 'https://api.themoviedb.org',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'tmdb-api',
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          {
+            urlPattern: ({ url }) => url.origin === 'https://fonts.gstatic.com',
             handler: 'CacheFirst',
             options: {
               cacheName: 'google-fonts',
               expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] }
             }
+          },
+          {
+            urlPattern: ({ url }) => url.hostname.endsWith('supabase.co'),
+            handler: 'NetworkOnly'
           }
         ]
       }
@@ -52,19 +90,14 @@ export default defineConfig({
     minify: 'esbuild',
     cssMinify: true,
     sourcemap: false,
-
     rollupOptions: {
       output: {
-        // Code splitting : sépare les dépendances volumineuses du code applicatif
-        // pour qu'elles soient cachées en navigation et rechargements
         manualChunks: {
           'vendor-alpine': ['alpinejs'],
           'vendor-supabase': ['@supabase/supabase-js']
         }
       }
     },
-
-    // Tailwind + Alpine + Supabase = ~150KB gzippé. Avertir si on dépasse trop
     chunkSizeWarningLimit: 200
   },
 
@@ -73,7 +106,6 @@ export default defineConfig({
     host: true
   },
 
-  // Optimise la pré-bundling Vite en dev
   optimizeDeps: {
     include: ['alpinejs', '@supabase/supabase-js']
   }
