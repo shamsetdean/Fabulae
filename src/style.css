@@ -6,17 +6,14 @@
   :root {
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
-
     --radius-sm: 10px;
     --radius-md: 14px;
     --radius-lg: 18px;
     --radius-xl: 24px;
-
-    --glass-bg: rgba(255, 255, 255, 0.035);
-    --glass-bg-strong: rgba(255, 255, 255, 0.06);
+    --glass-bg: rgba(255, 255, 255, 0.04);
+    --glass-bg-strong: rgba(255, 255, 255, 0.07);
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-border-strong: rgba(255, 255, 255, 0.14);
-
     --text-primary: #F5ECE3;
     --text-secondary: #B8A99A;
     --text-tertiary: #8A7D70;
@@ -38,6 +35,7 @@
     color: var(--text-primary);
     font-size: 15px;
     line-height: 1.5;
+    font-family: 'Onest', system-ui, -apple-system, sans-serif;
   }
 
   body::before {
@@ -58,19 +56,15 @@
 }
 
 @layer components {
-  /* ============== CARTES GLASS ============== */
   .card {
     background: var(--glass-bg);
     backdrop-filter: blur(20px) saturate(1.4);
     -webkit-backdrop-filter: blur(20px) saturate(1.4);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    box-shadow:
-      0 6px 24px rgba(0, 0, 0, 0.22),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04);
     transition: all 0.2s ease;
   }
-
   .card-strong {
     background: var(--glass-bg-strong);
     backdrop-filter: blur(24px) saturate(1.5);
@@ -79,7 +73,6 @@
     border-radius: var(--radius-lg);
   }
 
-  /* ============== BOUTONS ============== */
   .btn-primary {
     background: linear-gradient(135deg, #FF6B35 0%, #E63946 100%);
     color: #FFF5EE;
@@ -126,7 +119,6 @@
   }
   .btn-ghost:hover { color: var(--text-primary); background: var(--glass-bg); }
 
-  /* ============== INPUTS ============== */
   .input {
     width: 100%;
     background: var(--glass-bg);
@@ -146,7 +138,6 @@
     background: var(--glass-bg-strong);
   }
 
-  /* ============== CHIPS ============== */
   .chip {
     display: inline-flex;
     align-items: center;
@@ -160,10 +151,9 @@
     color: var(--text-secondary);
   }
 
-  /* ============== RANK NUMBERS ============== */
   .rank-number {
     font-family: 'Instrument Serif', Georgia, serif;
-    font-size: 2.75rem;  /* Réduit de 3.5 à 2.75 pour cartes compactes */
+    font-size: 2.5rem;
     line-height: 1;
     font-style: italic;
     color: transparent;
@@ -180,7 +170,6 @@
     -webkit-text-stroke: 0;
   }
 
-  /* ============== SKELETON ============== */
   .skeleton {
     background: linear-gradient(90deg,
       rgba(255, 255, 255, 0.03) 25%,
@@ -195,7 +184,6 @@
     100% { background-position: 200% 0; }
   }
 
-  /* ============== NAV ============== */
   .nav-glass {
     background: rgba(10, 9, 8, 0.72);
     backdrop-filter: blur(24px) saturate(1.8);
@@ -203,7 +191,13 @@
     border-top: 1px solid var(--glass-border);
   }
 
-  /* ============== POSTER COMPACT (nouvelles cartes mini Top 3) ============== */
+  .header-glass {
+    background: rgba(10, 9, 8, 0.85);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border-bottom: 1px solid var(--glass-border);
+  }
+
   .poster-compact {
     aspect-ratio: 2/3;
     border-radius: var(--radius-md);
@@ -211,13 +205,21 @@
     background: var(--glass-bg);
     position: relative;
   }
-  .poster-compact img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  .poster-compact img { width: 100%; height: 100%; object-fit: cover; }
 
-  /* ============== BETA BANNER ============== */
+  /* Étoiles de notation */
+  .star-btn {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-tertiary);
+    transition: color 0.15s ease, transform 0.1s ease;
+  }
+  .star-btn:hover { color: #E9B44C; }
+  .star-btn:active { transform: scale(0.92); }
+  .star-btn.active { color: #E9B44C; }
+
   .beta-banner {
     background: linear-gradient(90deg, rgba(233, 180, 76, 0.12), rgba(255, 107, 53, 0.12));
     border: 1px solid rgba(233, 180, 76, 0.25);
@@ -230,11 +232,10 @@
     gap: 6px;
   }
 
-  /* ============== NOTIF BADGE ============== */
   .notif-dot {
     position: absolute;
-    top: 4px;
-    right: 24%;
+    top: -2px;
+    right: -2px;
     width: 8px;
     height: 8px;
     background: #FF6B35;
@@ -242,16 +243,66 @@
     border: 2px solid #0A0908;
     box-shadow: 0 0 0 1px rgba(255, 107, 53, 0.4);
   }
+
+  /* Modal classifier */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(10, 9, 8, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: fadeIn 0.2s ease-out;
+  }
+  .modal-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 101;
+    max-height: 90dvh;
+    overflow-y: auto;
+    background: rgba(20, 17, 15, 0.92);
+    backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
+    border-top: 1px solid var(--glass-border-strong);
+    box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.5);
+    padding: 16px 16px calc(var(--safe-bottom) + 24px);
+    animation: slideUpModal 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes slideUpModal {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  /* Status pill (en cours / terminée / etc.) */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+  }
+  .pill-active {
+    background: rgba(255, 107, 53, 0.15);
+    border-color: rgba(255, 107, 53, 0.4);
+    color: #FF8F5E;
+  }
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
 
 [x-cloak] { display: none !important; }
 
-/* Safe areas iOS */
 .safe-top { padding-top: calc(var(--safe-top) + 0.5rem); }
 .safe-bottom { padding-bottom: calc(var(--safe-bottom) + 5rem); }
 .nav-bottom { padding-bottom: calc(var(--safe-bottom) + 0.5rem); }
@@ -268,13 +319,12 @@
   }
 }
 
-/* ============== PROSE (pages légales) ============== */
 .prose-legal {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-secondary);
 }
-.prose-legal h1, .prose-legal h2, .prose-legal h3 {
+.prose-legal h1, .prose-legal h2 {
   color: var(--text-primary);
   font-family: 'Instrument Serif', Georgia, serif;
   font-style: italic;
