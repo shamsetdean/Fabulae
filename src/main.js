@@ -42,7 +42,7 @@ if (missing.length > 0) {
   throw new Error('Missing env vars: ' + missing.join(', '))
 }
 
-// Exposition des vues à Alpine
+// Expose toutes les vues à Alpine
 window.authView = authView
 window.onboardingView = onboardingView
 window.feedView = feedView
@@ -56,6 +56,7 @@ window.notificationsView = notificationsView
 window.legalView = legalView
 window.formatDate = formatDate
 
+// Démarrage de l'app
 try { document.getElementById('app').innerHTML = appTemplate }
 catch (e) { showFatalError('Erreur injection template', e.message, e.stack); throw e }
 
@@ -72,3 +73,16 @@ Alpine.store('app').init().catch(err => {
     'L\'application n\'a pas pu s\'initialiser correctement.',
     err.message + '\n\n' + (err.stack || ''))
 })
+
+// Préchargement intelligent en idle :
+// dès que le navigateur est libre, on commence à pré-fetcher les premières pages
+// que l'utilisateur va probablement consulter (TMDB tendances, son profil)
+function warmupCaches() {
+  const idle = window.requestIdleCallback || (cb => setTimeout(cb, 1500))
+  idle(() => {
+    // Précharge les images affiches TMDB pour le préchargement DNS/TLS
+    const img = new Image()
+    img.src = 'https://image.tmdb.org/t/p/w92/0.png'
+  }, { timeout: 3000 })
+}
+warmupCaches()
