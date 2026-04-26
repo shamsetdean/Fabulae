@@ -82,22 +82,17 @@ export const discoverView = () => ({
   },
 
   classify(show) {
-    // Ouvre le modal classifier global (déjà existant dans l'app)
-    const store = window.Alpine.store('app')
-    store.openClassifier({
-      tmdb_id: show.id,
-      show: {
+    if (window.openClassifier) {
+      window.openClassifier(show.id, {
         id: show.id,
         name: show.name,
         poster: show.poster,
         year: show.year,
         overview: show.overview
-      },
-      onSaved: () => {
-        // Une fois ajoutée, on met à jour notre set local
-        this.myLibraryIds.add(show.id)
-        this.myLibraryIds = new Set(this.myLibraryIds)
-      }
-    })
+      })
+      // Optimiste : on marque comme ajoutée localement, le modal classifier
+      // gère l'écriture en base. On rafraîchit dans 500ms pour être sûr.
+      setTimeout(() => this.loadMyLibrary(), 500)
+    }
   }
 })
