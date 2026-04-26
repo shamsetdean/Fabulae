@@ -1500,11 +1500,8 @@ export const appTemplate = `
       <!-- ============== MODAL CLASSIFIER (global) ============== -->
       <div x-data="classifierModal()" @classifier:open.window="openModal($event.detail.tmdbId, $event.detail.showInfo)">
         <template x-if="open">
-          <div>
-            <div class="modal-backdrop" @click="closeModal"></div>
-            <div class="modal-sheet">
-              <!-- Handle -->
-              <div class="w-10 h-1 bg-cream-50/20 rounded-full mx-auto mb-4"></div>
+          <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" @click.self="closeModal">
+            <div class="w-full max-w-md bg-ink-900 rounded-2xl border-2 border-flame-500/40 shadow-2xl max-h-[90vh] overflow-y-auto p-5">
 
               <template x-if="loading">
                 <div class="text-center py-8 text-cream-300/50 text-sm">Chargement…</div>
@@ -1616,8 +1613,6 @@ export const appTemplate = `
           </div>
         </template>
       </div>
-    </div>
-  </template>
 
   <!-- Pas connecté → vers auth -->
   <template x-if="!$store.app.isAuthed && !['auth','onboarding','legal'].includes($store.app.route.name)">
