@@ -38,13 +38,16 @@ export const discoverView = () => ({
     this.trendingLoading = true
     try {
       const data = await tmdbApi.getTrending()
-      this.trendingShows = (data?.results || []).slice(0, 20).map(r => ({
-        id: r.id,
-        name: r.name,
-        year: r.first_air_date ? r.first_air_date.slice(0, 4) : '',
-        poster: r.poster_path ? tmdbApi.poster(r.poster_path, 'w342') : null,
-        overview: r.overview || ''
-      }))
+      this.trendingShows = (data?.results || [])
+        .filter(r => !this.myLibraryIds.has(r.id))
+        .slice(0, 20)
+        .map(r => ({
+          id: r.id,
+          name: r.name,
+          year: r.first_air_date ? r.first_air_date.slice(0, 4) : '',
+          poster: r.poster_path ? tmdbApi.poster(r.poster_path, 'w342') : null,
+          overview: r.overview || ''
+        }))
     } catch (e) {
       console.warn('[Discover] loadTrending error', e)
       this.trendingShows = []
@@ -61,13 +64,16 @@ export const discoverView = () => ({
     this.searchTimer = setTimeout(async () => {
       try {
         const data = await tmdbApi.searchTv(q)
-        this.searchResults = (data?.results || []).slice(0, 20).map(r => ({
-          id: r.id,
-          name: r.name,
-          year: r.first_air_date ? r.first_air_date.slice(0, 4) : '',
-          poster: r.poster_path ? tmdbApi.poster(r.poster_path, 'w342') : null,
-          overview: r.overview || ''
-        }))
+        this.searchResults = (data?.results || [])
+          .filter(r => !this.myLibraryIds.has(r.id))
+          .slice(0, 20)
+          .map(r => ({
+            id: r.id,
+            name: r.name,
+            year: r.first_air_date ? r.first_air_date.slice(0, 4) : '',
+            poster: r.poster_path ? tmdbApi.poster(r.poster_path, 'w342') : null,
+            overview: r.overview || ''
+          }))
       } catch (e) {
         console.warn('[Discover] search error', e)
         this.searchResults = []
@@ -90,9 +96,13 @@ export const discoverView = () => ({
         year: show.year,
         overview: show.overview
       })
-      // Optimiste : on marque comme ajoutée localement, le modal classifier
-      // gère l'écriture en base. On rafraîchit dans 500ms pour être sûr.
-      setTimeout(() => this.loadMyLibrary(), 500)
+      // Une fois le modal classifier fermé après ajout, on rafraîchit la
+      // bibliothèque locale et on retire la série des listes affichées
+      setTimeout(async () => {
+        await this.loadMyLibrary()
+        this.searchResults = this.searchResults.filter(s => !this.myLibraryIds.has(s.id))
+        this.trendingShows = this.trendingShows.filter(s => !this.myLibraryIds.has(s.id))
+      }, 800)
     }
   }
 })
