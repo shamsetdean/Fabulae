@@ -370,6 +370,7 @@ export const profileView = () => ({
       return {
         _item: null,
         startX: 0, currentX: 0, swiping: false, THRESHOLD: 80,
+        get offset() { return 0 },
         get swipePercent() { return 0 },
         get isRight() { return false },
         get isLeft() { return false },
@@ -382,6 +383,7 @@ export const profileView = () => ({
       currentX: 0,
       swiping: false,
       THRESHOLD: 80,
+      get offset() { return this.currentX },
       get swipePercent() { return Math.min(Math.abs(this.currentX) / this.THRESHOLD, 1) },
       get isRight() { return this.currentX > 20 },
       get isLeft() { return this.currentX < -20 },
