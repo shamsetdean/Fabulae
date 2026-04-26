@@ -15,6 +15,7 @@ import { libraryView } from './views/library.js'
 import { classifierModal } from './views/classifier.js'
 import { notificationsView } from './views/notifications.js'
 import { legalView } from './views/legal.js'
+import { welcomeModal } from './views/welcome.js'
 
 function showFatalError(title, message, details) {
   document.getElementById('app').innerHTML = `
@@ -108,6 +109,7 @@ window.libraryView = libraryView
 window.classifierModal = classifierModal
 window.notificationsView = notificationsView
 window.legalView = legalView
+window.welcomeModal = welcomeModal
 window.formatDate = formatDate
 
 function bootstrap() {
