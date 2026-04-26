@@ -9,6 +9,7 @@ import { onboardingView } from './views/onboarding.js'
 import { feedView, formatDate } from './views/feed.js'
 import { top3View } from './views/top3.js'
 import { trendingView } from './views/trending.js'
+import { discoverView } from './views/discover.js'
 import { profileView } from './views/profile.js'
 import { showView } from './views/show.js'
 import { libraryView } from './views/library.js'
@@ -103,6 +104,7 @@ window.onboardingView = onboardingView
 window.feedView = feedView
 window.top3View = top3View
 window.trendingView = trendingView
+window.discoverView = discoverView
 window.profileView = profileView
 window.showView = showView
 window.libraryView = libraryView
