@@ -10,6 +10,25 @@ export const welcomeModal = () => ({
   next() { if (this.step < 3) this.step++ },
   prev() { if (this.step > 1) this.step-- },
 
+  async dismiss() {
+    if (this.saving) return
+    this.saving = true
+    const store = window.Alpine.store('app')
+    const me = store.session?.user?.id
+    if (!me) { this.saving = false; return }
+
+    try {
+      const { error } = await supabase
+        .from('profiles').update({ welcome_seen: true }).eq('id', me)
+      if (error) throw error
+      if (store.profile) store.profile.welcome_seen = true
+    } catch (e) {
+      console.warn('[Welcome] dismiss error', e)
+    } finally {
+      this.saving = false
+    }
+  },
+
   async finish() {
     if (this.saving) return
     this.saving = true
