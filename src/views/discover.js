@@ -15,6 +15,13 @@ export const discoverView = () => ({
   // État
   myLibraryIds: new Set(),
 
+  // Série sélectionnée pour classification (apparaît en haut)
+  selectedShow: null,
+  selStatus: 'watching',
+  selRating: 0,
+  selRecommendation: null,
+  selSaving: false,
+
   async init() {
     await this.loadMyLibrary()
     await this.loadTrending()
@@ -87,22 +94,65 @@ export const discoverView = () => ({
     return this.myLibraryIds.has(tmdbId)
   },
 
-  classify(show) {
-    if (window.openClassifier) {
-      window.openClassifier(show.id, {
-        id: show.id,
-        name: show.name,
-        poster: show.poster,
-        year: show.year,
-        overview: show.overview
-      })
-      // Une fois le modal classifier fermé après ajout, on rafraîchit la
-      // bibliothèque locale et on retire la série des listes affichées
-      setTimeout(async () => {
-        await this.loadMyLibrary()
-        this.searchResults = this.searchResults.filter(s => !this.myLibraryIds.has(s.id))
-        this.trendingShows = this.trendingShows.filter(s => !this.myLibraryIds.has(s.id))
-      }, 800)
+  // Sélectionne une série → affichage en haut de la page
+  select(show) {
+    this.selectedShow = show
+    this.selStatus = 'watching'
+    this.selRating = 0
+    this.selRecommendation = null
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  },
+
+  cancelSelection() {
+    this.selectedShow = null
+    this.selStatus = 'watching'
+    this.selRating = 0
+    this.selRecommendation = null
+  },
+
+  setRating(n) {
+    this.selRating = this.selRating === n ? 0 : n
+  },
+
+  async saveSelection() {
+    if (!this.selectedShow || this.selSaving) return
+    this.selSaving = true
+    const me = window.Alpine.store('app').session?.user?.id
+    if (!me) { this.selSaving = false; return }
+
+    try {
+      const payload = {
+        user_id: me,
+        tmdb_id: this.selectedShow.id,
+        status: this.selStatus,
+        rating: this.selRating > 0 ? this.selRating : null,
+        recommendation: this.selRecommendation
+      }
+      const { error } = await supabase.from('library_items').insert(payload)
+      if (error) throw error
+
+      // Mise à jour locale instantanée
+      this.myLibraryIds.add(this.selectedShow.id)
+      this.myLibraryIds = new Set(this.myLibraryIds)
+
+      // Retire la série des listes affichées
+      const id = this.selectedShow.id
+      this.searchResults = this.searchResults.filter(s => s.id !== id)
+      this.trendingShows = this.trendingShows.filter(s => s.id !== id)
+
+      // Notifie la bibliothèque pour qu'elle se rafraîchisse
+      window.dispatchEvent(new CustomEvent('library:updated'))
+
+      // Reset
+      this.selectedShow = null
+      this.selStatus = 'watching'
+      this.selRating = 0
+      this.selRecommendation = null
+    } catch (e) {
+      console.warn('[Discover] saveSelection error', e)
+      alert('Erreur lors de l\\'ajout : ' + (e.message || ''))
+    } finally {
+      this.selSaving = false
     }
   }
 })
