@@ -1,0 +1,40 @@
+<!-- ============================================================
+     ONBOARDING — Modal 3 écrans de bienvenue
+     ============================================================ -->
+<div id="onboarding" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+  <div class="w-full max-w-md bg-ink-900 rounded-3xl border border-ink-700/50 overflow-hidden">
+
+    <!-- ─── ob-screen-1 ─── -->
+    <section id="ob-screen-1" class="p-8">
+      <h2 class="text-2xl display italic text-cream-50 mb-6">Comment créer un profil et le supprimer</h2>
+    </section>
+
+    <!-- ─── ob-screen-2 ─── -->
+    <section id="ob-screen-2" class="p-8 hidden">
+      <h2 class="text-2xl display italic text-cream-50 mb-6">Comment ajouter une série</h2>
+    </section>
+
+    <!-- ─── ob-screen-3 ─── -->
+    <section id="ob-screen-3" class="p-8 hidden">
+      <h2 class="text-2xl display italic text-cream-50 mb-6">Vos données, vos choix.</h2>
+
+      <div class="space-y-4">
+        <label class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-ink-800 border border-ink-700/50">
+          <span class="text-sm text-cream-100">Cookies analytiques</span>
+          <input type="checkbox" id="consent-analytics" class="toggle" />
+        </label>
+
+        <label class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-ink-800 border border-ink-700/50">
+          <span class="text-sm text-cream-100">Notifications</span>
+          <input type="checkbox" id="consent-notifications" class="toggle" />
+        </label>
+
+        <label class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-ink-800 border border-ink-700/50">
+          <span class="text-sm text-cream-100">Personnalisation</span>
+          <input type="checkbox" id="consent-personalization" class="toggle" />
+        </label>
+      </div>
+    </section>
+
+  </div>
+</div>
