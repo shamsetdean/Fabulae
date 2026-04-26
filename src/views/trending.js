@@ -33,11 +33,11 @@ export const trendingView = () => ({
 
   async loadTmdb() {
     try {
-      const data = await tmdbApi.trending('week')
-      this.tmdbTrending = (data.results || []).slice(0, 20).map(r => ({
+      const data = await tmdbApi.getTrending()
+      this.tmdbTrending = (data?.results || []).slice(0, 20).map(r => ({
         id: r.id,
         name: r.name,
-        poster: tmdbApi.poster(r.poster_path),
+        poster: r.poster_path ? tmdbApi.poster(r.poster_path) : null,
         year: r.first_air_date ? r.first_air_date.slice(0, 4) : '',
         vote: r.vote_average
       }))
