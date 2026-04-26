@@ -122,6 +122,14 @@ export const tmdbApi = {
     }
   },
 
+  async getProvidersFR(tmdbId) {
+    const show = await this.getShow(tmdbId)
+    if (!show) return { flatrate: [], free: [] }
+    if (show.flatrate !== undefined) return { flatrate: show.flatrate || [], free: show.free || [] }
+    const fr = show['watch/providers']?.results?.FR || {}
+    return { flatrate: fr.flatrate || [], free: fr.free || [] }
+  },
+
   async getPopular() {
     const key = 'popular_tv'
     if (MEM_CACHE.has(key)) return MEM_CACHE.get(key)
