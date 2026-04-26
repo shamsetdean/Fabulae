@@ -1196,24 +1196,19 @@ export const appTemplate = `
                   </div>
                 </template>
 
-              </div>
-
-              <!-- ─── ACTIONS PROFIL (toujours visibles, hors onglets) ─── -->
-              <div class="px-4 pt-4 pb-6 mt-2 border-t border-ink-700/30">
-                <template x-if="!isMe">
-                  <button @click="showReportModal = true" class="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-cream-300/40 text-xs hover:text-cream-300/70 transition-colors">
+                <!-- ─── ACTIONS PROFIL (toujours visibles, hors onglets) ─── -->
+                <div class="px-4 pt-4 pb-6 mt-2 border-t border-ink-700/30">
+                  <button x-show="!isMe" @click="showReportModal = true" class="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-cream-300/40 text-xs hover:text-cream-300/70 transition-colors">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
                     Signaler cet utilisateur
                   </button>
-                </template>
-                <template x-if="isMe">
-                  <button @click="showDeleteAccountModal = true" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-red-400/70 bg-red-600/5 border border-red-600/15 text-xs hover:bg-red-600/15 hover:text-red-400 transition-colors">
+                  <button x-show="isMe" @click="showDeleteAccountModal = true" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-red-400/70 bg-red-600/5 border border-red-600/15 text-xs hover:bg-red-600/15 hover:text-red-400 transition-colors">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     Supprimer mon compte
                   </button>
-                </template>
-              </div>
+                </div>
 
+              </div>
             </template>
 
             <!-- ─── MODAL CONFIRMATION SUPPRESSION SÉRIE ─── -->
