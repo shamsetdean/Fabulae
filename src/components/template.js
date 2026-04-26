@@ -825,6 +825,24 @@ export const appTemplate = `
                 <!-- ─── HEADER PROFIL ─── -->
                 <div class="relative px-4 pt-6 pb-4 bg-gradient-to-b from-ink-900/80 to-transparent">
 
+                  <!-- Actions rapides (mon profil) — haut à droite -->
+                  <template x-if="isMe">
+                    <div class="absolute top-4 right-4 flex items-center gap-2 z-10">
+                      <!-- Rafraîchir -->
+                      <button @click="window.location.reload()" title="Rafraîchir" class="w-9 h-9 rounded-full bg-ink-800/80 border border-ink-700/50 flex items-center justify-center text-cream-300/60 hover:text-cream-200 hover:bg-ink-700 active:scale-95 transition-all">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                      </button>
+                      <!-- Déconnexion -->
+                      <button @click="$store.app.signOut()" title="Déconnexion" class="w-9 h-9 rounded-full bg-ink-800/80 border border-ink-700/50 flex items-center justify-center text-cream-300/60 hover:text-amber-400 hover:bg-ink-700 active:scale-95 transition-all">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                      </button>
+                      <!-- Supprimer le compte -->
+                      <button @click="showDeleteAccountModal = true" title="Supprimer mon compte" class="w-9 h-9 rounded-full bg-red-950/60 border border-red-900/40 flex items-center justify-center text-red-400/70 hover:text-red-400 hover:bg-red-950/80 active:scale-95 transition-all">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      </button>
+                    </div>
+                  </template>
+
                   <!-- Photo de profil + infos -->
                   <div class="flex items-end gap-4 mb-4">
 
@@ -1196,22 +1214,12 @@ export const appTemplate = `
                   </div>
                 </template>
 
-                <!-- ─── ACTIONS PROFIL ─── -->
-                <div class="px-4 pt-6 pb-8 mt-4">
-                  <!-- Signaler (profil autre) -->
+                <!-- ─── ACTIONS PROFIL (profil autre) ─── -->
+                <div class="px-4 pb-8 mt-2">
                   <button x-show="!isMe" @click="showReportModal = true" class="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-cream-300/50 text-sm border border-ink-700/40 hover:border-ink-600 hover:text-cream-300/80 active:bg-ink-800 transition-all">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
                     Signaler cet utilisateur
                   </button>
-                  <!-- Supprimer mon compte (mon profil) -->
-                  <div x-show="isMe" class="space-y-3">
-                    <div class="h-px bg-ink-700/30"></div>
-                    <p class="text-[11px] text-cream-300/30 text-center">Zone de danger</p>
-                    <button @click="showDeleteAccountModal = true" class="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-red-400 bg-red-950/40 border border-red-900/40 text-sm font-medium hover:bg-red-950/60 hover:border-red-800/60 active:scale-98 transition-all">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                      Supprimer mon compte
-                    </button>
-                  </div>
                 </div>
 
               </div>
