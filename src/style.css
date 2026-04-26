@@ -60,11 +60,19 @@
     letter-spacing: -0.015em;
   }
 
-  /* Corps : Inter (moderne, lisible, mobile-first) */
-  body, button, input, textarea, select {
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  /* Corps : Inter via variable CSS (bat le layer base de Tailwind) */
+  :root {
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-display: 'Instrument Serif', Georgia, serif;
+  }
+  html {
+    font-family: var(--font-sans) !important;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body, button, input, textarea, select {
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
   /* Texte corps minimum 15px sur mobile */
