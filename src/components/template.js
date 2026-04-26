@@ -326,80 +326,27 @@ export const appTemplate = `
               <input type="search" x-model="search" class="input text-sm" placeholder="Rechercher dans ma bibliothèque..." />
             </div>
 
-            <!-- ZONE_RECHERCHE_TMDB_SUPPRIMEE -->
-            <div style="display:none">
-              <div class="relative mb-3">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                <input
-                  id="library-search-input"
-                  type="search"
-                  x-model="searchQuery"
-                  @input="onSearchInput"
-                  class="input text-sm pl-9"
-                  placeholder="Cherche une série à ajouter..."
-                  autocomplete="off"
-                />
-              </div>
-
-              <template x-if="searching">
-                <div class="text-xs text-cream-300/50 text-center py-3">Recherche…</div>
-              </template>
-
-              <template x-if="!searching && searchQuery.trim().length >= 2 && searchResults.length === 0">
-                <div class="text-xs text-cream-300/50 text-center py-3">Aucun résultat.</div>
-              </template>
-
-              <template x-if="searchResults.length > 0">
-                <ul class="space-y-1.5 max-h-[60vh] overflow-y-auto -mx-1 px-1">
-                  <template x-for="r in searchResults" :key="r.id">
-                    <li>
-                      <button @click="pickResult(r)" class="w-full flex gap-2.5 p-2 rounded-xl hover:bg-ink-800 active:bg-ink-700 text-left transition-colors" :class="isInLibrary(r.id) ? 'opacity-60' : ''">
-                        <template x-if="r.poster">
-                          <img :src="r.poster" :alt="r.name" class="w-10 h-14 rounded-md bg-ink-800 object-cover flex-shrink-0" loading="lazy" />
-                        </template>
-                        <template x-if="!r.poster">
-                          <div class="w-10 h-14 rounded-md bg-ink-800 flex-shrink-0"></div>
-                        </template>
-                        <div class="flex-1 min-w-0">
-                          <p class="font-medium text-cream-100 text-sm truncate" x-text="r.name"></p>
-                          <p class="text-[11px] text-cream-300/50" x-text="r.year"></p>
-                          <p class="text-[11px] text-cream-300/60 line-clamp-2 mt-0.5" x-text="r.overview"></p>
-                        </div>
-                        <template x-if="isInLibrary(r.id)">
-                          <span class="pill text-[10px] flex-shrink-0 self-start mt-0.5">déjà ajoutée</span>
-                        </template>
-                      </button>
-                    </li>
-                  </template>
-                </ul>
-              </template>
-
-              <template x-if="searchQuery.trim().length < 2 && !searching">
-                <p class="text-[11px] text-cream-300/40 text-center py-3">Tape au moins 2 lettres.</p>
-              </template>
-            </div>
-
             <!-- Filtres horizontaux scrollables -->
             <div class="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-4 px-4">
-              <button @click="setFilter('all')" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+              <button @click=\"filter = 'all'\" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
                 Tout (<span x-text="counts.all"></span>)
               </button>
-              <button @click="setFilter('watching')" :class="filter === 'watching' ? 'bg-flame-600 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+              <button @click=\"filter = 'watching'\" :class="filter === 'watching' ? 'bg-flame-600 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
                 En cours (<span x-text="counts.watching"></span>)
               </button>
-              <button @click="setFilter('finished')" :class="filter === 'finished' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+              <button @click=\"filter = 'finished'\" :class="filter === 'finished' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
                 Terminées (<span x-text="counts.finished"></span>)
               </button>
-              <button @click="setFilter('recommended')" :class="filter === 'recommended' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+              <button @click=\"filter = 'recommended'\" :class="filter === 'recommended' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
                 Recommandées (<span x-text="counts.recommended"></span>)
               </button>
-              <button @click="setFilter('not_recommended')" :class="filter === 'not_recommended' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+              <button @click=\"filter = 'not_recommended'\" :class="filter === 'not_recommended' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
                 Flop (<span x-text="counts.not_recommended"></span>)
               </button>
-              <button @click="setFilter('abandoned')" :class="filter === 'abandoned' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+              <button @click=\"filter = 'abandoned'\" :class="filter === 'abandoned' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
                 Abandonnées (<span x-text="counts.abandoned"></span>)
               </button>
-              <button @click="setFilter('wishlist')" :class="filter === 'wishlist' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+              <button @click=\"filter = 'wishlist'\" :class="filter === 'wishlist' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
                 À voir (<span x-text="counts.wishlist"></span>)
               </button>
             </div>
@@ -496,8 +443,8 @@ export const appTemplate = `
             </header>
 
             <div class="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-1 px-1">
-              <button @click="setFilter('all')" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Tout le monde</button>
-              <button @click="setFilter('following')" :class="filter === 'following' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Mes abonnements</button>
+              <button @click=\"filter = 'all'\" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Tout le monde</button>
+              <button @click=\"filter = 'following'\" :class="filter === 'following' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Mes abonnements</button>
             </div>
 
             <template x-if="loading">
