@@ -62,6 +62,21 @@ export const profileView = () => ({
   reportSent: false,
 
   async init() {
+    // Surveille les changements de route param pour réinitialiser sur navigation entre profils
+    if (this.$watch) {
+      this.$watch('$store.app.route', (newRoute) => {
+        if (newRoute.name === 'u' || newRoute.name === 'profile') {
+          const newKey = newRoute.params?.[0] || 'me'
+          if (newKey !== this._routeKey) {
+            this._load()
+          }
+        }
+      })
+    }
+    this._load()
+  },
+
+  async _load() {
     const store = window.Alpine.store('app')
     const currentKey = store.route?.params?.[0] || 'me'
     if (this._routeKey === currentKey && this.profile) return
@@ -77,6 +92,7 @@ export const profileView = () => ({
     this.following = []
     this.networkLoaded = false
     this.commonSeriesCount = null
+    this.activeTab = 'top'  // Reset tab only on actual navigation change
 
     try {
       const me = store.session?.user?.id
@@ -279,6 +295,8 @@ export const profileView = () => ({
 
   async loadLibrary() {
     if (!this.profile) return
+    if (this._libraryLoading) return  // Guard contre appels concurrents
+    this._libraryLoading = true
     this.libraryLoading = true
     try {
       const { data, error } = await supabase
@@ -295,21 +313,26 @@ export const profileView = () => ({
     } catch (e) {
       console.warn('[Profile] loadLibrary error', e)
       this.library = []
-    } finally { this.libraryLoading = false }
+    } finally {
+      this.libraryLoading = false
+      this._libraryLoading = false
+    }
   },
 
   get libraryFiltered() {
-    if (this.libraryFilter === 'all') return this.library
-    return this.library.filter(i => i.status === this.libraryFilter)
+    const lib = (this.library || []).filter(i => i && i.id && i.show)
+    if (this.libraryFilter === 'all') return lib
+    return lib.filter(i => i.status === this.libraryFilter)
   },
 
   get libraryCounts() {
+    const lib = (this.library || []).filter(Boolean)
     return {
-      all: this.library.length,
-      watching: this.library.filter(i => i.status === 'watching').length,
-      finished: this.library.filter(i => i.status === 'finished').length,
-      wishlist: this.library.filter(i => i.status === 'wishlist').length,
-      abandoned: this.library.filter(i => i.status === 'abandoned').length,
+      all: lib.length,
+      watching: lib.filter(i => i.status === 'watching').length,
+      finished: lib.filter(i => i.status === 'finished').length,
+      wishlist: lib.filter(i => i.status === 'wishlist').length,
+      abandoned: lib.filter(i => i.status === 'abandoned').length,
     }
   },
 
@@ -342,6 +365,17 @@ export const profileView = () => ({
   // ─── SWIPE ──────────────────────────────────────────────────────────────────
 
   swipeCard(item) {
+    if (!item) {
+      // Guard : retourne un objet inerte si item null (évite crash Alpine)
+      return {
+        _item: null,
+        startX: 0, currentX: 0, swiping: false, THRESHOLD: 80,
+        get swipePercent() { return 0 },
+        get isRight() { return false },
+        get isLeft() { return false },
+        onTouchStart() {}, onTouchMove() {}, onTouchEnd() {}
+      }
+    }
     return {
       _item: item,
       startX: 0,
