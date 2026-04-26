@@ -1311,6 +1311,61 @@ export const appTemplate = `
         </p>
       </footer>
 
+      <!-- ============== WELCOME MODAL (3 écrans) ============== -->
+      <template x-if="$store.app.profile && $store.app.profile.welcome_seen === false">
+        <div id="onboarding" x-data="welcomeModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div class="w-full max-w-md bg-ink-900 rounded-3xl border border-ink-700/50 overflow-hidden">
+
+            <!-- Progress -->
+            <div class="px-6 pt-6 flex gap-2">
+              <div class="h-1 flex-1 rounded-full transition-colors" :class="step >= 1 ? 'bg-flame-500' : 'bg-ink-700'"></div>
+              <div class="h-1 flex-1 rounded-full transition-colors" :class="step >= 2 ? 'bg-flame-500' : 'bg-ink-700'"></div>
+              <div class="h-1 flex-1 rounded-full transition-colors" :class="step >= 3 ? 'bg-flame-500' : 'bg-ink-700'"></div>
+            </div>
+
+            <!-- ob-screen-1 -->
+            <section x-show="step === 1" id="ob-screen-1" class="p-8">
+              <h2 class="text-2xl display italic text-cream-50 mb-6">Comment créer un profil et le supprimer</h2>
+            </section>
+
+            <!-- ob-screen-2 -->
+            <section x-show="step === 2" id="ob-screen-2" class="p-8">
+              <h2 class="text-2xl display italic text-cream-50 mb-6">Comment ajouter une série</h2>
+            </section>
+
+            <!-- ob-screen-3 -->
+            <section x-show="step === 3" id="ob-screen-3" class="p-8">
+              <h2 class="text-2xl display italic text-cream-50 mb-6">Vos données, vos choix.</h2>
+              <div class="space-y-3">
+                <label class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-ink-800 border border-ink-700/50 cursor-pointer">
+                  <span class="text-sm text-cream-100">Cookies analytiques</span>
+                  <input type="checkbox" x-model="consent_analytics" class="w-5 h-5 accent-flame-500" />
+                </label>
+                <label class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-ink-800 border border-ink-700/50 cursor-pointer">
+                  <span class="text-sm text-cream-100">Notifications</span>
+                  <input type="checkbox" x-model="consent_notifications" class="w-5 h-5 accent-flame-500" />
+                </label>
+                <label class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-ink-800 border border-ink-700/50 cursor-pointer">
+                  <span class="text-sm text-cream-100">Personnalisation</span>
+                  <input type="checkbox" x-model="consent_personalization" class="w-5 h-5 accent-flame-500" />
+                </label>
+              </div>
+            </section>
+
+            <!-- Navigation -->
+            <div class="px-6 pb-6 flex gap-3">
+              <button x-show="step > 1" @click="prev()" class="flex-1 py-3 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Précédent</button>
+              <button x-show="step < 3" @click="next()" class="flex-1 py-3 rounded-xl bg-flame-600 text-cream-50 text-sm font-semibold hover:bg-flame-500 transition-colors">Suivant</button>
+              <button x-show="step === 3" @click="finish()" :disabled="saving" class="flex-1 py-3 rounded-xl bg-flame-600 text-cream-50 text-sm font-semibold hover:bg-flame-500 transition-colors disabled:opacity-50">
+                <span x-show="!saving">Terminer</span>
+                <span x-show="saving">…</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </template>
+
       <!-- ============== BOTTOM NAV : 5 onglets ============== -->
       <nav class="fixed bottom-0 left-0 right-0 z-30 nav-glass nav-bottom">
         <div class="flex items-center justify-around max-w-md mx-auto px-2 pt-2">
