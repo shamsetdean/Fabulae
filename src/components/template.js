@@ -1284,8 +1284,8 @@ export const appTemplate = `
 
             <!-- ─── MODAL SUPPRESSION DE COMPTE ─── -->
             <template x-if="showDeleteAccountModal">
-              <div class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showDeleteAccountModal = false; deleteConfirmText = ''">
-                <div class="w-full max-w-sm bg-ink-900 rounded-2xl p-6 border border-red-900/50 animate-slide-up">
+              <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showDeleteAccountModal = false; deleteConfirmText = ''">
+                <div class="w-full max-w-sm bg-ink-900 rounded-2xl p-6 border border-red-900/50 animate-slide-up max-h-[80vh] overflow-y-auto">
                   <div class="flex items-center gap-2 mb-3">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     <h3 class="text-base font-semibold text-red-400">Supprimer mon compte</h3>
@@ -1297,16 +1297,16 @@ export const appTemplate = `
                     <li>• Tes Top 3 et Flop 3</li>
                     <li>• Tes abonnements et abonnés</li>
                   </ul>
-                  <div class="mb-4">
-                    <label class="text-xs text-cream-300/70 mb-1.5 block">Tape <strong class="text-red-400">SUPPRIMER</strong> pour confirmer</label>
-                    <input x-model="deleteConfirmText" type="text" class="input text-sm" placeholder="SUPPRIMER" />
-                  </div>
-                  <div class="flex gap-3">
+                  <div class="flex gap-3 mb-4">
                     <button @click="showDeleteAccountModal = false; deleteConfirmText = ''" class="flex-1 py-2.5 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Annuler</button>
                     <button @click="deleteAccount()" :disabled="deletingAccount || deleteConfirmText !== 'SUPPRIMER'" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500 transition-colors disabled:opacity-50">
                       <span x-show="!deletingAccount">Supprimer</span>
                       <span x-show="deletingAccount">Suppression…</span>
                     </button>
+                  </div>
+                  <div>
+                    <label class="text-xs text-cream-300/70 mb-1.5 block">Tape <strong class="text-red-400">SUPPRIMER</strong> pour confirmer</label>
+                    <input x-model="deleteConfirmText" type="text" class="input text-sm" placeholder="SUPPRIMER" autocomplete="off" autocorrect="off" autocapitalize="characters" />
                   </div>
                 </div>
               </div>
