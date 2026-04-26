@@ -1314,7 +1314,12 @@ export const appTemplate = `
       <!-- ============== WELCOME MODAL (3 écrans) ============== -->
       <template x-if="$store.app.profile && $store.app.profile.welcome_seen === false">
         <div id="onboarding" x-data="welcomeModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-          <div class="w-full max-w-md bg-ink-900 rounded-3xl border border-ink-700/50 overflow-hidden">
+          <div class="relative w-full max-w-md bg-ink-900 rounded-3xl border border-ink-700/50 overflow-hidden">
+
+            <!-- Bouton "Ne plus afficher" -->
+            <button @click="dismiss()" :disabled="saving" class="absolute top-3 right-3 z-10 text-[11px] text-cream-300/50 hover:text-cream-100 px-3 py-1.5 rounded-full hover:bg-ink-800 transition-colors disabled:opacity-50">
+              Ne plus afficher
+            </button>
 
             <!-- Progress -->
             <div class="px-6 pt-6 flex gap-2">
