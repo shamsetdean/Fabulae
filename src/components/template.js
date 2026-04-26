@@ -556,62 +556,66 @@ export const appTemplate = `
             <template x-if="selectedShow">
               <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" @click.self="cancelSelection()">
                 <div class="w-full max-w-md bg-ink-900 rounded-2xl border-2 border-flame-500/40 shadow-2xl max-h-[90vh] overflow-y-auto p-5">
+
                   <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Classer cette série</p>
+
+                  <!-- En-tête : poster + infos + bouton fermer -->
                   <div class="flex gap-3 items-start mb-4">
-                <template x-if="selectedShow?.poster">
-                  <img :src="selectedShow.poster" :alt="selectedShow?.name" class="w-16 h-24 rounded-lg object-cover flex-shrink-0" />
-                </template>
-                <template x-if="!selectedShow?.poster">
-                  <div class="w-16 h-24 rounded-lg bg-ink-800 flex-shrink-0"></div>
-                </template>
-                <div class="flex-1 min-w-0">
-                  <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-1">Série sélectionnée</p>
-                  <p class="text-base font-semibold text-cream-50 line-clamp-2" x-text="selectedShow?.name"></p>
-                  <p class="text-xs text-cream-300/60" x-text="selectedShow?.year"></p>
-                </div>
-                <button @click="cancelSelection()" class="text-cream-300/40 hover:text-cream-200 transition-colors flex-shrink-0">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-              </div>
-
-              <!-- Statut -->
-              <div class="mb-3">
-                <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Statut</p>
-                <div class="grid grid-cols-2 gap-2">
-                  <button @click="selStatus = 'watching'" :class="selStatus === 'watching' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">En cours</button>
-                  <button @click="selStatus = 'finished'" :class="selStatus === 'finished' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">Terminée</button>
-                  <button @click="selStatus = 'wishlist'" :class="selStatus === 'wishlist' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">À voir</button>
-                  <button @click="selStatus = 'abandoned'" :class="selStatus === 'abandoned' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">Abandonnée</button>
-                </div>
-              </div>
-
-              <!-- Évaluation étoiles -->
-              <div class="mb-3">
-                <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Évaluation</p>
-                <div class="flex gap-1.5">
-                  <template x-for="n in 5" :key="n">
-                    <button @click="setRating(n)" class="text-2xl transition-transform active:scale-110" :class="n <= selRating ? 'text-flame-500' : 'text-ink-700'">★</button>
-                  </template>
-                </div>
-              </div>
-
-              <!-- Recommandation -->
-              <div class="mb-4">
-                <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Recommandation</p>
-                <div class="flex gap-2">
-                  <button @click="selRecommendation = (selRecommendation === 'recommended' ? null : 'recommended')" :class="selRecommendation === 'recommended' ? 'bg-green-600/30 text-green-400 border-green-600/50' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="flex-1 text-xs px-3 py-2 rounded-lg border transition-colors">Je conseille</button>
-                  <button @click="selRecommendation = (selRecommendation === 'not_recommended' ? null : 'not_recommended')" :class="selRecommendation === 'not_recommended' ? 'bg-red-600/30 text-red-400 border-red-600/50' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="flex-1 text-xs px-3 py-2 rounded-lg border transition-colors">Je déconseille</button>
-                </div>
-              </div>
-
-              <!-- Boutons d'action -->
-              <div class="flex gap-2">
-                <button @click="cancelSelection()" class="flex-1 py-2.5 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Annuler</button>
-                <button @click="saveSelection()" :disabled="selSaving" class="flex-1 py-2.5 rounded-xl bg-flame-600 text-cream-50 text-sm font-semibold hover:bg-flame-500 transition-colors disabled:opacity-50">
-                  <span x-show="!selSaving">Ajouter à ma bibliothèque</span>
-                  <span x-show="selSaving">…</span>
-                </button>
+                    <template x-if="selectedShow?.poster">
+                      <img :src="selectedShow.poster" :alt="selectedShow?.name" class="w-16 h-24 rounded-lg object-cover flex-shrink-0" />
+                    </template>
+                    <template x-if="!selectedShow?.poster">
+                      <div class="w-16 h-24 rounded-lg bg-ink-800 flex-shrink-0"></div>
+                    </template>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-1">Série sélectionnée</p>
+                      <p class="text-base font-semibold text-cream-50 line-clamp-2" x-text="selectedShow?.name"></p>
+                      <p class="text-xs text-cream-300/60" x-text="selectedShow?.year"></p>
+                    </div>
+                    <button @click="cancelSelection()" class="text-cream-300/40 hover:text-cream-200 transition-colors flex-shrink-0">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
                   </div>
+
+                  <!-- Statut -->
+                  <div class="mb-3">
+                    <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Statut</p>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button @click="selStatus = 'watching'" :class="selStatus === 'watching' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">En cours</button>
+                      <button @click="selStatus = 'finished'" :class="selStatus === 'finished' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">Terminée</button>
+                      <button @click="selStatus = 'wishlist'" :class="selStatus === 'wishlist' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">À voir</button>
+                      <button @click="selStatus = 'abandoned'" :class="selStatus === 'abandoned' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">Abandonnée</button>
+                    </div>
+                  </div>
+
+                  <!-- Évaluation étoiles -->
+                  <div class="mb-3">
+                    <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Évaluation</p>
+                    <div class="flex gap-1.5">
+                      <template x-for="n in 5" :key="n">
+                        <button @click="setRating(n)" class="text-2xl transition-transform active:scale-110" :class="n <= selRating ? 'text-flame-500' : 'text-ink-700'">★</button>
+                      </template>
+                    </div>
+                  </div>
+
+                  <!-- Recommandation -->
+                  <div class="mb-4">
+                    <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Recommandation</p>
+                    <div class="flex gap-2">
+                      <button @click="selRecommendation = (selRecommendation === 'recommended' ? null : 'recommended')" :class="selRecommendation === 'recommended' ? 'bg-green-600/30 text-green-400 border-green-600/50' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="flex-1 text-xs px-3 py-2 rounded-lg border transition-colors">Je conseille</button>
+                      <button @click="selRecommendation = (selRecommendation === 'not_recommended' ? null : 'not_recommended')" :class="selRecommendation === 'not_recommended' ? 'bg-red-600/30 text-red-400 border-red-600/50' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="flex-1 text-xs px-3 py-2 rounded-lg border transition-colors">Je déconseille</button>
+                    </div>
+                  </div>
+
+                  <!-- Boutons d'action -->
+                  <div class="flex gap-2">
+                    <button @click="cancelSelection()" class="flex-1 py-2.5 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Annuler</button>
+                    <button @click="saveSelection()" :disabled="selSaving" class="flex-1 py-2.5 rounded-xl bg-flame-600 text-cream-50 text-sm font-semibold hover:bg-flame-500 transition-colors disabled:opacity-50">
+                      <span x-show="!selSaving">Ajouter à ma bibliothèque</span>
+                      <span x-show="selSaving">…</span>
+                    </button>
+                  </div>
+
                 </div>
               </div>
             </template>
