@@ -150,7 +150,7 @@ export const discoverView = () => ({
       this.selRecommendation = null
     } catch (e) {
       console.warn('[Discover] saveSelection error', e)
-      alert('Erreur lors de l\\'ajout : ' + (e.message || ''))
+      alert("Erreur lors de l'ajout : " + (e.message || ''))
     } finally {
       this.selSaving = false
     }
