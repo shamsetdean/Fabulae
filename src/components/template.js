@@ -312,11 +312,11 @@ export const appTemplate = `
         </a>
       </header>
 
-      <main class="relative z-10 pb-24">
+      <main class="relative z-10 safe-bottom">
 
         <!-- ============== LIBRARY ============== -->
         <template x-if="$store.app.route.name === 'library'">
-          <section x-data="libraryView()" x-init="init()" class="px-4 pt-4 animate-fade-in">
+          <section x-data="libraryView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
             <header class="mb-4 flex items-end justify-between gap-2">
               <div>
                 <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Mon univers</p>
@@ -497,7 +497,7 @@ export const appTemplate = `
 
         <!-- ============== FEED ============== -->
         <template x-if="$store.app.route.name === 'feed'">
-          <section x-data="feedView()" x-init="init()" class="px-4 pt-4 animate-fade-in">
+          <section x-data="feedView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
             <header class="mb-4 flex items-end justify-between">
               <div>
                 <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">À l'affiche</p>
@@ -614,7 +614,7 @@ export const appTemplate = `
 
         <!-- ============== TRENDING ============== -->
         <template x-if="$store.app.route.name === 'trending'">
-          <section x-data="trendingView()" x-init="init()" class="px-4 pt-4 animate-fade-in">
+          <section x-data="trendingView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
             <header class="mb-5">
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Classement</p>
               <h1 class="text-3xl display italic">Tendances</h1>
@@ -677,7 +677,7 @@ export const appTemplate = `
 
         <!-- ============== TOP 3 / FLOP 3 EDITOR ============== -->
         <template x-if="$store.app.route.name === 'top3'">
-          <section x-data="top3View()" x-init="init()" class="px-4 pt-4 animate-fade-in">
+          <section x-data="top3View()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
             <header class="mb-4">
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Publier un classement</p>
               <h1 class="text-3xl display italic" x-text="'Mon ' + label"></h1>
@@ -777,7 +777,7 @@ export const appTemplate = `
 
         <!-- ============== NOTIFICATIONS ============== -->
         <template x-if="$store.app.route.name === 'notifications'">
-          <section x-data="notificationsView()" x-init="init()" class="px-4 pt-4 animate-fade-in">
+          <section x-data="notificationsView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
             <header class="mb-5">
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Activité</p>
               <h1 class="text-3xl display italic">Notifications</h1>
@@ -813,7 +813,7 @@ export const appTemplate = `
 
         <!-- ============== PROFIL ============== -->
         <template x-if="$store.app.route.name === 'profile' || $store.app.route.name === 'u'">
-          <section x-data="profileView()" x-init="init()" x-effect="($store.app.route.name === 'u' || $store.app.route.name === 'profile') && init()" class="safe-bottom animate-fade-in">
+          <section x-data="profileView()" x-init="init()" x-effect="($store.app.route.name === 'u' || $store.app.route.name === 'profile') && init()" class="pb-4 animate-fade-in">
 
             <!-- Loading / Error -->
             <template x-if="loading"><div class="text-center text-cream-300/50 py-20">Chargement…</div></template>
