@@ -82,24 +82,33 @@ export const profileView = () => ({
       const me = store.session?.user?.id
       const route = store.route
 
-      let targetUsername = null
+      let profile = null
+
       if (route?.name === 'u' && route.params?.[0]) {
-        targetUsername = route.params[0]
-      } else if (store.profile?.username) {
-        targetUsername = store.profile.username
+        // Profil d'un autre utilisateur — recherche par username
+        const targetUsername = route.params[0]
+        const { data, error: pErr } = await supabase
+          .from('profiles').select('*').eq('username', targetUsername).maybeSingle()
+        if (pErr) throw pErr
+        if (!data) { this.error = 'Utilisateur introuvable'; this.loading = false; return }
+        profile = data
       } else if (me) {
-        const { data: myProfile } = await supabase
-          .from('profiles').select('username').eq('id', me).maybeSingle()
-        if (myProfile?.username) targetUsername = myProfile.username
+        // Mon propre profil — recherche directe par id (plus fiable, pas de race condition)
+        // Attend que le store ait chargé le profil si possible
+        if (store.profile?.id === me) {
+          profile = store.profile
+        } else {
+          const { data, error: pErr } = await supabase
+            .from('profiles').select('*').eq('id', me).maybeSingle()
+          if (pErr) throw pErr
+          profile = data
+        }
+        if (!profile) { this.error = 'Profil introuvable'; this.loading = false; return }
+      } else {
+        this.error = 'Non connecté'
+        this.loading = false
+        return
       }
-
-      if (!targetUsername) { this.error = 'Profil introuvable'; this.loading = false; return }
-
-      const { data: profile, error: pErr } = await supabase
-        .from('profiles').select('*').eq('username', targetUsername).maybeSingle()
-
-      if (pErr) throw pErr
-      if (!profile) { this.error = 'Utilisateur inconnu'; this.loading = false; return }
 
       this.profile = profile
       this.isMe = profile.id === me
