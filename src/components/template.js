@@ -552,9 +552,12 @@ export const appTemplate = `
         <template x-if="$store.app.route.name === 'discover'">
           <section x-data="discoverView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
 
-            <!-- ZONE DE CLASSIFICATION (toute première chose en haut de page) -->
-            <div x-show="selectedShow" x-transition class="mb-5 card p-4 border-2 border-flame-500/40 bg-flame-600/5">
-              <div x-show="selectedShow" class="flex gap-3 items-start mb-4">
+            <!-- ZONE DE CLASSIFICATION (overlay modal centré) -->
+            <template x-if="selectedShow">
+              <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" @click.self="cancelSelection()">
+                <div class="w-full max-w-md bg-ink-900 rounded-2xl border-2 border-flame-500/40 shadow-2xl max-h-[90vh] overflow-y-auto p-5">
+                  <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Classer cette série</p>
+                  <div class="flex gap-3 items-start mb-4">
                 <template x-if="selectedShow?.poster">
                   <img :src="selectedShow.poster" :alt="selectedShow?.name" class="w-16 h-24 rounded-lg object-cover flex-shrink-0" />
                 </template>
@@ -608,11 +611,13 @@ export const appTemplate = `
                   <span x-show="!selSaving">Ajouter à ma bibliothèque</span>
                   <span x-show="selSaving">…</span>
                 </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            </template>
 
-            <!-- Header (sous la zone de classification quand elle est ouverte) -->
-            <header x-show="!selectedShow" class="mb-4">
+            <!-- Header -->
+            <header class="mb-4">
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Explorer</p>
               <h1 class="text-3xl display italic text-cream-50 leading-none">Découverte</h1>
               <p class="text-xs text-cream-300/60 mt-2">Cherche, ajoute et classe de nouvelles séries.</p>
