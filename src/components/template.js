@@ -813,7 +813,7 @@ export const appTemplate = `
 
         <!-- ============== PROFIL ============== -->
         <template x-if="$store.app.route.name === 'profile' || $store.app.route.name === 'u'">
-          <section :key="$store.app.route.params[0] || 'me'" x-data="profileView()" x-init="init()" class="pb-4 animate-fade-in">
+          <section x-data="profileView()" x-init="init()" class="pb-4 animate-fade-in">
 
             <!-- Loading / Error -->
             <template x-if="loading"><div class="text-center text-cream-300/50 py-20">Chargement…</div></template>
@@ -938,12 +938,6 @@ export const appTemplate = `
                 <!-- ─── ONGLETS ─── -->
                 <div class="flex border-b border-ink-700/50 mb-4 px-4 overflow-x-auto">
                   <button @click="setTab('top')" :class="activeTab === 'top' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">Top 3</button>
-                  <template x-if="showAnalysis">
-                    <button @click="setTab('library')" :class="activeTab === 'library' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
-                      Bibliothèque
-                      <span x-show="library.length > 0" class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + library.length + ')'"></span>
-                    </button>
-                  </template>
                   <template x-if="isMe">
                     <button @click="setTab('followers')" :class="activeTab === 'followers' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
                       Abonnés
@@ -1020,124 +1014,6 @@ export const appTemplate = `
 
                     <template x-if="isMe">
                       <a href="#/top3" class="block text-center btn-secondary text-sm">Mettre à jour mes classements</a>
-                    </template>
-                  </div>
-                </template>
-
-                <!-- ─── ONGLET BIBLIOTHÈQUE ─── -->
-                <template x-if="activeTab === 'library'">
-                  <div class="px-4">
-                    <template x-if="!showAnalysis">
-                      <div class="card p-6 text-center">
-                        <p class="text-sm text-cream-300/60">Bibliothèque privée</p>
-                      </div>
-                    </template>
-
-                    <template x-if="showAnalysis">
-                      <div>
-                        <!-- Filtres -->
-                        <div class="flex gap-2 overflow-x-auto pb-2 mb-3 -mx-1 px-1">
-                          <button @click="libraryFilter = 'all'" :class="libraryFilter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0" x-text="'Tout (' + libraryCounts.all + ')'"></button>
-                          <button @click="libraryFilter = 'watching'" :class="libraryFilter === 'watching' ? 'bg-flame-500 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0" x-text="'En cours (' + libraryCounts.watching + ')'"></button>
-                          <button @click="libraryFilter = 'finished'" :class="libraryFilter === 'finished' ? 'bg-green-600 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0" x-text="'Terminées (' + libraryCounts.finished + ')'"></button>
-                          <button @click="libraryFilter = 'wishlist'" :class="libraryFilter === 'wishlist' ? 'bg-ink-600 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0" x-text="'À voir (' + libraryCounts.wishlist + ')'"></button>
-                          <button @click="libraryFilter = 'abandoned'" :class="libraryFilter === 'abandoned' ? 'bg-red-700 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0" x-text="'Abandonnées (' + libraryCounts.abandoned + ')'"></button>
-                        </div>
-
-                        <template x-if="libraryLoading">
-                          <div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-16 rounded-xl"></div></template></div>
-                        </template>
-
-                        <template x-if="!libraryLoading && libraryFiltered.length === 0">
-                          <p class="text-sm text-cream-300/50 text-center py-8">Aucune série dans cette catégorie.</p>
-                        </template>
-
-                        <!-- Cartes avec swipe (uniquement sur mon profil) -->
-                        <div class="space-y-2">
-                          <template x-for="item in libraryFiltered" :key="item.id">
-                            <div x-data="swipeCard(item)" class="relative overflow-hidden rounded-xl">
-
-                              <!-- Fond swipe gauche (supprimer) -->
-                              <div class="absolute inset-0 flex items-center justify-end pr-5 rounded-xl bg-red-600/90" :style="'opacity: ' + (isLeft ? swipePercent : 0)">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                              </div>
-
-                              <!-- Fond swipe droit (éditer) -->
-                              <div class="absolute inset-0 flex items-center pl-5 rounded-xl bg-flame-600/90" :style="'opacity: ' + (isRight ? swipePercent : 0)">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                              </div>
-
-                              <!-- Carte (glissante) -->
-                              <div
-                                class="relative card p-3 flex gap-3 items-center touch-pan-y select-none"
-                                :style="'transform: translateX(' + offset + 'px); transition: ' + (swiping ? 'none' : 'transform 0.25s ease') + ';'"
-                                @touchstart.passive="onTouchStart($event)"
-                                @touchmove.passive="onTouchMove($event)"
-                                @touchend="onTouchEnd($root)"
-                              >
-                                <template x-if="item.show?.poster">
-                                  <img :src="item.show.poster" :alt="item.show.name" class="w-10 h-14 rounded-md object-cover flex-shrink-0" loading="lazy" />
-                                </template>
-                                <template x-if="!item.show?.poster">
-                                  <div class="w-10 h-14 rounded-md bg-ink-800 flex-shrink-0"></div>
-                                </template>
-                                <div class="flex-1 min-w-0">
-                                  <p class="text-sm font-medium text-cream-100 truncate" x-text="item.show?.name"></p>
-                                  <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-                                    <span :class="statusColor(item.status)" class="text-[11px]" x-text="statusLabel(item.status)"></span>
-                                    <template x-if="item.rating">
-                                      <span class="text-[11px] text-cream-300/60">
-                                        <template x-for="s in item.rating" :key="s">★</template>
-                                      </span>
-                                    </template>
-                                    <template x-if="item.recommendation === 'recommended'">
-                                      <span class="text-[10px] text-green-400">Je recommande</span>
-                                    </template>
-                                    <template x-if="item.recommendation === 'not_recommended'">
-                                      <span class="text-[10px] text-red-400">Déconseillé</span>
-                                    </template>
-                                  </div>
-                                </div>
-                                <!-- Hint swipe uniquement sur mon profil -->
-                                <template x-if="$root.isMe">
-                                  <svg class="flex-shrink-0 text-cream-300/20" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                                </template>
-                              </div>
-                            </div>
-                          </template>
-                        </div>
-
-                        <!-- Analyse genres -->
-                        <template x-if="!libraryLoading && library.length > 0">
-                          <div class="mt-6 pt-5 border-t border-ink-700/40">
-                            <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 mb-3">Profil de goûts</p>
-                            <div class="card p-4">
-                              <div class="flex items-center gap-4 mb-3">
-                                <div x-html="pieSvgHtml"></div>
-                                <div class="flex-1 min-w-0 space-y-1">
-                                  <template x-for="(g, i) in genreStats.slice(0, 5)" :key="g.id">
-                                    <div class="flex items-center gap-2 text-xs">
-                                      <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" :style="'background:' + g.color"></span>
-                                      <span class="truncate text-cream-100" x-text="g.name"></span>
-                                      <span class="ml-auto text-cream-300/60 font-mono" x-text="g.percent.toFixed(0) + '%'"></span>
-                                    </div>
-                                  </template>
-                                </div>
-                              </div>
-                              <template x-if="genreNeverWatched.length > 0">
-                                <div class="pt-3 border-t border-ink-700/40">
-                                  <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Jamais explorés</p>
-                                  <div class="flex flex-wrap gap-1.5">
-                                    <template x-for="g in genreNeverWatched" :key="g.id">
-                                      <span class="chip text-[11px]" x-text="g.name"></span>
-                                    </template>
-                                  </div>
-                                </div>
-                              </template>
-                            </div>
-                          </div>
-                        </template>
-                      </div>
                     </template>
                   </div>
                 </template>
