@@ -317,24 +317,17 @@ export const appTemplate = `
         <!-- ============== LIBRARY ============== -->
         <template x-if="$store.app.route.name === 'library'">
           <section x-data="libraryView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
-            <header class="mb-4 flex items-end justify-between gap-2">
-              <div>
-                <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Mon univers</p>
-                <h1 class="text-3xl display italic text-cream-50 leading-none">Bibliothèque</h1>
-              </div>
-              <button @click="toggleSearch" class="btn-primary flex items-center gap-1.5 text-sm py-2 px-3" :aria-expanded="searchOpen ? 'true' : 'false'">
-                <template x-if="!searchOpen">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                </template>
-                <template x-if="searchOpen">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </template>
-                <span x-text="searchOpen ? 'Fermer' : 'Ajouter'"></span>
-              </button>
+            <header class="mb-4">
+              <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Mon univers</p>
+              <h1 class="text-3xl display italic text-cream-50 leading-none">Bibliothèque</h1>
             </header>
 
-            <!-- ZONE RECHERCHE TMDB (slide down) -->
-            <div x-show="searchOpen" x-transition.duration.200ms class="mb-4 card p-3">
+            <div class="mb-4">
+              <input type="search" x-model="search" class="input text-sm" placeholder="Rechercher dans ma bibliothèque..." />
+            </div>
+
+            <!-- ZONE_RECHERCHE_TMDB_SUPPRIMEE -->
+            <div style="display:none">
               <div class="relative mb-3">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
                 <input
@@ -384,10 +377,6 @@ export const appTemplate = `
               <template x-if="searchQuery.trim().length < 2 && !searching">
                 <p class="text-[11px] text-cream-300/40 text-center py-3">Tape au moins 2 lettres.</p>
               </template>
-            </div>
-
-            <div class="mb-4" x-show="!searchOpen">
-              <input type="search" x-model="search" class="input text-sm" placeholder="Rechercher dans ma bibliothèque..." />
             </div>
 
             <!-- Filtres horizontaux scrollables -->
@@ -609,6 +598,100 @@ export const appTemplate = `
                 </article>
               </template>
             </div>
+          </section>
+        </template>
+
+        <!-- ============== DISCOVER ============== -->
+        <template x-if="$store.app.route.name === 'discover'">
+          <section x-data="discoverView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
+            <header class="mb-4">
+              <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Explorer</p>
+              <h1 class="text-3xl display italic text-cream-50 leading-none">Découverte</h1>
+              <p class="text-xs text-cream-300/60 mt-2">Cherche, ajoute et classe de nouvelles séries.</p>
+            </header>
+
+            <!-- Barre de recherche -->
+            <div class="relative mb-5">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input
+                type="search"
+                x-model="searchQuery"
+                @input="onSearchInput"
+                class="input text-sm pl-9"
+                placeholder="Cherche une série..."
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- Résultats de recherche -->
+            <template x-if="searchQuery.trim().length >= 2">
+              <div class="mb-6">
+                <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Résultats</p>
+                <template x-if="searching">
+                  <div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-20 rounded-xl"></div></template></div>
+                </template>
+                <template x-if="!searching && searchResults.length === 0">
+                  <p class="text-sm text-cream-300/50 text-center py-6">Aucun résultat pour cette recherche.</p>
+                </template>
+                <div class="space-y-2">
+                  <template x-for="show in searchResults" :key="show.id">
+                    <div class="card p-3 flex gap-3 items-center">
+                      <template x-if="show.poster">
+                        <img :src="show.poster" :alt="show.name" class="w-12 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+                      </template>
+                      <template x-if="!show.poster">
+                        <div class="w-12 h-16 rounded-lg bg-ink-800 flex-shrink-0"></div>
+                      </template>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-cream-100 truncate" x-text="show.name"></p>
+                        <p class="text-[11px] text-cream-300/50" x-text="show.year"></p>
+                        <p class="text-[11px] text-cream-300/60 line-clamp-2 mt-0.5" x-text="show.overview"></p>
+                      </div>
+                      <button @click="classify(show)" :disabled="isInLibrary(show.id)" class="flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg transition-colors" :class="isInLibrary(show.id) ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-flame-600 text-cream-50 hover:bg-flame-500'">
+                        <span x-text="isInLibrary(show.id) ? '✓ Ajoutée' : 'Classer'"></span>
+                      </button>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <!-- Tendances par défaut (quand pas de recherche active) -->
+            <template x-if="searchQuery.trim().length < 2">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Tendances de la semaine</p>
+                <template x-if="trendingLoading">
+                  <div class="grid grid-cols-2 gap-3"><template x-for="i in 6" :key="i"><div class="skeleton aspect-[2/3] rounded-xl"></div></template></div>
+                </template>
+                <template x-if="!trendingLoading && trendingShows.length === 0">
+                  <p class="text-sm text-cream-300/50 text-center py-8">Tendances indisponibles pour le moment.</p>
+                </template>
+                <div class="grid grid-cols-2 gap-3">
+                  <template x-for="show in trendingShows" :key="show.id">
+                    <div class="space-y-2">
+                      <div class="relative aspect-[2/3] rounded-xl overflow-hidden bg-ink-800">
+                        <template x-if="show.poster">
+                          <img :src="show.poster" :alt="show.name" class="w-full h-full object-cover" loading="lazy" />
+                        </template>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                        <button @click="classify(show)" :disabled="isInLibrary(show.id)" class="absolute bottom-2 right-2 w-9 h-9 rounded-full flex items-center justify-center shadow-lg transition-colors" :class="isInLibrary(show.id) ? 'bg-green-600 text-white' : 'bg-flame-600 text-white hover:bg-flame-500'">
+                          <template x-if="!isInLibrary(show.id)">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                          </template>
+                          <template x-if="isInLibrary(show.id)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          </template>
+                        </button>
+                      </div>
+                      <div>
+                        <p class="text-xs font-medium text-cream-100 line-clamp-1" x-text="show.name"></p>
+                        <p class="text-[10px] text-cream-300/50" x-text="show.year"></p>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
           </section>
         </template>
 
@@ -1371,32 +1454,32 @@ export const appTemplate = `
         </div>
       </template>
 
-      <!-- ============== BOTTOM NAV : 5 onglets ============== -->
+      <!-- ============== BOTTOM NAV : 5 onglets égaux ============== -->
       <nav class="fixed bottom-0 left-0 right-0 z-30 nav-glass nav-bottom">
         <div class="flex items-center justify-around max-w-md mx-auto px-2 pt-2">
-          <!-- Biblio — Lucide: book-open -->
+          <!-- Bibliothèque — Lucide: book-open -->
           <a href="#/library" :class="$store.app.route.name === 'library' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            <span class="text-[10px] uppercase tracking-wider font-medium">Biblio</span>
+            <span class="text-[10px] uppercase tracking-wider font-medium">Bibliothèque</span>
+          </a>
+          <!-- Découverte — Lucide: compass -->
+          <a href="#/discover" :class="$store.app.route.name === 'discover' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            <span class="text-[10px] uppercase tracking-wider font-medium">Découverte</span>
           </a>
           <!-- Fil — Lucide: layout-list -->
           <a href="#/feed" :class="$store.app.route.name === 'feed' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="M13 5h8M13 9h5M3 15h18M3 19h14"/></svg>
             <span class="text-[10px] uppercase tracking-wider font-medium">Fil</span>
           </a>
-          <!-- Publier — Lucide: circle-plus -->
-          <a href="#/top3" class="flex flex-col items-center gap-0.5 p-2 flex-1">
-            <div class="w-11 h-11 rounded-full bg-flame-600 flex items-center justify-center text-cream-50 -mt-4 shadow-lg shadow-flame-600/30">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-            </div>
-          </a>
           <!-- Tendances — Lucide: trending-up -->
           <a href="#/trending" :class="$store.app.route.name === 'trending' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-            <span class="text-[10px] uppercase tracking-wider font-medium">Tendance</span>
+            <span class="text-[10px] uppercase tracking-wider font-medium">Tendances</span>
           </a>
+          <!-- Profil — Lucide: user -->
           <a href="#/profile" :class="$store.app.route.name === 'profile' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
             <span class="text-[10px] uppercase tracking-wider font-medium">Profil</span>
           </a>
         </div>
