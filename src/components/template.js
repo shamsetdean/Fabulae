@@ -813,7 +813,7 @@ export const appTemplate = `
 
         <!-- ============== PROFIL ============== -->
         <template x-if="$store.app.route.name === 'profile' || $store.app.route.name === 'u'">
-          <section x-data="profileView()" x-init="init()" x-effect="($store.app.route.name === 'u' || $store.app.route.name === 'profile') && init()" class="pb-24 animate-fade-in">
+          <section x-data="profileView()" x-init="init()" x-effect="($store.app.route.name === 'u' || $store.app.route.name === 'profile') && init()" class="safe-bottom animate-fade-in">
 
             <!-- Loading / Error -->
             <template x-if="loading"><div class="text-center text-cream-300/50 py-20">Chargement…</div></template>
@@ -823,11 +823,11 @@ export const appTemplate = `
               <div>
 
                 <!-- ─── HEADER PROFIL ─── -->
-                <div class="relative px-4 pt-6 pb-4 bg-gradient-to-b from-ink-900/80 to-transparent">
+                <div class="relative px-4 pt-6 pb-4 bg-gradient-to-b from-ink-900/80 to-transparent overflow-visible">
 
                   <!-- Actions rapides (mon profil) — haut à droite -->
                   <template x-if="isMe">
-                    <div class="absolute top-4 right-4 flex items-center gap-2 z-10">
+                    <div class="absolute top-4 right-4 flex items-center gap-2 z-20">
                       <!-- Rafraîchir -->
                       <button @click="window.location.reload()" title="Rafraîchir" class="w-9 h-9 rounded-full bg-ink-800/80 border border-ink-700/50 flex items-center justify-center text-cream-300/60 hover:text-cream-200 hover:bg-ink-700 active:scale-95 transition-all">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
