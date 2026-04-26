@@ -70,7 +70,7 @@ export const libraryView = () => ({
   setFilter(f) { this.filter = f },
 
   get filtered() {
-    let list = this.items
+    let list = (this.items || []).filter(i => i && i.id && i.show)
     switch (this.filter) {
       case 'watching':
         list = list.filter(i => i.status === 'watching'); break
