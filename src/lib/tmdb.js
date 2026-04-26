@@ -144,6 +144,16 @@ export const tmdbApi = {
   }
 }
 
+// ─── Helper : providers FR (compatibilité avec l'ancien code) ──────────────
+
+export function getProvidersFR(show) {
+  if (!show) return { flatrate: [], free: [] }
+  // Support des deux formats : raw TMDB et getShowCard normalisé
+  if (show.flatrate !== undefined) return { flatrate: show.flatrate || [], free: show.free || [] }
+  const fr = show['watch/providers']?.results?.FR || {}
+  return { flatrate: fr.flatrate || [], free: fr.free || [] }
+}
+
 // ─── Helper : carte série normalisée ────────────────────────────────────────
 
 const SHOW_CARD_CACHE = new Map()
