@@ -813,7 +813,7 @@ export const appTemplate = `
 
         <!-- ============== PROFIL ============== -->
         <template x-if="$store.app.route.name === 'profile' || $store.app.route.name === 'u'">
-          <section x-data="profileView()" x-init="init()" x-effect="($store.app.route.name === 'u' || $store.app.route.name === 'profile') && init()" class="pb-4 animate-fade-in">
+          <section :key="$store.app.route.params[0] || 'me'" x-data="profileView()" x-init="init()" class="pb-4 animate-fade-in">
 
             <!-- Loading / Error -->
             <template x-if="loading"><div class="text-center text-cream-300/50 py-20">Chargement…</div></template>
