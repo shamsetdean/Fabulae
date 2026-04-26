@@ -551,13 +551,8 @@ export const appTemplate = `
         <!-- ============== DISCOVER ============== -->
         <template x-if="$store.app.route.name === 'discover'">
           <section x-data="discoverView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
-            <header class="mb-4">
-              <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Explorer</p>
-              <h1 class="text-3xl display italic text-cream-50 leading-none">Découverte</h1>
-              <p class="text-xs text-cream-300/60 mt-2">Cherche, ajoute et classe de nouvelles séries.</p>
-            </header>
 
-            <!-- ZONE DE CLASSIFICATION (apparaît au-dessus de la barre de recherche) -->
+            <!-- ZONE DE CLASSIFICATION (toute première chose en haut de page) -->
             <div x-show="selectedShow" x-transition class="mb-5 card p-4 border-2 border-flame-500/40 bg-flame-600/5">
               <div x-show="selectedShow" class="flex gap-3 items-start mb-4">
                 <template x-if="selectedShow?.poster">
@@ -615,6 +610,13 @@ export const appTemplate = `
                 </button>
               </div>
             </div>
+
+            <!-- Header (sous la zone de classification quand elle est ouverte) -->
+            <header x-show="!selectedShow" class="mb-4">
+              <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Explorer</p>
+              <h1 class="text-3xl display italic text-cream-50 leading-none">Découverte</h1>
+              <p class="text-xs text-cream-300/60 mt-2">Cherche, ajoute et classe de nouvelles séries.</p>
+            </header>
 
             <!-- Barre de recherche -->
             <div class="relative mb-5">
