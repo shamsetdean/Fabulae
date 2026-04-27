@@ -1,24 +1,11 @@
 import { supabase } from '../lib/supabase.js'
 import { getShowCard } from '../lib/tmdb.js'
 
-export function formatDate(iso) {
-  const d = new Date(iso)
-  const diff = (Date.now() - d.getTime()) / 1000
-  if (diff < 60) return "à l'instant"
-  if (diff < 3600) return Math.floor(diff / 60) + ' min'
-  if (diff < 86400) return Math.floor(diff / 3600) + ' h'
-  if (diff < 86400 * 7) return Math.floor(diff / 86400) + ' j'
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-}
-
 export const feedView = () => ({
-  // Entrées regroupées : 1 par utilisateur, contient { user_id, username, top, flop, latestDate, like_count, liked_by_me }
   entries: [],
   loading: true,
   error: null,
-  filter: 'all',     // 'all' | 'following'
-
-  formatDate,
+  filter: 'all', // 'all' | 'recommended' | 'not_recommended'
 
   async init() {
     await this.load()
@@ -27,103 +14,66 @@ export const feedView = () => ({
   async load() {
     this.loading = true
     this.error = null
+    const me = window.Alpine.store('app').session?.user?.id
+    if (!me) { this.loading = false; return }
+
     try {
-      let query = supabase
-        .from('top_lists_with_profile')
+      const { data: follows } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', me)
+
+      const userIds = [me, ...(follows || []).map(f => f.following_id)]
+
+      const { data, error } = await supabase
+        .from('feed_recent_additions')
         .select('*')
-        .eq('is_current', true)
-        .order('created_at', { ascending: false })
+        .in('user_id', userIds)
         .limit(80)
 
-      if (this.filter === 'following') {
-        const me = window.Alpine.store('app').session?.user?.id
-        if (me) {
-          const { data: follows } = await supabase
-            .from('follows').select('following_id').eq('follower_id', me)
-          const ids = (follows ?? []).map(f => f.following_id)
-          if (ids.length === 0) {
-            this.entries = []
-            this.loading = false
-            return
-          }
-          query = query.in('user_id', ids)
-        }
-      }
-
-      const { data, error } = await query
       if (error) throw error
 
-      // Regrouper par user_id : 1 entrée par user, contenant top et/ou flop
-      const grouped = new Map()
-      for (const list of (data || [])) {
-        const key = list.user_id
-        if (!grouped.has(key)) {
-          grouped.set(key, {
-            user_id: list.user_id,
-            username: list.username,
-            top: null,
-            flop: null,
-            latestDate: list.created_at
-          })
-        }
-        const entry = grouped.get(key)
-        if (list.kind === 'top') entry.top = list
-        if (list.kind === 'flop') entry.flop = list
-        // Conserve la date la plus récente entre top et flop
-        if (new Date(list.created_at) > new Date(entry.latestDate)) {
-          entry.latestDate = list.created_at
-        }
-      }
-
-      // Hydrater chaque entrée avec les séries TMDB
-      const list = Array.from(grouped.values())
-      const hydrated = await Promise.all(list.map(async (entry) => {
-        if (entry.top) {
-          const [s1, s2, s3] = await Promise.all([
-            getShowCard(entry.top.position_1_tmdb_id),
-            getShowCard(entry.top.position_2_tmdb_id),
-            getShowCard(entry.top.position_3_tmdb_id)
-          ])
-          entry.top.shows = [s1, s2, s3]
-        }
-        if (entry.flop) {
-          const [s1, s2, s3] = await Promise.all([
-            getShowCard(entry.flop.position_1_tmdb_id),
-            getShowCard(entry.flop.position_2_tmdb_id),
-            getShowCard(entry.flop.position_3_tmdb_id)
-          ])
-          entry.flop.shows = [s1, s2, s3]
-        }
-        return entry
+      const hydrated = await Promise.all((data || []).map(async (row) => {
+        const show = await getShowCard(row.tmdb_id)
+        return show ? { ...row, show } : null
       }))
 
-      // Trier par date la plus récente
-      hydrated.sort((a, b) => new Date(b.latestDate) - new Date(a.latestDate))
-      this.entries = hydrated
+      this.entries = hydrated.filter(Boolean)
     } catch (e) {
+      console.warn('[Feed] load error', e)
       this.error = e.message
     } finally {
       this.loading = false
     }
   },
 
-  // Like sur le top OU le flop d'une entrée
-  async toggleLike(list) {
-    if (!list) return
-    const me = window.Alpine.store('app').session?.user?.id
-    if (!me) return
-    if (list.liked_by_me) {
-      await supabase.from('likes').delete().eq('user_id', me).eq('top_list_id', list.id)
-      list.liked_by_me = false
-      list.like_count = Math.max(0, list.like_count - 1)
-    } else {
-      const { error } = await supabase.from('likes').insert({ user_id: me, top_list_id: list.id })
-      if (!error) {
-        list.liked_by_me = true
-        list.like_count = (list.like_count || 0) + 1
-      }
-    }
+  get filtered() {
+    const list = (this.entries || []).filter(e => e && e.show)
+    if (this.filter === 'recommended') return list.filter(e => e.recommendation === 'recommended')
+    if (this.filter === 'not_recommended') return list.filter(e => e.recommendation === 'not_recommended')
+    return list
   },
 
-  setFilter(f) { this.filter = f; this.load() }
+  formatRelativeDate(dateStr) {
+    if (!dateStr) return ''
+    const now = Date.now()
+    const then = new Date(dateStr).getTime()
+    const diff = now - then
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
+
+    if (minutes < 1) return "a l'instant"
+    if (minutes < 60) return 'il y a ' + minutes + ' min'
+    if (hours < 24) return 'il y a ' + hours + 'h'
+    if (days < 7) return 'il y a ' + days + 'j'
+    return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  }
 })
+
+export function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  })
+}
