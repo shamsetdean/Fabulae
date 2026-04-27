@@ -434,276 +434,87 @@ export const appTemplate = `
         <!-- ============== FEED ============== -->
         <template x-if="$store.app.route.name === 'feed'">
           <section x-data="feedView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
-            <header class="mb-4 flex items-end justify-between">
-              <div>
-                <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">À l'affiche</p>
-                <h1 class="text-3xl display italic text-cream-50 leading-none">Le fil</h1>
-              </div>
-              <a href="#/top3" class="btn-primary text-sm py-2 px-4">Publier</a>
+            <header class="mb-4">
+              <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">À l'affiche</p>
+              <h1 class="text-3xl display italic text-cream-50 leading-none">Le fil</h1>
+              <p class="text-xs text-cream-300/60 mt-2">Les ajouts récents de la communauté.</p>
             </header>
 
-            <div class="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-1 px-1">
-              <button @click=\"filter = 'all'\" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Tout le monde</button>
-              <button @click=\"filter = 'following'\" :class="filter === 'following' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap">Mes abonnements</button>
+            <!-- Filtres -->
+            <div class="flex gap-2 mb-4 overflow-x-auto -mx-1 px-1">
+              <button @click="filter = 'all'" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-300/70'" class="text-[11px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">Tout</button>
+              <button @click="filter = 'recommended'" :class="filter === 'recommended' ? 'bg-green-600 text-cream-50' : 'bg-ink-800 text-cream-300/70'" class="text-[11px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">Recommandées</button>
+              <button @click="filter = 'not_recommended'" :class="filter === 'not_recommended' ? 'bg-red-600 text-cream-50' : 'bg-ink-800 text-cream-300/70'" class="text-[11px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">Déconseillées</button>
             </div>
 
+            <!-- Loading -->
             <template x-if="loading">
               <div class="space-y-3">
-                <template x-for="i in 3" :key="i"><div class="skeleton h-64"></div></template>
+                <template x-for="i in 4" :key="i">
+                  <div class="skeleton h-24 rounded-xl"></div>
+                </template>
               </div>
             </template>
 
-            <template x-if="!loading && entries.length === 0">
-              <div class="text-center py-16 text-cream-300/60">
-                <p class="text-sm">Rien pour le moment.</p>
+            <!-- Empty -->
+            <template x-if="!loading && filtered.length === 0">
+              <div class="text-center py-16">
+                <p class="text-sm text-cream-300/50">Aucune activité récente dans ton fil.</p>
+                <p class="text-xs text-cream-300/40 mt-2">Suis des membres ou ajoute des séries pour voir des recommandations.</p>
               </div>
             </template>
 
-            <div class="space-y-4">
-              <template x-for="entry in entries" :key="entry.user_id">
-                <article class="card p-4 animate-slide-up">
-                  <header class="flex items-center justify-between gap-2 mb-4">
-                    <a :href="'#/u/' + entry.username" class="flex items-center gap-2.5 min-w-0">
-                      <div class="w-9 h-9 rounded-full bg-ink-700 flex items-center justify-center text-cream-200 font-mono text-xs flex-shrink-0">
-                        <span x-text="entry.username?.charAt(0).toUpperCase() ?? '?'"></span>
-                      </div>
-                      <div class="min-w-0">
-                        <p class="font-medium text-cream-50 text-sm truncate" x-text="'@' + entry.username"></p>
-                        <p class="text-[11px] text-cream-300/50" x-text="formatDate(entry.latestDate)"></p>
-                      </div>
+            <!-- Liste des entrées -->
+            <div class="space-y-3">
+              <template x-for="entry in filtered" :key="entry.id">
+                <div class="card p-3 flex gap-3 items-center">
+                  <a :href="'#/show/' + entry.tmdb_id" class="flex-shrink-0">
+                    <template x-if="entry.show?.poster">
+                      <img :src="entry.show.poster" :alt="entry.show.name" class="w-14 h-20 rounded-lg object-cover" loading="lazy" />
+                    </template>
+                    <template x-if="!entry.show?.poster">
+                      <div class="w-14 h-20 rounded-lg bg-ink-800"></div>
+                    </template>
+                  </a>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <a :href="'#/u/' + entry.username" class="flex items-center gap-1.5 group">
+                        <template x-if="entry.avatar_url">
+                          <img :src="entry.avatar_url" :alt="entry.username" class="w-5 h-5 rounded-full object-cover" />
+                        </template>
+                        <template x-if="!entry.avatar_url">
+                          <div class="w-5 h-5 rounded-full bg-ink-700 flex items-center justify-center text-[9px] font-mono text-cream-200" x-text="entry.username?.charAt(0).toUpperCase()"></div>
+                        </template>
+                        <span class="text-xs text-cream-200 group-hover:text-flame-400 transition-colors" x-text="'@' + entry.username"></span>
+                      </a>
+                      <span class="text-[10px] text-cream-300/40" x-text="formatRelativeDate(entry.created_at)"></span>
+                    </div>
+                    <a :href="'#/show/' + entry.tmdb_id" class="block">
+                      <p class="text-sm font-medium text-cream-50 line-clamp-1 hover:text-flame-400 transition-colors" x-text="entry.show?.name"></p>
                     </a>
-                  </header>
-
-                  <!-- TOP 3 -->
-                  <template x-if="entry.top">
-                    <div class="mb-4">
-                      <div class="flex items-center justify-between mb-2">
-                        <span class="text-[10px] uppercase tracking-[0.2em] text-flame-500 font-semibold">Top 3</span>
-                      </div>
-                      <div class="grid grid-cols-3 gap-2">
-                        <template x-for="(show, idx) in entry.top.shows" :key="'t'+idx">
-                          <div>
-                            <template x-if="show">
-                              <a :href="'#/show/' + show.id" class="block group">
-                                <div class="poster-compact relative">
-                                  <img x-show="show.poster" :src="show.poster" :alt="show.name" loading="lazy" class="group-hover:scale-105 transition-transform duration-500" />
-                                  <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                                  <div class="absolute top-1 left-1.5 rank-number" :class="idx === 0 ? 'rank-number-filled' : ''" x-text="idx + 1"></div>
-                                </div>
-                                <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1.5 leading-tight" x-text="show.name"></p>
-                              </a>
-                            </template>
-                          </div>
-                        </template>
-                      </div>
-                      <template x-if="entry.top.comment">
-                        <p class="text-xs text-cream-300 italic mt-2 leading-relaxed" x-text="'« ' + entry.top.comment + ' »'"></p>
+                    <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <template x-if="entry.recommendation === 'recommended'">
+                        <span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-green-600/20 text-green-400 border border-green-600/30">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H7V10l4.34-9.06a1.93 1.93 0 0 1 3.49 1.85Z"/></svg>
+                          Je recommande
+                        </span>
                       </template>
-                      <button @click="toggleLike(entry.top)" class="flex items-center gap-1.5 text-xs transition-colors mt-2" :class="entry.top.liked_by_me ? 'text-flame-500' : 'text-cream-300/60'">
-                        <svg width="14" height="14" viewBox="0 0 24 24" :fill="entry.top.liked_by_me ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        <span x-text="entry.top.like_count || 0"></span>
-                      </button>
-                    </div>
-                  </template>
-
-                  <!-- SÉPARATEUR si Top ET Flop présents -->
-                  <template x-if="entry.top && entry.flop">
-                    <div class="border-t border-ink-700/40 my-3"></div>
-                  </template>
-
-                  <!-- FLOP 3 -->
-                  <template x-if="entry.flop">
-                    <div>
-                      <div class="flex items-center justify-between mb-2">
-                        <span class="text-[10px] uppercase tracking-[0.2em] text-cream-300/70 font-semibold">Flop 3</span>
-                      </div>
-                      <div class="grid grid-cols-3 gap-2">
-                        <template x-for="(show, idx) in entry.flop.shows" :key="'f'+idx">
-                          <div>
-                            <template x-if="show">
-                              <a :href="'#/show/' + show.id" class="block group">
-                                <div class="poster-compact relative">
-                                  <img x-show="show.poster" :src="show.poster" :alt="show.name" loading="lazy" class="group-hover:scale-105 transition-transform duration-500 grayscale group-hover:grayscale-0" />
-                                  <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                                  <div class="absolute top-1 left-1.5 rank-number rank-number-flop" x-text="idx + 1"></div>
-                                </div>
-                                <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1.5 leading-tight" x-text="show.name"></p>
-                              </a>
-                            </template>
-                          </div>
-                        </template>
-                      </div>
-                      <template x-if="entry.flop.comment">
-                        <p class="text-xs text-cream-300 italic mt-2 leading-relaxed" x-text="'« ' + entry.flop.comment + ' »'"></p>
+                      <template x-if="entry.recommendation === 'not_recommended'">
+                        <span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-red-600/20 text-red-400 border border-red-600/30">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H17v12l-4.34 9.06a1.93 1.93 0 0 1-3.49-1.85Z"/></svg>
+                          Je déconseille
+                        </span>
                       </template>
-                      <button @click="toggleLike(entry.flop)" class="flex items-center gap-1.5 text-xs transition-colors mt-2" :class="entry.flop.liked_by_me ? 'text-flame-500' : 'text-cream-300/60'">
-                        <svg width="14" height="14" viewBox="0 0 24 24" :fill="entry.flop.liked_by_me ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        <span x-text="entry.flop.like_count || 0"></span>
-                      </button>
+                      <template x-if="entry.rating">
+                        <span class="text-[10px] text-flame-500">
+                          <template x-for="s in entry.rating" :key="s">★</template>
+                        </span>
+                      </template>
                     </div>
-                  </template>
-                </article>
+                  </div>
+                </div>
               </template>
             </div>
-          </section>
-        </template>
-
-        <!-- ============== DISCOVER ============== -->
-        <template x-if="$store.app.route.name === 'discover'">
-          <section x-data="discoverView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
-
-            <!-- ZONE DE CLASSIFICATION (overlay modal centré) -->
-            <template x-if="selectedShow">
-              <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" @click.self="cancelSelection()">
-                <div class="w-full max-w-md bg-ink-900 rounded-2xl border-2 border-flame-500/40 shadow-2xl max-h-[90vh] overflow-y-auto p-5">
-
-                  <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Classer cette série</p>
-
-                  <!-- En-tête : poster + infos + bouton fermer -->
-                  <div class="flex gap-3 items-start mb-4">
-                    <template x-if="selectedShow?.poster">
-                      <img :src="selectedShow.poster" :alt="selectedShow?.name" class="w-16 h-24 rounded-lg object-cover flex-shrink-0" />
-                    </template>
-                    <template x-if="!selectedShow?.poster">
-                      <div class="w-16 h-24 rounded-lg bg-ink-800 flex-shrink-0"></div>
-                    </template>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-1">Série sélectionnée</p>
-                      <p class="text-base font-semibold text-cream-50 line-clamp-2" x-text="selectedShow?.name"></p>
-                      <p class="text-xs text-cream-300/60" x-text="selectedShow?.year"></p>
-                    </div>
-                    <button @click="cancelSelection()" class="text-cream-300/40 hover:text-cream-200 transition-colors flex-shrink-0">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                    </button>
-                  </div>
-
-                  <!-- Statut -->
-                  <div class="mb-3">
-                    <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Statut</p>
-                    <div class="grid grid-cols-2 gap-2">
-                      <button @click="selStatus = 'watching'" :class="selStatus === 'watching' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">En cours</button>
-                      <button @click="selStatus = 'finished'" :class="selStatus === 'finished' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">Terminée</button>
-                      <button @click="selStatus = 'wishlist'" :class="selStatus === 'wishlist' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">À voir</button>
-                      <button @click="selStatus = 'abandoned'" :class="selStatus === 'abandoned' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">Abandonnée</button>
-                    </div>
-                  </div>
-
-                  <!-- Évaluation étoiles -->
-                  <div class="mb-3">
-                    <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Évaluation</p>
-                    <div class="flex gap-1.5">
-                      <template x-for="n in 5" :key="n">
-                        <button @click="setRating(n)" class="text-2xl transition-transform active:scale-110" :class="n <= selRating ? 'text-flame-500' : 'text-ink-700'">★</button>
-                      </template>
-                    </div>
-                  </div>
-
-                  <!-- Recommandation -->
-                  <div class="mb-4">
-                    <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Recommandation</p>
-                    <div class="flex gap-2">
-                      <button @click="selRecommendation = (selRecommendation === 'recommended' ? null : 'recommended')" :class="selRecommendation === 'recommended' ? 'bg-green-600/30 text-green-400 border-green-600/50' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="flex-1 text-xs px-3 py-2 rounded-lg border transition-colors">Je conseille</button>
-                      <button @click="selRecommendation = (selRecommendation === 'not_recommended' ? null : 'not_recommended')" :class="selRecommendation === 'not_recommended' ? 'bg-red-600/30 text-red-400 border-red-600/50' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="flex-1 text-xs px-3 py-2 rounded-lg border transition-colors">Je déconseille</button>
-                    </div>
-                  </div>
-
-                  <!-- Boutons d'action -->
-                  <div class="flex gap-2">
-                    <button @click="cancelSelection()" class="flex-1 py-2.5 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Annuler</button>
-                    <button @click="saveSelection()" :disabled="selSaving" class="flex-1 py-2.5 rounded-xl bg-flame-600 text-cream-50 text-sm font-semibold hover:bg-flame-500 transition-colors disabled:opacity-50">
-                      <span x-show="!selSaving">Ajouter à ma bibliothèque</span>
-                      <span x-show="selSaving">…</span>
-                    </button>
-                  </div>
-
-                </div>
-              </div>
-            </template>
-
-            <!-- Header -->
-            <header class="mb-4">
-              <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Explorer</p>
-              <h1 class="text-3xl display italic text-cream-50 leading-none">Découverte</h1>
-              <p class="text-xs text-cream-300/60 mt-2">Cherche, ajoute et classe de nouvelles séries.</p>
-            </header>
-
-            <!-- Barre de recherche -->
-            <div class="relative mb-5">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input
-                type="search"
-                x-model="searchQuery"
-                @input="onSearchInput"
-                class="input text-sm pl-9"
-                placeholder="Cherche une série..."
-                autocomplete="off"
-              />
-            </div>
-
-            <!-- Résultats de recherche -->
-            <template x-if="searchQuery.trim().length >= 2">
-              <div class="mb-6">
-                <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Résultats</p>
-                <template x-if="searching">
-                  <div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-20 rounded-xl"></div></template></div>
-                </template>
-                <template x-if="!searching && searchResults.length === 0">
-                  <p class="text-sm text-cream-300/50 text-center py-6">Aucun résultat pour cette recherche.</p>
-                </template>
-                <div class="space-y-2">
-                  <template x-for="show in searchResults" :key="show.id">
-                    <div class="card p-3 flex gap-3 items-center">
-                      <template x-if="show.poster">
-                        <img :src="show.poster" :alt="show.name" class="w-12 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
-                      </template>
-                      <template x-if="!show.poster">
-                        <div class="w-12 h-16 rounded-lg bg-ink-800 flex-shrink-0"></div>
-                      </template>
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-cream-100 truncate" x-text="show.name"></p>
-                        <p class="text-[11px] text-cream-300/50" x-text="show.year"></p>
-                        <p class="text-[11px] text-cream-300/60 line-clamp-2 mt-0.5" x-text="show.overview"></p>
-                      </div>
-                      <button @click="select(show)" class="flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg bg-flame-600 text-cream-50 hover:bg-flame-500 transition-colors">
-                        Classer
-                      </button>
-                    </div>
-                  </template>
-                </div>
-              </div>
-            </template>
-
-            <!-- Tendances par défaut (quand pas de recherche active) -->
-            <template x-if="searchQuery.trim().length < 2">
-              <div>
-                <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Tendances de la semaine</p>
-                <template x-if="trendingLoading">
-                  <div class="grid grid-cols-2 gap-3"><template x-for="i in 6" :key="i"><div class="skeleton aspect-[2/3] rounded-xl"></div></template></div>
-                </template>
-                <template x-if="!trendingLoading && trendingShows.length === 0">
-                  <p class="text-sm text-cream-300/50 text-center py-8">Tendances indisponibles pour le moment.</p>
-                </template>
-                <div class="grid grid-cols-2 gap-3">
-                  <template x-for="show in trendingShows" :key="show.id">
-                    <div class="space-y-2">
-                      <div class="relative aspect-[2/3] rounded-xl overflow-hidden bg-ink-800">
-                        <template x-if="show.poster">
-                          <img :src="show.poster" :alt="show.name" class="w-full h-full object-cover" loading="lazy" />
-                        </template>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                        <button @click="select(show)" class="absolute bottom-2 right-2 w-9 h-9 rounded-full flex items-center justify-center shadow-lg bg-flame-600 text-white hover:bg-flame-500 transition-colors">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                        </button>
-                      </div>
-                      <div>
-                        <p class="text-xs font-medium text-cream-100 line-clamp-1" x-text="show.name"></p>
-                        <p class="text-[10px] text-cream-300/50" x-text="show.year"></p>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-              </div>
-            </template>
           </section>
         </template>
 
@@ -1033,82 +844,143 @@ export const appTemplate = `
                 <!-- ─── ONGLETS ─── -->
                 <div class="flex border-b border-ink-700/50 mb-4 px-4 overflow-x-auto">
                   <button @click="setTab('top')" :class="activeTab === 'top' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">Top 3</button>
-                  <template x-if="isMe">
-                    <button @click="setTab('followers')" :class="activeTab === 'followers' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
-                      Abonnés
-                      <span class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + counts.followers + ')'"></span>
-                    </button>
-                  </template>
-                  <template x-if="isMe">
-                    <button @click="setTab('following')" :class="activeTab === 'following' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
-                      Abonnements
-                      <span class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + counts.following + ')'"></span>
-                    </button>
-                  </template>
+                  <button x-show="showAnalysis" @click="setTab('library')" :class="activeTab === 'library' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
+                    Bibliothèque
+                    <span x-show="library.length > 0" class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + library.length + ')'"></span>
+                  </button>
+                  <button x-show="isMe" @click="setTab('followers')" :class="activeTab === 'followers' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
+                    Abonnés
+                    <span class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + counts.followers + ')'"></span>
+                  </button>
+                  <button x-show="isMe" @click="setTab('following')" :class="activeTab === 'following' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
+                    Abonnements
+                    <span class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + counts.following + ')'"></span>
+                  </button>
                 </div>
 
-                <!-- ─── ONGLET TOP 3 ─── -->
+                <!-- ─── ONGLET TOP 3 / FLOP 3 ─── -->
                 <template x-if="activeTab === 'top'">
-                  <div class="px-4 space-y-5">
+                  <div class="px-4 space-y-6">
 
-                    <!-- Top 3 actuel -->
-                    <template x-if="currentTop">
+                    <!-- Top 3 (toutes les séries recommandées) -->
+                    <template x-if="currentTop && currentTop.shows.length > 0">
                       <div>
-                        <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-2">Top 3</p>
-                        <div class="grid grid-cols-3 gap-2 mb-2">
-                          <template x-for="(show, idx) in currentTop.shows" :key="'t'+idx">
-                            <div>
-                              <template x-if="show">
-                                <a :href="'#/show/' + show.id" class="block group">
-                                  <div class="poster-compact relative">
-                                    <img x-show="show.poster" :src="show.poster" :alt="show.name" loading="lazy" class="group-hover:scale-105 transition-transform duration-500" />
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                                    <div class="absolute top-1 left-1.5 rank-number" :class="idx === 0 ? 'rank-number-filled' : ''" x-text="idx + 1"></div>
-                                  </div>
-                                  <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1.5 leading-tight" x-text="show.name"></p>
-                                </a>
+                        <div class="flex items-baseline justify-between mb-3">
+                          <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold">Top 3</p>
+                          <span class="text-[10px] text-cream-300/40" x-text="currentTop.shows.length + ' série' + (currentTop.shows.length > 1 ? 's' : '')"></span>
+                        </div>
+                        <div class="flex gap-2 overflow-x-auto -mx-1 px-1 pb-2 snap-x">
+                          <template x-for="(show, idx) in currentTop.shows" :key="'t-' + show.id">
+                            <a :href="'#/show/' + show.id" class="flex-shrink-0 w-24 snap-start group">
+                              <div class="poster-compact relative">
+                                <template x-if="show.poster">
+                                  <img :src="show.poster" :alt="show.name" loading="lazy" class="group-hover:scale-105 transition-transform duration-500" />
+                                </template>
+                                <template x-if="!show.poster">
+                                  <div class="aspect-[2/3] bg-ink-800 rounded"></div>
+                                </template>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded"></div>
+                                <div class="absolute top-1 left-1.5 rank-number" :class="idx === 0 ? 'rank-number-filled' : ''" x-text="idx + 1"></div>
+                              </div>
+                              <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1.5 leading-tight" x-text="show.name"></p>
+                              <template x-if="show.rating">
+                                <p class="text-[10px] text-flame-500 mt-0.5">
+                                  <template x-for="s in show.rating" :key="s">★</template>
+                                </p>
                               </template>
-                            </div>
+                            </a>
                           </template>
                         </div>
-                        <template x-if="currentTop.comment">
-                          <p class="text-xs text-cream-300 italic" x-text="'« ' + currentTop.comment + ' »'"></p>
-                        </template>
                       </div>
                     </template>
 
-                    <!-- Flop 3 actuel -->
-                    <template x-if="currentFlop">
+                    <!-- Flop 3 (toutes les séries déconseillées) -->
+                    <template x-if="currentFlop && currentFlop.shows.length > 0">
                       <div>
-                        <p class="text-[10px] uppercase tracking-[0.25em] text-cream-300/60 font-semibold mb-2">Flop 3</p>
-                        <div class="grid grid-cols-3 gap-2 mb-2">
-                          <template x-for="(show, idx) in currentFlop.shows" :key="'f'+idx">
-                            <div>
-                              <template x-if="show">
-                                <a :href="'#/show/' + show.id" class="block group">
-                                  <div class="poster-compact relative">
-                                    <img x-show="show.poster" :src="show.poster" :alt="show.name" loading="lazy" class="grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500" />
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                                    <div class="absolute top-1 left-1.5 rank-number rank-number-flop" x-text="idx + 1"></div>
-                                  </div>
-                                  <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1.5 leading-tight" x-text="show.name"></p>
-                                </a>
-                              </template>
-                            </div>
+                        <div class="flex items-baseline justify-between mb-3">
+                          <p class="text-[10px] uppercase tracking-[0.25em] text-cream-300/60 font-semibold">Flop 3</p>
+                          <span class="text-[10px] text-cream-300/40" x-text="currentFlop.shows.length + ' série' + (currentFlop.shows.length > 1 ? 's' : '')"></span>
+                        </div>
+                        <div class="flex gap-2 overflow-x-auto -mx-1 px-1 pb-2 snap-x">
+                          <template x-for="(show, idx) in currentFlop.shows" :key="'f-' + show.id">
+                            <a :href="'#/show/' + show.id" class="flex-shrink-0 w-24 snap-start group">
+                              <div class="poster-compact relative">
+                                <template x-if="show.poster">
+                                  <img :src="show.poster" :alt="show.name" loading="lazy" class="grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500" />
+                                </template>
+                                <template x-if="!show.poster">
+                                  <div class="aspect-[2/3] bg-ink-800 rounded"></div>
+                                </template>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded"></div>
+                                <div class="absolute top-1 left-1.5 rank-number rank-number-flop" x-text="idx + 1"></div>
+                              </div>
+                              <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1.5 leading-tight" x-text="show.name"></p>
+                            </a>
                           </template>
                         </div>
-                        <template x-if="currentFlop.comment">
-                          <p class="text-xs text-cream-300 italic" x-text="'« ' + currentFlop.comment + ' »'"></p>
-                        </template>
                       </div>
                     </template>
 
-                    <template x-if="!currentTop && !currentFlop">
-                      <p class="text-sm text-cream-300/50 text-center py-6">Aucun classement publié.</p>
+                    <template x-if="(!currentTop || currentTop.shows.length === 0) && (!currentFlop || currentFlop.shows.length === 0)">
+                      <div class="text-center py-12">
+                        <p class="text-sm text-cream-300/50 mb-2">Aucune série recommandée pour le moment.</p>
+                        <p class="text-xs text-cream-300/40">Ajoute des séries depuis Découverte et marque-les "Je recommande" ou "Je déconseille" pour qu'elles apparaissent ici.</p>
+                      </div>
                     </template>
 
-                    <template x-if="isMe">
-                      <a href="#/top3" class="block text-center btn-secondary text-sm">Mettre à jour mes classements</a>
+                  </div>
+                </template>
+
+                <!-- ─── ONGLET BIBLIOTHÈQUE (grille statique, sans swipe) ─── -->
+                <template x-if="activeTab === 'library'">
+                  <div class="px-4">
+                    <template x-if="!showAnalysis && !isMe">
+                      <p class="text-sm text-cream-300/50 text-center py-12">Bibliothèque privée.</p>
+                    </template>
+                    <template x-if="showAnalysis || isMe">
+                      <div>
+                        <template x-if="libraryLoading">
+                          <div class="grid grid-cols-3 gap-3">
+                            <template x-for="i in 9" :key="i">
+                              <div class="skeleton aspect-[2/3] rounded-lg"></div>
+                            </template>
+                          </div>
+                        </template>
+                        <template x-if="!libraryLoading && library.length === 0">
+                          <p class="text-sm text-cream-300/50 text-center py-12">Aucune série dans la bibliothèque.</p>
+                        </template>
+                        <div class="grid grid-cols-3 gap-3" x-show="!libraryLoading && library.length > 0">
+                          <template x-for="item in library" :key="item.id">
+                            <a :href="'#/show/' + item.tmdb_id" class="block group">
+                              <div class="aspect-[2/3] rounded-lg overflow-hidden bg-ink-800 relative">
+                                <template x-if="item.show?.poster">
+                                  <img :src="item.show.poster" :alt="item.show.name" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                </template>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                                <template x-if="item.recommendation === 'recommended'">
+                                  <span class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-green-600 flex items-center justify-center">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                  </span>
+                                </template>
+                                <template x-if="item.recommendation === 'not_recommended'">
+                                  <span class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-red-600 flex items-center justify-center">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                  </span>
+                                </template>
+                              </div>
+                              <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1.5 leading-tight" x-text="item.show?.name"></p>
+                              <div class="flex items-center gap-1.5 mt-0.5">
+                                <span class="text-[9px]" :class="statusColor(item.status)" x-text="statusLabel(item.status)"></span>
+                                <template x-if="item.rating">
+                                  <span class="text-[9px] text-flame-500">
+                                    <template x-for="s in item.rating" :key="s">★</template>
+                                  </span>
+                                </template>
+                              </div>
+                            </a>
+                          </template>
+                        </div>
+                      </div>
                     </template>
                   </div>
                 </template>
