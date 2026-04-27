@@ -659,10 +659,8 @@ export const appTemplate = `
                           Je déconseille
                         </span>
                       </template>
-                      <template x-if="entry.rating">
-                        <span class="text-[10px] text-flame-500">
-                          <template x-for="s in entry.rating" :key="s">★</template>
-                        </span>
+                      <template x-if="entry.rating && entry.rating > 0">
+                        <span class="text-[10px] text-flame-500" x-text="'★'.repeat(entry.rating)"></span>
                       </template>
                     </div>
                   </div>
@@ -939,7 +937,7 @@ export const appTemplate = `
                               <p class="text-[11px] font-medium text-cream-100 line-clamp-2 mt-1.5 leading-tight" x-text="show.name"></p>
                               <template x-if="show.rating">
                                 <p class="text-[10px] text-flame-500 mt-0.5">
-                                  <template x-for="s in show.rating" :key="s">★</template>
+                                  <span x-text="'★'.repeat(show.rating || 0)"></span>
                                 </p>
                               </template>
                             </a>
@@ -1034,7 +1032,7 @@ export const appTemplate = `
                                 <span class="text-[9px]" :class="statusColor(item.status)" x-text="statusLabel(item.status)"></span>
                                 <template x-if="item.rating">
                                   <span class="text-[9px] text-flame-500">
-                                    <template x-for="s in item.rating" :key="s">★</template>
+                                    <span x-text="'★'.repeat(item.rating || 0)"></span>
                                   </span>
                                 </template>
                               </div>
