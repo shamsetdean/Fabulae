@@ -23,6 +23,10 @@ export const profileView = () => ({
   libraryFilter: 'all',
   libraryVisible: false,
 
+  // Mes propres séries (pour le badge "En commun" sur les bibliothèques d'autrui)
+  myLibraryIds: new Set(),
+  isFollowingProfile: false,
+
   // Réseau
   followers: [],
   following: [],
@@ -309,9 +313,25 @@ export const profileView = () => ({
 
   async loadLibrary() {
     if (!this.profile) return
-    if (this._libraryLoading) return  // Guard contre appels concurrents
+    if (this._libraryLoading) return
     this._libraryLoading = true
     this.libraryLoading = true
+
+    // Si je consulte un autre profil ET je le suis → charge ma propre biblio pour comparaison
+    if (!this.isMe && this.isFollowing) {
+      try {
+        const me = window.Alpine.store('app').session?.user?.id
+        if (me) {
+          const { data: mine } = await supabase
+            .from('library_items')
+            .select('tmdb_id')
+            .eq('user_id', me)
+          this.myLibraryIds = new Set((mine || []).map(i => i.tmdb_id))
+        }
+      } catch (e) {
+        console.warn('[Profile] myLibraryIds error', e)
+      }
+    }
     try {
       const { data, error } = await supabase
         .from('library_items').select('*')
@@ -352,6 +372,10 @@ export const profileView = () => ({
 
   statusLabel(status) {
     return { watching: 'En cours', finished: 'Terminée', wishlist: 'À voir', abandoned: 'Abandonnée' }[status] || status
+  },
+
+  hasInCommon(tmdbId) {
+    return !this.isMe && this.isFollowing && this.myLibraryIds.has(tmdbId)
   },
 
   statusColor(status) {
