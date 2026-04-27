@@ -431,6 +431,160 @@ export const appTemplate = `
           </section>
         </template>
 
+        <!-- ============== DISCOVER ============== -->
+        <template x-if="$store.app.route.name === 'discover'">
+          <section x-data="discoverView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
+
+            <!-- ZONE DE CLASSIFICATION (overlay modal centré) -->
+            <template x-if="selectedShow">
+              <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" @click.self="cancelSelection()">
+                <div class="w-full max-w-md bg-ink-900 rounded-2xl border-2 border-flame-500/40 shadow-2xl max-h-[90vh] overflow-y-auto p-5">
+
+                  <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Classer cette série</p>
+
+                  <div class="flex gap-3 items-start mb-4">
+                    <template x-if="selectedShow?.poster">
+                      <img :src="selectedShow.poster" :alt="selectedShow?.name" class="w-16 h-24 rounded-lg object-cover flex-shrink-0" />
+                    </template>
+                    <template x-if="!selectedShow?.poster">
+                      <div class="w-16 h-24 rounded-lg bg-ink-800 flex-shrink-0"></div>
+                    </template>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-1">Série sélectionnée</p>
+                      <p class="text-base font-semibold text-cream-50 line-clamp-2" x-text="selectedShow?.name"></p>
+                      <p class="text-xs text-cream-300/60" x-text="selectedShow?.year"></p>
+                    </div>
+                    <button @click="cancelSelection()" class="text-cream-300/40 hover:text-cream-200 transition-colors flex-shrink-0">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+
+                  <div class="mb-3">
+                    <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Statut</p>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button @click="selStatus = 'watching'" :class="selStatus === 'watching' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">En cours</button>
+                      <button @click="selStatus = 'finished'" :class="selStatus === 'finished' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">Terminée</button>
+                      <button @click="selStatus = 'wishlist'" :class="selStatus === 'wishlist' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">À voir</button>
+                      <button @click="selStatus = 'abandoned'" :class="selStatus === 'abandoned' ? 'bg-flame-600 text-cream-50 border-flame-500' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="text-xs px-3 py-2 rounded-lg border transition-colors">Abandonnée</button>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Évaluation</p>
+                    <div class="flex gap-1.5">
+                      <template x-for="n in 5" :key="n">
+                        <button @click="setRating(n)" class="text-2xl transition-transform active:scale-110" :class="n <= selRating ? 'text-flame-500' : 'text-ink-700'">★</button>
+                      </template>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Recommandation</p>
+                    <div class="flex gap-2">
+                      <button @click="selRecommendation = (selRecommendation === 'recommended' ? null : 'recommended')" :class="selRecommendation === 'recommended' ? 'bg-green-600/30 text-green-400 border-green-600/50' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="flex-1 text-xs px-3 py-2 rounded-lg border transition-colors">Je recommande</button>
+                      <button @click="selRecommendation = (selRecommendation === 'not_recommended' ? null : 'not_recommended')" :class="selRecommendation === 'not_recommended' ? 'bg-red-600/30 text-red-400 border-red-600/50' : 'bg-ink-800 text-cream-300/70 border-ink-700'" class="flex-1 text-xs px-3 py-2 rounded-lg border transition-colors">Je déconseille</button>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-2">
+                    <button @click="cancelSelection()" class="flex-1 py-2.5 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Annuler</button>
+                    <button @click="saveSelection()" :disabled="selSaving" class="flex-1 py-2.5 rounded-xl bg-flame-600 text-cream-50 text-sm font-semibold hover:bg-flame-500 transition-colors disabled:opacity-50">
+                      <span x-show="!selSaving">Ajouter à ma bibliothèque</span>
+                      <span x-show="selSaving">…</span>
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            </template>
+
+            <!-- Header -->
+            <header class="mb-4">
+              <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Explorer</p>
+              <h1 class="text-3xl display italic text-cream-50 leading-none">Découverte</h1>
+              <p class="text-xs text-cream-300/60 mt-2">Cherche, ajoute et classe de nouvelles séries.</p>
+            </header>
+
+            <!-- Barre de recherche -->
+            <div class="relative mb-5">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input
+                type="search"
+                x-model="searchQuery"
+                @input="onSearchInput"
+                class="input text-sm pl-9"
+                placeholder="Cherche une série..."
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- Résultats de recherche -->
+            <template x-if="searchQuery.trim().length >= 2">
+              <div class="mb-6">
+                <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Résultats</p>
+                <template x-if="searching">
+                  <div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-20 rounded-xl"></div></template></div>
+                </template>
+                <template x-if="!searching && searchResults.length === 0">
+                  <p class="text-sm text-cream-300/50 text-center py-6">Aucun résultat pour cette recherche.</p>
+                </template>
+                <div class="space-y-2">
+                  <template x-for="show in searchResults" :key="show.id">
+                    <div class="card p-3 flex gap-3 items-center">
+                      <template x-if="show.poster">
+                        <img :src="show.poster" :alt="show.name" class="w-12 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+                      </template>
+                      <template x-if="!show.poster">
+                        <div class="w-12 h-16 rounded-lg bg-ink-800 flex-shrink-0"></div>
+                      </template>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-cream-100 truncate" x-text="show.name"></p>
+                        <p class="text-[11px] text-cream-300/50" x-text="show.year"></p>
+                        <p class="text-[11px] text-cream-300/60 line-clamp-2 mt-0.5" x-text="show.overview"></p>
+                      </div>
+                      <button @click="select(show)" class="flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg bg-flame-600 text-cream-50 hover:bg-flame-500 transition-colors">
+                        Classer
+                      </button>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <!-- Tendances par défaut (quand pas de recherche active) -->
+            <template x-if="searchQuery.trim().length < 2">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Tendances de la semaine</p>
+                <template x-if="trendingLoading">
+                  <div class="grid grid-cols-2 gap-3"><template x-for="i in 6" :key="i"><div class="skeleton aspect-[2/3] rounded-xl"></div></template></div>
+                </template>
+                <template x-if="!trendingLoading && trendingShows.length === 0">
+                  <p class="text-sm text-cream-300/50 text-center py-8">Tendances indisponibles pour le moment.</p>
+                </template>
+                <div class="grid grid-cols-2 gap-3">
+                  <template x-for="show in trendingShows" :key="show.id">
+                    <div class="space-y-2">
+                      <div class="relative aspect-[2/3] rounded-xl overflow-hidden bg-ink-800">
+                        <template x-if="show.poster">
+                          <img :src="show.poster" :alt="show.name" class="w-full h-full object-cover" loading="lazy" />
+                        </template>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                        <button @click="select(show)" class="absolute bottom-2 right-2 w-9 h-9 rounded-full flex items-center justify-center shadow-lg bg-flame-600 text-white hover:bg-flame-500 transition-colors">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                        </button>
+                      </div>
+                      <div>
+                        <p class="text-xs font-medium text-cream-100 line-clamp-1" x-text="show.name"></p>
+                        <p class="text-[10px] text-cream-300/50" x-text="show.year"></p>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </section>
+        </template>
+
         <!-- ============== FEED ============== -->
         <template x-if="$store.app.route.name === 'feed'">
           <section x-data="feedView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
