@@ -129,39 +129,53 @@ export const profileView = () => ({
       this.profile = profile
       this.isMe = profile.id === me
 
-      // Top + Flop actuels
-      const { data: currents } = await supabase
-        .from('top_lists').select('*')
-        .eq('user_id', profile.id).eq('is_current', true)
+      // Top + Flop calculés depuis library_items (nouveau système)
+      // Top = toutes les séries marquées "Je recommande", triées par note ↓ puis date ↓
+      // Flop = toutes les séries marquées "Je déconseille", même tri
+      const { data: ratedItems } = await supabase
+        .from('library_items')
+        .select('tmdb_id, recommendation, rating, created_at')
+        .eq('user_id', profile.id)
+        .not('recommendation', 'is', null)
 
-      const topList = (currents || []).find(l => l.kind === 'top')
-      const flopList = (currents || []).find(l => l.kind === 'flop')
-
-      if (topList) {
-        const shows = await Promise.all([
-          topList.position_1_tmdb_id, topList.position_2_tmdb_id, topList.position_3_tmdb_id
-        ].map(id => tmdbApi.getShow(id).catch(() => null)))
-        const cards = shows.map(s => s ? {
-          id: s.id, name: s.name || '',
-          poster: s.poster_path ? tmdbApi.poster(s.poster_path, 'w154') : null,
-          genres: Array.isArray(s.genres) ? s.genres : []
-        } : null)
-        this.currentTop = { ...topList, shows: cards }
-        try { this.alias = generateAlias(cards.filter(Boolean)) } catch (e) { this.alias = null }
+      const sortByRatingThenDate = (a, b) => {
+        const ra = a.rating || 0, rb = b.rating || 0
+        if (rb !== ra) return rb - ra
+        return new Date(b.created_at) - new Date(a.created_at)
       }
 
-      if (flopList) {
-        const shows = await Promise.all([
-          flopList.position_1_tmdb_id, flopList.position_2_tmdb_id, flopList.position_3_tmdb_id
-        ].map(id => tmdbApi.getShow(id).catch(() => null)))
-        this.currentFlop = {
-          ...flopList,
-          shows: shows.map(s => s ? {
-            id: s.id, name: s.name || '',
-            poster: s.poster_path ? tmdbApi.poster(s.poster_path, 'w154') : null
-          } : null)
-        }
+      const recommended = (ratedItems || [])
+        .filter(i => i.recommendation === 'recommended')
+        .sort(sortByRatingThenDate)
+      const notRecommended = (ratedItems || [])
+        .filter(i => i.recommendation === 'not_recommended')
+        .sort(sortByRatingThenDate)
+
+      // Hydrate avec TMDB
+      const hydrate = async (items) => {
+        const shows = await Promise.all(items.map(async (i) => {
+          const s = await tmdbApi.getShow(i.tmdb_id)
+          if (!s) return null
+          return {
+            id: s.id,
+            name: s.name || '',
+            poster: s.poster_path ? tmdbApi.poster(s.poster_path, 'w154') : null,
+            genres: Array.isArray(s.genres) ? s.genres : [],
+            rating: i.rating
+          }
+        }))
+        return shows.filter(Boolean)
       }
+
+      const topShows = await hydrate(recommended)
+      const flopShows = await hydrate(notRecommended)
+
+      this.currentTop = topShows.length > 0 ? { shows: topShows } : null
+      this.currentFlop = flopShows.length > 0 ? { shows: flopShows } : null
+
+      try {
+        if (topShows.length > 0) this.alias = generateAlias(topShows.slice(0, 3))
+      } catch (e) { this.alias = null }
 
       // Compteurs followers/following
       const [followersRes, followingRes] = await Promise.all([
