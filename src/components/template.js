@@ -412,18 +412,7 @@ export const appTemplate = `
                       </template>
                     </div>
 
-                    <!-- Provider + bouton +1 épisode pour watching -->
-                    <template x-if="item.status === 'watching'">
-                      <div class="flex items-center gap-2 mt-2">
-                        <template x-if="item.provider_name && item.provider_logo_path">
-                          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-ink-800">
-                            <img :src="providerLogoUrl(item.provider_logo_path)" class="w-3.5 h-3.5 rounded" />
-                            <span class="text-[10px] text-cream-200" x-text="item.provider_name"></span>
-                          </span>
-                        </template>
-                        <button @click="incrementEpisode(item)" class="text-[11px] text-flame-500 ml-auto">+1 ép.</button>
-                      </div>
-                    </template>
+
                   </div>
                 </li>
               </template>
