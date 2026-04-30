@@ -4,8 +4,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
         name: 'Fabulae',
@@ -24,8 +24,8 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
+        clientsClaim: false,
+        skipWaiting: false,
         navigationPreload: true,
         navigateFallback: null,
         globPatterns: ['**/*.{js,css,html,png,svg,webp,woff,woff2}'],
@@ -84,7 +84,6 @@ export default defineConfig({
       }
     })
   ],
-
   build: {
     target: 'es2020',
     minify: 'esbuild',
@@ -100,12 +99,10 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 200
   },
-
   server: {
     port: 5173,
     host: true
   },
-
   optimizeDeps: {
     include: ['alpinejs', '@supabase/supabase-js']
   }
