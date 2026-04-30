@@ -1,4 +1,5 @@
 import Alpine from 'alpinejs'
+import { registerSW } from 'virtual:pwa-register'
 import './style.css'
 
 import { initStore } from './lib/store.js'
@@ -35,26 +36,12 @@ function reloadOnce(reason) {
   _reloaded = true
   sessionStorage.setItem('__fabulae_reloaded', '1')
   console.warn('[Bootstrap] reloading due to:', reason)
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(r => r.unregister().catch(() => {}))
-      if ('caches' in window) {
-        caches.keys().then(keys => {
-          Promise.all(keys.map(k => caches.delete(k))).finally(() => location.reload())
-        })
-      } else {
-        location.reload()
-      }
-    }).catch(() => location.reload())
-  } else {
-    location.reload()
-  }
+  location.reload()
 }
 
 window.addEventListener('error', e => {
   const msg = (e?.error?.message || e?.message || '').toLowerCase()
   if (msg.includes('failed to fetch dynamically imported module') ||
-      msg.includes("can't find variable") ||
       msg.includes('importing a module script failed') ||
       msg.includes('failed to load module')) {
     reloadOnce('module-load-error')
@@ -74,17 +61,6 @@ window.addEventListener('unhandledrejection', e => {
   }
   console.error('[Unhandled rejection]', reason)
 })
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (sessionStorage.getItem('__fabulae_sw_seen') !== '1') {
-      sessionStorage.setItem('__fabulae_sw_seen', '1')
-    } else {
-      sessionStorage.removeItem('__fabulae_reloaded')
-      location.reload()
-    }
-  })
-}
 
 const env = import.meta.env
 const missing = []
@@ -113,6 +89,61 @@ window.notificationsView = notificationsView
 window.legalView = legalView
 window.welcomeModal = welcomeModal
 window.formatDate = formatDate
+
+// ======================================================================
+// PWA : enregistrement du service worker avec détection de mise à jour
+// ======================================================================
+let _updateSW = null
+
+function setupPWA() {
+  if (!('serviceWorker' in navigator)) return
+
+  _updateSW = registerSW({
+    immediate: true,
+
+    onNeedRefresh() {
+      console.info('[PWA] Nouvelle version détectée')
+      const store = window.Alpine?.store?.('app')
+      if (store) store.updateAvailable = true
+    },
+
+    onOfflineReady() {
+      console.info('[PWA] App prête en mode hors-ligne')
+    },
+
+    onRegisteredSW(swUrl, registration) {
+      if (!registration) return
+      console.info('[PWA] Service Worker enregistré')
+
+      // Vérification au focus de l'onglet
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          registration.update().catch(() => {})
+        }
+      })
+
+      // Vérification périodique discrète (toutes les 30 min)
+      setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          registration.update().catch(() => {})
+        }
+      }, 30 * 60 * 1000)
+    },
+
+    onRegisterError(error) {
+      console.warn('[PWA] Erreur enregistrement Service Worker', error)
+    }
+  })
+}
+
+// Exposé au store pour déclencher la mise à jour depuis le bouton du toast
+window.__applyPWAUpdate = () => {
+  if (_updateSW) {
+    _updateSW(true)
+  } else {
+    location.reload()
+  }
+}
 
 function bootstrap() {
   const appEl = document.getElementById('app')
@@ -146,6 +177,9 @@ function bootstrap() {
       'L\'application n\'a pas pu s\'initialiser correctement.',
       err.message + '\n\n' + (err.stack || ''))
   })
+
+  // Enregistrement du SW après le bootstrap pour ne pas bloquer le rendu
+  setupPWA()
 
   setTimeout(() => sessionStorage.removeItem('__fabulae_reloaded'), 5000)
 }
