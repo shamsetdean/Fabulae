@@ -1546,5 +1546,25 @@ export const appTemplate = `
     </div>
   </template>
 
+  <!-- Toast Nouvelle version disponible (PWA) -->
+  <template x-if="$store.app.updateAvailable">
+    <div class="fixed top-4 left-1/2 -translate-x-1/2 z-[201] safe-top px-3 max-w-[92vw]">
+      <div class="flex items-center gap-2.5 bg-ink-900 border border-flame-500/50 rounded-xl px-3.5 py-2.5 shadow-2xl shadow-black/50 animate-slide-up">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14"/>
+        </svg>
+        <span class="text-[12px] text-cream-100 leading-tight">L'appli a une nouvelle version,</span>
+        <button @click="$store.app.applyUpdate()" :disabled="$store.app.applyingUpdate" class="text-[12px] text-flame-500 hover:text-flame-400 font-semibold whitespace-nowrap transition-colors disabled:opacity-50">
+          <span x-show="!$store.app.applyingUpdate">mettre à jour.</span>
+          <span x-show="$store.app.applyingUpdate">…</span>
+        </button>
+        <button @click="$store.app.dismissUpdate()" :disabled="$store.app.applyingUpdate" class="text-cream-300/40 hover:text-cream-200 flex-shrink-0 transition-colors disabled:opacity-30" aria-label="Ignorer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </template>
+
 </div>
 `
