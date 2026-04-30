@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase.js'
 import { tmdbApi } from '../lib/tmdb.js'
+import { generateRecommendations, invalidateProfileCache } from '../lib/recommender.js'
 
 export const discoverView = () => ({
   // Recherche
@@ -11,6 +12,12 @@ export const discoverView = () => ({
   // Tendances par défaut
   trendingShows: [],
   trendingLoading: true,
+
+  // Recommandations personnalisées
+  recommendations: [],
+  recoLoading: false,
+  recoLoaded: false,
+  recoReason: null,
 
   // État
   myLibraryIds: new Set(),
@@ -24,7 +31,19 @@ export const discoverView = () => ({
 
   async init() {
     await this.loadMyLibrary()
-    await this.loadTrending()
+    // Lancement en parallèle — les recos n'attendent pas les tendances
+    await Promise.all([
+      this.loadTrending(),
+      this.loadRecommendations()
+    ])
+    // Invalide le cache reco si la bibliothèque est mise à jour depuis une autre vue
+    window.addEventListener('library:updated', () => {
+      const userId = window.Alpine.store('app').session?.user?.id
+      if (userId) invalidateProfileCache(userId)
+      this.recoLoaded = false
+      this.recommendations = []
+      this.loadRecommendations()
+    })
   },
 
   async loadMyLibrary() {
@@ -63,6 +82,27 @@ export const discoverView = () => ({
     }
   },
 
+  async loadRecommendations() {
+    if (this.recoLoading || this.recoLoaded) return
+    const me = window.Alpine.store('app').session?.user?.id
+    if (!me) return
+
+    this.recoLoading = true
+    try {
+      const { results, reason } = await generateRecommendations(me, { limit: 3 })
+      this.recommendations = results
+      this.recoReason = reason
+      this.recoLoaded = true
+    } catch (e) {
+      console.warn('[Discover] loadRecommendations error', e)
+      this.recommendations = []
+      this.recoReason = 'error'
+      this.recoLoaded = true
+    } finally {
+      this.recoLoading = false
+    }
+  },
+
   onSearchInput() {
     clearTimeout(this.searchTimer)
     const q = this.searchQuery.trim()
@@ -94,7 +134,7 @@ export const discoverView = () => ({
     return this.myLibraryIds.has(tmdbId)
   },
 
-  // Sélectionne une série → affichage en haut de la page
+  // Sélectionne une série → affichage modal de classification
   select(show) {
     this.selectedShow = show
     this.selStatus = 'watching'
@@ -132,18 +172,22 @@ export const discoverView = () => ({
       if (error) throw error
 
       // Mise à jour locale instantanée
-      this.myLibraryIds.add(this.selectedShow.id)
-      this.myLibraryIds = new Set(this.myLibraryIds)
+      this.myLibraryIds = new Set([...this.myLibraryIds, this.selectedShow.id])
 
-      // Retire la série des listes affichées
+      // Retire la série des trois listes
       const id = this.selectedShow.id
-      this.searchResults = this.searchResults.filter(s => s.id !== id)
-      this.trendingShows = this.trendingShows.filter(s => s.id !== id)
+      this.searchResults   = this.searchResults.filter(s => s.id !== id)
+      this.trendingShows   = this.trendingShows.filter(s => s.id !== id)
+      this.recommendations = this.recommendations.filter(s => s.id !== id)
 
-      // Notifie la bibliothèque pour qu'elle se rafraîchisse
+      // Invalide le cache profil si la série est bien notée (signal positif fort)
+      if (this.selRating >= 5) {
+        invalidateProfileCache(me)
+        this.recoLoaded = false
+      }
+
       window.dispatchEvent(new CustomEvent('library:updated'))
 
-      // Reset
       this.selectedShow = null
       this.selStatus = 'watching'
       this.selRating = 0
