@@ -24,7 +24,7 @@ async function tmdbFetch(path, params = {}) {
   return res.json()
 }
 
-// ─── Cache Supabase ─────────────────────────────────────────────────────────
+// ─── Cache Supabase ──────────────────────────────────────────────────────────
 
 async function getFromSupabaseCache(tmdbId) {
   try {
@@ -55,7 +55,7 @@ async function writeToSupabaseCache(tmdbId, data) {
   }
 }
 
-// ─── API principale ─────────────────────────────────────────────────────────
+// ─── API principale ──────────────────────────────────────────────────────────
 
 export const tmdbApi = {
   poster(path, size = 'w342') {
@@ -63,27 +63,30 @@ export const tmdbApi = {
     return `${TMDB_IMAGE}/${size}${path}`
   },
 
+  // Lecture synchrone du cache mémoire — zéro appel réseau
+  // Utilisé par recommender.js pour enrichir le profil sans fetch
+  getCached(id) {
+    return MEM_CACHE.get(`show_${id}`) ?? null
+  },
+
   async getShow(id) {
     if (!id) return null
     const key = `show_${id}`
 
-    // 1. Cache mémoire (instantané)
     if (MEM_CACHE.has(key)) return MEM_CACHE.get(key)
 
-    // 2. Cache Supabase (serveur, ~60% des cas après première visite)
     const cached = await getFromSupabaseCache(key)
     if (cached) {
       MEM_CACHE.set(key, cached)
       return cached
     }
 
-    // 3. Fetch TMDB
     try {
       const data = await tmdbFetch(`/tv/${id}`, {
-        append_to_response: 'watch/providers'
+        append_to_response: 'keywords,watch/providers'
       })
       MEM_CACHE.set(key, data)
-      writeToSupabaseCache(key, data) // fire-and-forget
+      writeToSupabaseCache(key, data)
       return data
     } catch (e) {
       console.warn('[TMDB] getShow error', id, e)
@@ -149,20 +152,45 @@ export const tmdbApi = {
       console.warn('[TMDB] popular error', e)
       return { results: [] }
     }
+  },
+
+  // Recommandations natives TMDB — avec double cache (mémoire + Supabase)
+  // Retourne les détails complets (genres, networks, created_by) → pas de fetch supplémentaire
+  async getRecommendations(id) {
+    if (!id) return []
+    const key = `reco_${id}`
+
+    if (MEM_CACHE.has(key)) return MEM_CACHE.get(key)
+
+    const cached = await getFromSupabaseCache(key)
+    if (cached) {
+      MEM_CACHE.set(key, cached)
+      return cached
+    }
+
+    try {
+      const data = await tmdbFetch(`/tv/${id}/recommendations`)
+      const results = data?.results ?? []
+      MEM_CACHE.set(key, results)
+      writeToSupabaseCache(key, results)
+      return results
+    } catch (e) {
+      console.warn('[TMDB] getRecommendations error', id, e)
+      return []
+    }
   }
 }
 
-// ─── Helper : providers FR (compatibilité avec l'ancien code) ──────────────
+// ─── Helper : providers FR (compatibilité avec l'ancien code) ────────────────
 
 export function getProvidersFR(show) {
   if (!show) return { flatrate: [], free: [] }
-  // Support des deux formats : raw TMDB et getShowCard normalisé
   if (show.flatrate !== undefined) return { flatrate: show.flatrate || [], free: show.free || [] }
   const fr = show['watch/providers']?.results?.FR || {}
   return { flatrate: fr.flatrate || [], free: fr.free || [] }
 }
 
-// ─── Helper : carte série normalisée ────────────────────────────────────────
+// ─── Helper : carte série normalisée ─────────────────────────────────────────
 
 const SHOW_CARD_CACHE = new Map()
 
