@@ -39,7 +39,6 @@ export function initStore(Alpine) {
     profile: null,
     authReady: false,
     profileReady: false,
-    // Séparé de profileReady : true uniquement après une tentative Supabase confirmée
     _profileLoadAttempted: false,
     _profileLoading: false,
     route: parseHash(),
@@ -47,24 +46,23 @@ export function initStore(Alpine) {
     unreadCount: 0,
     _unreadInterval: null,
 
+    // PWA : nouvelle version disponible
+    updateAvailable: false,
+    applyingUpdate: false,
+
     async init() {
-      // 1. Session synchrone depuis localStorage
       const localSession = readSessionFromLocalStorage()
       if (localSession) this.session = localSession
 
-      // 2. Auth prêt immédiatement (le rendu ne bloque jamais)
       this.authReady = true
       this.route = parseHash()
 
-      // 3. Hashchange : uniquement mise à jour de la route
-      //    PAS de _enforceGuards ici — c'est lui qui causait la boucle
       window.addEventListener('hashchange', () => {
         this.route = parseHash()
         window.scrollTo({ top: 0, behavior: 'instant' })
         if (this.session) this.refreshUnreadCount()
       })
 
-      // 4. Chargement du profil
       if (this.session) {
         await this.loadProfile()
         this.refreshUnreadCount()
@@ -76,15 +74,12 @@ export function initStore(Alpine) {
         this._profileLoadAttempted = true
       }
 
-      // 5. Guards une seule fois après chargement initial
       this._enforceGuardsOnce()
 
-      // 6. Redirection initiale si pas de hash
       if (!window.location.hash) {
         window.location.hash = this.session ? '#/feed' : '#/auth'
       }
 
-      // 7. Synchro Supabase en arrière-plan (ne redéclenche pas de boucle)
       supabase.auth.getSession()
         .then(r => {
           const s = r?.data?.session
@@ -94,7 +89,6 @@ export function initStore(Alpine) {
         })
         .catch(() => {})
 
-      // 8. Listener auth (login/logout uniquement)
       supabase.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_IN' && session) {
           this.session = session
@@ -123,7 +117,6 @@ export function initStore(Alpine) {
       })
     },
 
-    // Guards appliqués UNE SEULE FOIS au démarrage, pas en boucle
     _enforceGuardsOnce() {
       const r = this.route.name
 
@@ -132,7 +125,6 @@ export function initStore(Alpine) {
         return
       }
 
-      // Redirige vers onboarding SEULEMENT si la tentative Supabase a confirmé l'absence de profil
       if (this.session && this._profileLoadAttempted && !this.profile && !PROFILE_EXEMPT_ROUTES.includes(r)) {
         if (window.location.hash !== '#/onboarding') window.location.hash = '#/onboarding'
         return
@@ -188,6 +180,21 @@ export function initStore(Alpine) {
     showToast(message, type = 'info') {
       this.toast = { message, type }
       setTimeout(() => { this.toast = null }, 3200)
+    },
+
+    // PWA : application de la mise à jour (skipWaiting + reload contrôlé)
+    applyUpdate() {
+      if (this.applyingUpdate) return
+      this.applyingUpdate = true
+      if (typeof window.__applyPWAUpdate === 'function') {
+        window.__applyPWAUpdate()
+      } else {
+        location.reload()
+      }
+    },
+
+    dismissUpdate() {
+      this.updateAvailable = false
     },
 
     async signOut() {
