@@ -1399,8 +1399,8 @@ export const appTemplate = `
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="M13 5h8M13 9h5M3 15h18M3 19h14"/></svg>
             <span class="text-[10px] uppercase tracking-wider font-medium">Fil</span>
           </a>
-          <!-- Ajouter — Lucide: plus-circle -->
-          <a href="#/add" :class="$store.app.route.name === 'add' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
+          <!-- Ajouter — Lucide: plus-circle (route #/discover) -->
+          <a href="#/discover" :class="$store.app.route.name === 'discover' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
             <span class="text-[10px] uppercase tracking-wider font-medium">Ajouter</span>
           </a>
