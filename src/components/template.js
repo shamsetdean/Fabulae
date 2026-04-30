@@ -1394,15 +1394,15 @@ export const appTemplate = `
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             <span class="text-[10px] uppercase tracking-wider font-medium">Bibliothèque</span>
           </a>
-          <!-- Découverte — Lucide: compass -->
-          <a href="#/discover" :class="$store.app.route.name === 'discover' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
-            <span class="text-[10px] uppercase tracking-wider font-medium">Découverte</span>
-          </a>
           <!-- Fil — Lucide: layout-list -->
           <a href="#/feed" :class="$store.app.route.name === 'feed' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="M13 5h8M13 9h5M3 15h18M3 19h14"/></svg>
             <span class="text-[10px] uppercase tracking-wider font-medium">Fil</span>
+          </a>
+          <!-- Ajouter — Lucide: plus-circle -->
+          <a href="#/add" :class="$store.app.route.name === 'add' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span class="text-[10px] uppercase tracking-wider font-medium">Ajouter</span>
           </a>
           <!-- Tendances — Lucide: trending-up -->
           <a href="#/trending" :class="$store.app.route.name === 'trending' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
