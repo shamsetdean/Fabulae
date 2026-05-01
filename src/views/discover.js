@@ -127,6 +127,8 @@ export const discoverView = () => ({
     this.recoLoading = true
     try {
       const { results, reason } = await generateRecommendations(me, { limit: 3 })
+      window._fabuReco = { results, reason }
+      console.log('[Reco] results:', results.length, 'reason:', reason)
       this.recommendations = results
       this.recoReason = reason
       this.recoLoaded = true
