@@ -33,6 +33,12 @@ function readSessionFromLocalStorage() {
   }
 }
 
+// ============================================================================
+// CACHE TTL en mémoire avec stale-while-revalidate
+// ============================================================================
+const _cache = new Map()
+const _inflight = new Map()
+
 export function initStore(Alpine) {
   Alpine.store('app', {
     session: null,
@@ -46,7 +52,7 @@ export function initStore(Alpine) {
     unreadCount: 0,
     _unreadInterval: null,
 
-    // PWA : nouvelle version disponible
+    // PWA
     updateAvailable: false,
     applyingUpdate: false,
 
@@ -108,6 +114,7 @@ export function initStore(Alpine) {
             clearInterval(this._unreadInterval)
             this._unreadInterval = null
           }
+          this.cacheClear()
           if (window.location.hash !== '#/auth') {
             window.location.hash = '#/auth'
           }
@@ -119,17 +126,14 @@ export function initStore(Alpine) {
 
     _enforceGuardsOnce() {
       const r = this.route.name
-
       if (!this.session && !PUBLIC_ROUTES.includes(r)) {
         if (window.location.hash !== '#/auth') window.location.hash = '#/auth'
         return
       }
-
       if (this.session && this._profileLoadAttempted && !this.profile && !PROFILE_EXEMPT_ROUTES.includes(r)) {
         if (window.location.hash !== '#/onboarding') window.location.hash = '#/onboarding'
         return
       }
-
       if (this.session && this.profile && r === 'onboarding') {
         if (window.location.hash !== '#/feed') window.location.hash = '#/feed'
       }
@@ -142,17 +146,14 @@ export function initStore(Alpine) {
         this._profileLoadAttempted = true
         return
       }
-
       if (this._profileLoading) return
       this._profileLoading = true
-
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', this.session.user.id)
           .maybeSingle()
-
         if (error) {
           console.warn('[Store] loadProfile error', error)
           this.profile = null
@@ -182,7 +183,83 @@ export function initStore(Alpine) {
       setTimeout(() => { this.toast = null }, 3200)
     },
 
-    // PWA : application de la mise à jour (skipWaiting + reload contrôlé)
+    // ========================================================================
+    // CACHE API : stale-while-revalidate
+    // ========================================================================
+    //
+    // Usage dans une vue :
+    //   const data = await this.$store.app.cached('feed:user123', fetcher, 60_000, (fresh) => {
+    //     this.entries = fresh   // callback déclenché si le refresh a changé les données
+    //   })
+    //
+    //  - Si cache hit + fresh → retourne immédiatement, pas de fetch
+    //  - Si cache hit + stale (TTL dépassé) → retourne le cache, refresh en arrière-plan
+    //  - Si cache miss → fetch normal
+    //  - Coalescing : si plusieurs appels simultanés sur la même clé, un seul fetch est lancé
+    //
+    async cached(key, fetcher, ttl = 60_000, onRevalidate = null) {
+      const now = Date.now()
+      const entry = _cache.get(key)
+
+      // Cache hit + frais : retour immédiat, pas de revalidation
+      if (entry && (now - entry.ts) < ttl) {
+        return entry.data
+      }
+
+      // Cache hit mais stale : retour immédiat + revalidation silencieuse en arrière-plan
+      if (entry) {
+        if (!_inflight.has(key)) {
+          const p = Promise.resolve()
+            .then(() => fetcher())
+            .then(fresh => {
+              _cache.set(key, { data: fresh, ts: Date.now() })
+              if (onRevalidate && JSON.stringify(fresh) !== JSON.stringify(entry.data)) {
+                try { onRevalidate(fresh) } catch (e) { console.warn('[Cache] onRevalidate error', e) }
+              }
+              return fresh
+            })
+            .catch(e => {
+              console.warn('[Cache] revalidate error for', key, e)
+            })
+            .finally(() => _inflight.delete(key))
+          _inflight.set(key, p)
+        }
+        return entry.data
+      }
+
+      // Cache miss : fetch normal, coalescing si plusieurs appels parallèles
+      if (_inflight.has(key)) {
+        return _inflight.get(key)
+      }
+      const p = Promise.resolve()
+        .then(() => fetcher())
+        .then(fresh => {
+          _cache.set(key, { data: fresh, ts: Date.now() })
+          return fresh
+        })
+        .finally(() => _inflight.delete(key))
+      _inflight.set(key, p)
+      return p
+    },
+
+    // Invalide une clé ou toutes les clés correspondant à un préfixe
+    cacheInvalidate(keyOrPrefix) {
+      if (!keyOrPrefix) return
+      if (_cache.has(keyOrPrefix)) {
+        _cache.delete(keyOrPrefix)
+        return
+      }
+      for (const k of _cache.keys()) {
+        if (k.startsWith(keyOrPrefix)) _cache.delete(k)
+      }
+    },
+
+    cacheClear() {
+      _cache.clear()
+      _inflight.clear()
+    },
+
+    // PWA
     applyUpdate() {
       if (this.applyingUpdate) return
       this.applyingUpdate = true
@@ -202,6 +279,7 @@ export function initStore(Alpine) {
         clearInterval(this._unreadInterval)
         this._unreadInterval = null
       }
+      this.cacheClear()
       try { await supabase.auth.signOut() } catch (e) {}
       try {
         Object.keys(localStorage)
