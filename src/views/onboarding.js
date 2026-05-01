@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase.js'
 import { tmdbApi } from '../lib/tmdb.js'
 
 export const onboardingView = () => ({
-  step: 1,           // 1=profil, 2=séries, 3=suivre, 4=publier
+  step: 1,
   totalSteps: 4,
 
   // Étape 1 — Profil
@@ -15,8 +15,9 @@ export const onboardingView = () => ({
   searchQuery: '',
   searchResults: [],
   searching: false,
-  searchTimer: null,
-  addedShows: [],    // séries ajoutées à la bibliothèque
+  _searchTimer: null,
+  _searchAbort: null,
+  addedShows: [],
   addingId: null,
 
   // Étape 3 — Suivre des utilisateurs
@@ -33,13 +34,8 @@ export const onboardingView = () => ({
     return this.username.trim().length >= 3
   },
 
-  get canProceedStep2() {
-    return true // Optionnel, on peut passer sans ajouter
-  },
-
-  get canProceedStep3() {
-    return true // Optionnel, on peut passer sans suivre
-  },
+  get canProceedStep2() { return true },
+  get canProceedStep3() { return true },
 
   async init() {
     const store = window.Alpine.store('app')
@@ -71,7 +67,6 @@ export const onboardingView = () => ({
     }
 
     try {
-      // Vérifie la disponibilité du pseudo
       const { data: existing } = await supabase
         .from('profiles').select('id').eq('username', cleanUsername).maybeSingle()
 
@@ -98,28 +93,55 @@ export const onboardingView = () => ({
     }
   },
 
-  // ─── ÉTAPE 2 : Chercher des séries ──────────────────────────────────────
+  // ─── ÉTAPE 2 : Recherche debounced + cancellable ─────────────────────────
 
   onSearchInput() {
-    clearTimeout(this.searchTimer)
+    clearTimeout(this._searchTimer)
+    if (this._searchAbort) {
+      this._searchAbort.abort()
+      this._searchAbort = null
+    }
+
     const q = this.searchQuery.trim()
-    if (q.length < 2) { this.searchResults = []; return }
+    if (q.length < 2) {
+      this.searchResults = []
+      this.searching = false
+      return
+    }
+
     this.searching = true
-    this.searchTimer = setTimeout(async () => {
-      try {
-        const data = await tmdbApi.searchTv(q)
-        this.searchResults = (data?.results || []).slice(0, 8).map(r => ({
-          id: r.id,
-          name: r.name,
-          year: r.first_air_date ? r.first_air_date.slice(0, 4) : '',
-          poster: r.poster_path ? tmdbApi.poster(r.poster_path, 'w154') : null
-        }))
-      } catch (e) {
-        this.searchResults = []
-      } finally {
+    this._searchTimer = setTimeout(() => this._runSearch(q), 300)
+  },
+
+  async _runSearch(q) {
+    if (this.searchQuery.trim() !== q) return
+
+    const controller = new AbortController()
+    this._searchAbort = controller
+
+    try {
+      const data = await tmdbApi.searchTv(q, { signal: controller.signal })
+
+      if (this.searchQuery.trim() !== q) return
+
+      this.searchResults = (data?.results || []).slice(0, 8).map(r => ({
+        id: r.id,
+        name: r.name,
+        year: r.first_air_date ? r.first_air_date.slice(0, 4) : '',
+        poster: r.poster_path ? tmdbApi.poster(r.poster_path, 'w154') : null
+      }))
+    } catch (e) {
+      if (e.name === 'AbortError') return
+      console.warn('[Onboarding] search error', e)
+      this.searchResults = []
+    } finally {
+      if (this.searchQuery.trim() === q) {
         this.searching = false
       }
-    }, 300)
+      if (this._searchAbort === controller) {
+        this._searchAbort = null
+      }
+    }
   },
 
   isAdded(showId) {
@@ -151,7 +173,6 @@ export const onboardingView = () => ({
   async loadSuggestedUsers() {
     this.loadingUsers = true
     try {
-      // Suggère les utilisateurs avec le plus de séries en bibliothèque
       const { data } = await supabase
         .from('profiles')
         .select('id, username, avatar_url')
