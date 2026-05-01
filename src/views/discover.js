@@ -10,6 +10,23 @@ export const discoverView = () => ({
   _searchTimer: null,
   _searchAbort: null,
 
+  // Filtre genre
+  genreFilter: null,
+
+  // Genres TMDB disponibles dans Discover
+  genres: [
+    { id: null,  name: 'Tout' },
+    { id: 35,    name: 'Comédie' },
+    { id: 18,    name: 'Drame' },
+    { id: 80,    name: 'Crime' },
+    { id: 10765, name: 'Sci-Fi' },
+    { id: 9648,  name: 'Mystère' },
+    { id: 10759, name: 'Action' },
+    { id: 10768, name: 'Guerre' },
+    { id: 16,    name: 'Animation' },
+    { id: 99,    name: 'Documentaire' },
+  ],
+
   // Tendances par défaut
   trendingShows: [],
   trendingLoading: true,
@@ -71,7 +88,8 @@ export const discoverView = () => ({
           name: r.name,
           year: r.first_air_date ? r.first_air_date.slice(0, 4) : '',
           poster: r.poster_path ? tmdbApi.poster(r.poster_path, 'w342') : null,
-          overview: r.overview || ''
+          overview: r.overview || '',
+          genre_ids: r.genre_ids || []
         }))
     } catch (e) {
       console.warn('[Discover] loadTrending error', e)
@@ -167,6 +185,14 @@ export const discoverView = () => ({
 
   isInLibrary(tmdbId) {
     return this.myLibraryIds.has(tmdbId)
+  },
+
+  // Tendances filtrées par genre sélectionné
+  get trendingFiltered() {
+    if (!this.genreFilter) return this.trendingShows
+    return this.trendingShows.filter(s =>
+      (s.genre_ids || []).includes(this.genreFilter)
+    )
   },
 
   select(show) {
