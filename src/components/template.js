@@ -399,8 +399,9 @@ export const appTemplate = `
 
                       <template x-if="item.rating">
                         <span class="pill" :title="item.rating + '/5'">
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="#E9B44C"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                          <span x-text="item.rating"></span>
+                          <span class="tracking-wider">
+                            <span class="text-flame-500" x-text="'★'.repeat(item.rating)"></span><span class="text-cream-300/30" x-text="'★'.repeat(5 - item.rating)"></span>
+                          </span>
                         </span>
                       </template>
 
