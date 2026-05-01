@@ -6,7 +6,7 @@ export const feedView = () => ({
   entries: [],
   loading: true,
   error: null,
-  filter: 'all', // 'all' | 'recommended' | 'not_recommended'
+  filter: 'all',
 
   // ── Nouveaux membres ──────────────────────────────────────────────────────
   newMembers: [],
@@ -24,27 +24,24 @@ export const feedView = () => ({
   // ── Chargement du fil ─────────────────────────────────────────────────────
 
   async load() {
-    this.loading = true
-    this.error = null
     const me = window.Alpine.store('app').session?.user?.id
     if (!me) { this.loading = false; return }
+
+    this.error = null
+    const cacheKey = `feed:${me}`
+    const store = window.Alpine.store('app')
+
     try {
-      const { data: follows } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', me)
-      const userIds = [me, ...(follows || []).map(f => f.following_id)]
-      const { data, error } = await supabase
-        .from('feed_recent_additions')
-        .select('*')
-        .in('user_id', userIds)
-        .limit(80)
-      if (error) throw error
-      const hydrated = await Promise.all((data || []).map(async (row) => {
-        const show = await getShowCard(row.tmdb_id)
-        return show ? { ...row, show } : null
-      }))
-      this.entries = hydrated.filter(Boolean)
+      const data = await store.cached(
+        cacheKey,
+        async () => this._fetchFeed(me),
+        60_000,
+        (fresh) => {
+          // Revalidation : mise à jour silencieuse si les données ont changé
+          this.entries = fresh
+        }
+      )
+      this.entries = data
     } catch (e) {
       console.warn('[Feed] load error', e)
       this.error = e.message
@@ -53,37 +50,71 @@ export const feedView = () => ({
     }
   },
 
+  async _fetchFeed(me) {
+    const { data: follows } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', me)
+    const userIds = [me, ...(follows || []).map(f => f.following_id)]
+    const { data, error } = await supabase
+      .from('feed_recent_additions')
+      .select('*')
+      .in('user_id', userIds)
+      .limit(80)
+    if (error) throw error
+    const hydrated = await Promise.all((data || []).map(async (row) => {
+      const show = await getShowCard(row.tmdb_id)
+      return show ? { ...row, show } : null
+    }))
+    return hydrated.filter(Boolean)
+  },
+
   // ── Nouveaux membres ──────────────────────────────────────────────────────
 
   async loadNewMembers() {
-    this.newMembersLoading = true
     const me = window.Alpine.store('app').session?.user?.id
     if (!me) { this.newMembersLoading = false; return }
+
+    const cacheKey = `newMembers:${me}`
+    const store = window.Alpine.store('app')
+
     try {
-      // Abonnements actuels pour état initial des boutons
-      const { data: myFollows } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', me)
-      this.followingIds = new Set((myFollows || []).map(f => f.following_id))
-
-      // Membres inscrits dans les 14 derniers jours, hors soi-même
-      const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url, bio, created_at')
-        .neq('id', me)
-        .gte('created_at', since)
-        .order('created_at', { ascending: false })
-        .limit(12)
-
-      this.newMembers = profiles || []
+      const data = await store.cached(
+        cacheKey,
+        async () => this._fetchNewMembers(me),
+        120_000, // 2 min : les nouveaux membres ne changent pas tous les instants
+        (fresh) => {
+          this.newMembers = fresh.profiles
+          this.followingIds = new Set(fresh.followingIds)
+        }
+      )
+      this.newMembers = data.profiles
+      this.followingIds = new Set(data.followingIds)
     } catch (e) {
       console.warn('[Feed] loadNewMembers error', e)
       this.newMembers = []
     } finally {
       this.newMembersLoading = false
     }
+  },
+
+  async _fetchNewMembers(me) {
+    const { data: myFollows } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', me)
+    const followingIds = (myFollows || []).map(f => f.following_id)
+
+    const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, username, avatar_url, bio, created_at')
+      .neq('id', me)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(12)
+
+    return { profiles: profiles || [], followingIds }
   },
 
   // ── Follow / Unfollow inline ──────────────────────────────────────────────
@@ -96,7 +127,6 @@ export const feedView = () => ({
     this.followingInProgress = new Set([...this.followingInProgress, userId])
     const wasFollowing = this.followingIds.has(userId)
 
-    // Optimistic update
     if (wasFollowing) {
       this.followingIds.delete(userId)
     } else {
@@ -116,9 +146,12 @@ export const feedView = () => ({
           .from('follows')
           .insert({ follower_id: me, following_id: userId })
       }
+      // Invalide les caches dépendants des follows
+      const store = window.Alpine.store('app')
+      store.cacheInvalidate(`feed:${me}`)
+      store.cacheInvalidate(`newMembers:${me}`)
     } catch (e) {
       console.warn('[Feed] toggleFollow error', e)
-      // Rollback
       if (wasFollowing) {
         this.followingIds.add(userId)
       } else {
