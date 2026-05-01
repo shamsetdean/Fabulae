@@ -13,6 +13,9 @@ export const discoverView = () => ({
   // Profil utilisateur pour calcul de compatibilité
   _userProfile: null,
 
+  // Filtre genre actif (null = Tout)
+  genreFilter: null,
+
   // Genres TMDB disponibles dans Discover
   genres: [
     { id: null,  name: 'Tout' },
