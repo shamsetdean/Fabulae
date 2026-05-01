@@ -14,7 +14,6 @@ export const appTemplate = `
           Bêta privée · phase de test
         </span>
       </div>
-
       <div class="max-w-sm mx-auto w-full animate-slide-up">
         <div class="mb-8 text-center">
           <div class="flex items-center justify-center gap-2 text-flame-500 text-xs tracking-[0.3em] uppercase mb-4">
@@ -23,13 +22,11 @@ export const appTemplate = `
           <h1 class="text-5xl display text-cream-50 italic">Fabulae</h1>
           <p class="mt-2 text-[11px] tracking-[0.18em] uppercase text-cream-300/60 italic">L'art de ne jamais perdre le fil</p>
         </div>
-
         <div class="card p-6 space-y-4">
           <div class="flex gap-2">
             <button @click="mode = 'signin'" :class="mode === 'signin' ? 'bg-emerald-600 text-cream-50' : 'text-cream-200'" class="flex-1 py-2.5 rounded-full text-sm font-medium transition-colors">Connexion</button>
             <button @click="mode = 'signup'" :class="mode === 'signup' ? 'bg-emerald-600 text-cream-50' : 'text-cream-200'" class="flex-1 py-2.5 rounded-full text-sm font-medium transition-colors">Créer un compte</button>
           </div>
-
           <form @submit.prevent="submit" class="space-y-3">
             <div>
               <label class="text-xs text-cream-300/70 uppercase tracking-wider mb-1.5 block">Email</label>
@@ -40,28 +37,22 @@ export const appTemplate = `
               <input type="password" x-model="password" :autocomplete="mode === 'signup' ? 'new-password' : 'current-password'" required minlength="8" class="input" placeholder="••••••••" />
               <p x-show="mode === 'signup'" class="text-[11px] text-cream-300/50 mt-1">8 caractères minimum</p>
             </div>
-
             <template x-if="mode === 'signup'">
               <label class="flex items-start gap-2 text-xs text-cream-300 pt-1">
                 <input type="checkbox" x-model="acceptTerms" class="mt-0.5" />
                 <span>J'accepte les <a href="#/legal/mentions" class="text-flame-500 underline">mentions</a> et la <a href="#/legal/privacy" class="text-flame-500 underline">politique de confidentialité</a>, et je confirme avoir au moins 16 ans.</span>
               </label>
             </template>
-
             <template x-if="error">
               <div class="text-sm text-flame-400 bg-flame-600/10 border border-flame-600/30 rounded-lg px-3 py-2" x-text="error"></div>
             </template>
-
             <button type="submit" :disabled="loading" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-cream-50 font-semibold transition-colors disabled:opacity-50">
               <span x-show="!loading" x-text="mode === 'signup' ? 'Créer mon compte' : 'Entrer'"></span>
               <span x-show="loading">…</span>
             </button>
           </form>
         </div>
-
-        <p class="text-[11px] text-center text-cream-300/40 mt-6 px-4">
-          Projet en cours d'élaboration. Merci de ne pas partager ni redistribuer ce lien.
-        </p>
+        <p class="text-[11px] text-center text-cream-300/40 mt-6 px-4">Projet en cours d'élaboration. Merci de ne pas partager ni redistribuer ce lien.</p>
       </div>
     </section>
   </template>
@@ -70,7 +61,6 @@ export const appTemplate = `
   <template x-if="$store.app.route.name === 'onboarding'">
     <section x-data="onboardingView()" x-init="init()" class="min-h-dvh flex flex-col px-5 py-8 relative z-10">
       <div class="max-w-sm mx-auto w-full animate-slide-up flex flex-col min-h-dvh">
-
         <div class="mb-6">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs text-cream-300/60" x-text="'Étape ' + step + ' sur ' + totalSteps"></span>
@@ -80,7 +70,6 @@ export const appTemplate = `
             <div class="h-full bg-flame-500 rounded-full transition-all duration-500" :style="'width: ' + progressPercent + '%'"></div>
           </div>
         </div>
-
         <template x-if="step === 1">
           <div class="flex-1 flex flex-col">
             <h1 class="text-4xl display italic mb-2 text-cream-50">Choisis ton pseudo.</h1>
@@ -103,12 +92,10 @@ export const appTemplate = `
               </template>
             </div>
             <button @click="saveProfile" :disabled="saving || !canProceedStep1" class="btn-primary w-full mt-auto">
-              <span x-show="!saving">Continuer →</span>
-              <span x-show="saving">…</span>
+              <span x-show="!saving">Continuer →</span><span x-show="saving">…</span>
             </button>
           </div>
         </template>
-
         <template x-if="step === 2">
           <div class="flex-1 flex flex-col">
             <div class="mb-1 flex items-center gap-2">
@@ -120,18 +107,12 @@ export const appTemplate = `
               <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
               <input type="search" x-model="searchQuery" @input="onSearchInput" class="input pl-9 text-sm" placeholder="Cherche une série…" autocomplete="off" />
             </div>
-            <template x-if="searching">
-              <p class="text-xs text-cream-300/50 text-center py-3">Recherche…</p>
-            </template>
+            <template x-if="searching"><p class="text-xs text-cream-300/50 text-center py-3">Recherche…</p></template>
             <div class="space-y-1.5 flex-1 overflow-y-auto mb-4">
               <template x-for="show in searchResults" :key="show.id">
                 <div class="card p-2.5 flex items-center gap-3">
-                  <template x-if="show.poster">
-                    <img :src="show.poster" :alt="show.name" class="w-9 h-12 rounded object-cover flex-shrink-0" loading="lazy" />
-                  </template>
-                  <template x-if="!show.poster">
-                    <div class="w-9 h-12 rounded bg-ink-800 flex-shrink-0"></div>
-                  </template>
+                  <template x-if="show.poster"><img :src="show.poster" :alt="show.name" class="w-9 h-12 rounded object-cover flex-shrink-0" loading="lazy" /></template>
+                  <template x-if="!show.poster"><div class="w-9 h-12 rounded bg-ink-800 flex-shrink-0"></div></template>
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-cream-100 truncate" x-text="show.name"></p>
                     <p class="text-[11px] text-cream-300/50" x-text="show.year"></p>
@@ -142,16 +123,13 @@ export const appTemplate = `
                 </div>
               </template>
             </div>
-            <template x-if="addedShows.length > 0">
-              <p class="text-xs text-cream-300/60 text-center mb-3" x-text="addedShows.length + ' série(s) ajoutée(s)'"></p>
-            </template>
+            <template x-if="addedShows.length > 0"><p class="text-xs text-cream-300/60 text-center mb-3" x-text="addedShows.length + ' série(s) ajoutée(s)'"></p></template>
             <div class="flex gap-3 mt-auto">
               <button @click="proceedStep2" class="flex-1 py-3 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Passer</button>
               <button @click="proceedStep2" class="flex-2 btn-primary px-6">Continuer →</button>
             </div>
           </div>
         </template>
-
         <template x-if="step === 3">
           <div class="flex-1 flex flex-col">
             <div class="mb-1 flex items-center gap-2">
@@ -159,18 +137,12 @@ export const appTemplate = `
               <h2 class="text-2xl display italic text-cream-50">Suis des membres</h2>
             </div>
             <p class="text-cream-300 text-sm mb-5">Découvre les classements de la communauté.</p>
-            <template x-if="loadingUsers">
-              <div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-14 rounded-xl"></div></template></div>
-            </template>
+            <template x-if="loadingUsers"><div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-14 rounded-xl"></div></template></div></template>
             <div class="space-y-2 flex-1 overflow-y-auto mb-4">
               <template x-for="user in suggestedUsers" :key="user.id">
                 <div class="card p-3 flex items-center gap-3">
-                  <template x-if="user.avatar_url">
-                    <img :src="user.avatar_url" :alt="user.username" class="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-                  </template>
-                  <template x-if="!user.avatar_url">
-                    <div class="w-10 h-10 rounded-full bg-ink-700 flex items-center justify-center text-sm font-mono text-cream-200 flex-shrink-0" x-text="user.username?.charAt(0).toUpperCase()"></div>
-                  </template>
+                  <template x-if="user.avatar_url"><img :src="user.avatar_url" :alt="user.username" class="w-10 h-10 rounded-full object-cover flex-shrink-0" /></template>
+                  <template x-if="!user.avatar_url"><div class="w-10 h-10 rounded-full bg-ink-700 flex items-center justify-center text-sm font-mono text-cream-200 flex-shrink-0" x-text="user.username?.charAt(0).toUpperCase()"></div></template>
                   <p class="text-sm font-medium text-cream-100 flex-1 truncate" x-text="'@' + user.username"></p>
                   <button @click="toggleFollowUser(user.id)" :disabled="followingId === user.id" class="flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg transition-colors" :class="isFollowed(user.id) ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-flame-600 text-cream-50 hover:bg-flame-500'">
                     <span x-text="isFollowed(user.id) ? '✓ Suivi' : (followingId === user.id ? '…' : 'Suivre')"></span>
@@ -178,16 +150,13 @@ export const appTemplate = `
                 </div>
               </template>
             </div>
-            <template x-if="followedIds.size > 0">
-              <p class="text-xs text-cream-300/60 text-center mb-3" x-text="followedIds.size + ' membre(s) suivi(s)'"></p>
-            </template>
+            <template x-if="followedIds.size > 0"><p class="text-xs text-cream-300/60 text-center mb-3" x-text="followedIds.size + ' membre(s) suivi(s)'"></p></template>
             <div class="flex gap-3 mt-auto">
               <button @click="proceedStep3" class="flex-1 py-3 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Passer</button>
               <button @click="proceedStep3" class="flex-2 btn-primary px-6">Continuer →</button>
             </div>
           </div>
         </template>
-
         <template x-if="step === 4">
           <div class="flex-1 flex flex-col items-center justify-center text-center">
             <div class="w-20 h-20 rounded-full bg-flame-600/20 flex items-center justify-center mb-6">
@@ -201,7 +170,6 @@ export const appTemplate = `
             </div>
           </div>
         </template>
-
       </div>
     </section>
   </template>
@@ -272,10 +240,7 @@ export const appTemplate = `
       <header class="header-glass sticky top-0 z-20 safe-top px-4 pb-3 flex items-center justify-between">
         <a href="#/feed" class="display italic text-xl text-cream-50 leading-none">Fabulae</a>
         <a href="#/notifications" class="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-50/5 transition-colors" :class="$store.app.route.name === 'notifications' ? 'text-flame-500' : 'text-cream-200'">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span x-show="$store.app.unreadCount > 0" class="notif-dot"></span>
         </a>
       </header>
@@ -289,9 +254,7 @@ export const appTemplate = `
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Mon univers</p>
               <h1 class="text-3xl display italic text-cream-50 leading-none">Bibliothèque</h1>
             </header>
-            <div class="mb-4">
-              <input type="search" x-model="search" class="input text-sm" placeholder="Rechercher dans ma bibliothèque..." />
-            </div>
+            <div class="mb-4"><input type="search" x-model="search" class="input text-sm" placeholder="Rechercher dans ma bibliothèque..." /></div>
             <div class="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-4 px-4">
               <button @click="filter = 'all'" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">Tout (<span x-text="counts.all"></span>)</button>
               <button @click="filter = 'watching'" :class="filter === 'watching' ? 'bg-flame-600 text-cream-50' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">En cours (<span x-text="counts.watching"></span>)</button>
@@ -301,9 +264,7 @@ export const appTemplate = `
               <button @click="filter = 'abandoned'" :class="filter === 'abandoned' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">Abandonnées (<span x-text="counts.abandoned"></span>)</button>
               <button @click="filter = 'wishlist'" :class="filter === 'wishlist' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'" class="text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">À voir (<span x-text="counts.wishlist"></span>)</button>
             </div>
-            <template x-if="loading">
-              <div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-16"></div></template></div>
-            </template>
+            <template x-if="loading"><div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-16"></div></template></div></template>
             <template x-if="!loading && filtered.length === 0">
               <div class="text-center py-16 text-cream-300/60">
                 <svg class="mx-auto mb-3 opacity-40" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4zM4 9h16M9 4v16"/></svg>
@@ -314,9 +275,7 @@ export const appTemplate = `
             <ul class="space-y-2">
               <template x-for="item in filtered" :key="item.id">
                 <li class="card p-2.5 flex gap-2.5">
-                  <a :href="'#/show/' + item.show.id" class="flex-shrink-0">
-                    <img :src="item.show.poster" :alt="item.show.name" loading="lazy" class="w-12 h-18 rounded-md bg-ink-800 object-cover" />
-                  </a>
+                  <a :href="'#/show/' + item.show.id" class="flex-shrink-0"><img :src="item.show.poster" :alt="item.show.name" loading="lazy" class="w-12 h-18 rounded-md bg-ink-800 object-cover" /></a>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-start justify-between gap-2">
                       <a :href="'#/show/' + item.show.id" class="block min-w-0">
@@ -344,19 +303,13 @@ export const appTemplate = `
         <!-- ============== DISCOVER ============== -->
         <template x-if="$store.app.route.name === 'discover'">
           <section x-data="discoverView()" x-init="init()" class="px-4 pt-4 pb-6 animate-fade-in">
-
-            <!-- ZONE DE CLASSIFICATION -->
             <template x-if="selectedShow">
               <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" @click.self="cancelSelection()">
                 <div class="w-full max-w-md bg-ink-900 rounded-2xl border-2 border-flame-500/40 shadow-2xl max-h-[90vh] overflow-y-auto p-5">
                   <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Classer cette série</p>
                   <div class="flex gap-3 items-start mb-4">
-                    <template x-if="selectedShow?.poster">
-                      <img :src="selectedShow.poster" :alt="selectedShow?.name" class="w-16 h-24 rounded-lg object-cover flex-shrink-0" />
-                    </template>
-                    <template x-if="!selectedShow?.poster">
-                      <div class="w-16 h-24 rounded-lg bg-ink-800 flex-shrink-0"></div>
-                    </template>
+                    <template x-if="selectedShow?.poster"><img :src="selectedShow.poster" :alt="selectedShow?.name" class="w-16 h-24 rounded-lg object-cover flex-shrink-0" /></template>
+                    <template x-if="!selectedShow?.poster"><div class="w-16 h-24 rounded-lg bg-ink-800 flex-shrink-0"></div></template>
                     <div class="flex-1 min-w-0">
                       <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-1">Série sélectionnée</p>
                       <p class="text-base font-semibold text-cream-50 line-clamp-2" x-text="selectedShow?.name"></p>
@@ -378,9 +331,7 @@ export const appTemplate = `
                   <div class="mb-3">
                     <p class="text-[10px] uppercase tracking-wider text-cream-300/60 mb-2">Évaluation</p>
                     <div class="flex gap-1.5">
-                      <template x-for="n in 5" :key="n">
-                        <button @click="setRating(n)" class="text-2xl transition-transform active:scale-110" :class="n <= selRating ? 'text-flame-500' : 'text-ink-700'">★</button>
-                      </template>
+                      <template x-for="n in 5" :key="n"><button @click="setRating(n)" class="text-2xl transition-transform active:scale-110" :class="n <= selRating ? 'text-flame-500' : 'text-ink-700'">★</button></template>
                     </div>
                   </div>
                   <div class="mb-4">
@@ -393,36 +344,25 @@ export const appTemplate = `
                   <div class="flex gap-2">
                     <button @click="cancelSelection()" class="flex-1 py-2.5 rounded-xl bg-ink-700 text-cream-200 text-sm hover:bg-ink-600 transition-colors">Annuler</button>
                     <button @click="saveSelection()" :disabled="selSaving" class="flex-1 py-2.5 rounded-xl bg-flame-600 text-cream-50 text-sm font-semibold hover:bg-flame-500 transition-colors disabled:opacity-50">
-                      <span x-show="!selSaving">Ajouter à ma bibliothèque</span>
-                      <span x-show="selSaving">…</span>
+                      <span x-show="!selSaving">Ajouter à ma bibliothèque</span><span x-show="selSaving">…</span>
                     </button>
                   </div>
                 </div>
               </div>
             </template>
-
-            <!-- Header -->
             <header class="mb-4">
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Explorer</p>
               <h1 class="text-3xl display italic text-cream-50 leading-none">Découverte</h1>
               <p class="text-xs text-cream-300/60 mt-2">Cherche, ajoute et classe de nouvelles séries.</p>
             </header>
-
-            <!-- ── Pour toi : recommandations personnalisées ──────────────────── -->
-
-            <!-- Skeleton pendant le chargement -->
             <template x-if="recoLoading">
               <div class="mb-5">
                 <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Pour toi</p>
                 <div class="flex gap-2.5 overflow-x-auto -mx-4 px-4 pb-1">
-                  <template x-for="i in 3" :key="i">
-                    <div class="flex-shrink-0 w-28 skeleton rounded-xl" style="aspect-ratio:2/3"></div>
-                  </template>
+                  <template x-for="i in 3" :key="i"><div class="flex-shrink-0 w-28 skeleton rounded-xl" style="aspect-ratio:2/3"></div></template>
                 </div>
               </div>
             </template>
-
-            <!-- 3 recommandations -->
             <template x-if="!recoLoading && recommendations.length > 0">
               <div class="mb-5">
                 <div class="flex items-center justify-between mb-3">
@@ -433,9 +373,7 @@ export const appTemplate = `
                   <template x-for="show in recommendations" :key="show.id">
                     <div class="flex-shrink-0 w-28 snap-start">
                       <div class="relative rounded-xl overflow-hidden bg-ink-800" style="aspect-ratio:2/3">
-                        <template x-if="show.poster">
-                          <img :src="show.poster" :alt="show.name" class="w-full h-full object-cover" loading="lazy" />
-                        </template>
+                        <template x-if="show.poster"><img :src="show.poster" :alt="show.name" class="w-full h-full object-cover" loading="lazy" /></template>
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                         <button @click="select(show)" class="absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center bg-flame-600 text-white hover:bg-flame-500 transition-colors shadow-lg">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -448,72 +386,41 @@ export const appTemplate = `
                 </div>
               </div>
             </template>
-
-            <!-- ─────────────────────────────────────────────────────────────── -->
-
-            <!-- Barre de recherche -->
             <div class="relative mb-5">
               <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input
-                type="search"
-                x-model="searchQuery"
-                @input="onSearchInput"
-                class="input text-sm pl-9"
-                placeholder="Cherche une série..."
-                autocomplete="off"
-              />
+              <input type="search" x-model="searchQuery" @input="onSearchInput" class="input text-sm pl-9" placeholder="Cherche une série..." autocomplete="off" />
             </div>
-
-            <!-- Résultats de recherche -->
             <template x-if="searchQuery.trim().length >= 2">
               <div class="mb-6">
                 <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Résultats</p>
-                <template x-if="searching">
-                  <div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-20 rounded-xl"></div></template></div>
-                </template>
-                <template x-if="!searching && searchResults.length === 0">
-                  <p class="text-sm text-cream-300/50 text-center py-6">Aucun résultat pour cette recherche.</p>
-                </template>
+                <template x-if="searching"><div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-20 rounded-xl"></div></template></div></template>
+                <template x-if="!searching && searchResults.length === 0"><p class="text-sm text-cream-300/50 text-center py-6">Aucun résultat pour cette recherche.</p></template>
                 <div class="space-y-2">
                   <template x-for="show in searchResults" :key="show.id">
                     <div class="card p-3 flex gap-3 items-center">
-                      <template x-if="show.poster">
-                        <img :src="show.poster" :alt="show.name" class="w-12 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
-                      </template>
-                      <template x-if="!show.poster">
-                        <div class="w-12 h-16 rounded-lg bg-ink-800 flex-shrink-0"></div>
-                      </template>
+                      <template x-if="show.poster"><img :src="show.poster" :alt="show.name" class="w-12 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" /></template>
+                      <template x-if="!show.poster"><div class="w-12 h-16 rounded-lg bg-ink-800 flex-shrink-0"></div></template>
                       <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium text-cream-100 truncate" x-text="show.name"></p>
                         <p class="text-[11px] text-cream-300/50" x-text="show.year"></p>
                         <p class="text-[11px] text-cream-300/60 line-clamp-2 mt-0.5" x-text="show.overview"></p>
                       </div>
-                      <button @click="select(show)" class="flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg bg-flame-600 text-cream-50 hover:bg-flame-500 transition-colors">
-                        Classer
-                      </button>
+                      <button @click="select(show)" class="flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg bg-flame-600 text-cream-50 hover:bg-flame-500 transition-colors">Classer</button>
                     </div>
                   </template>
                 </div>
               </div>
             </template>
-
-            <!-- Tendances par défaut (quand pas de recherche active) -->
             <template x-if="searchQuery.trim().length < 2">
               <div>
                 <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Tendances de la semaine</p>
-                <template x-if="trendingLoading">
-                  <div class="grid grid-cols-2 gap-3"><template x-for="i in 6" :key="i"><div class="skeleton aspect-[2/3] rounded-xl"></div></template></div>
-                </template>
-                <template x-if="!trendingLoading && trendingShows.length === 0">
-                  <p class="text-sm text-cream-300/50 text-center py-8">Tendances indisponibles pour le moment.</p>
-                </template>
+                <template x-if="trendingLoading"><div class="grid grid-cols-2 gap-3"><template x-for="i in 6" :key="i"><div class="skeleton aspect-[2/3] rounded-xl"></div></template></div></template>
+                <template x-if="!trendingLoading && trendingShows.length === 0"><p class="text-sm text-cream-300/50 text-center py-8">Tendances indisponibles pour le moment.</p></template>
                 <div class="grid grid-cols-2 gap-3">
                   <template x-for="show in trendingShows" :key="show.id">
                     <div class="space-y-2">
                       <div class="relative aspect-[2/3] rounded-xl overflow-hidden bg-ink-800">
-                        <template x-if="show.poster">
-                          <img :src="show.poster" :alt="show.name" class="w-full h-full object-cover" loading="lazy" />
-                        </template>
+                        <template x-if="show.poster"><img :src="show.poster" :alt="show.name" class="w-full h-full object-cover" loading="lazy" /></template>
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                         <button @click="select(show)" class="absolute bottom-2 right-2 w-9 h-9 rounded-full flex items-center justify-center shadow-lg bg-flame-600 text-white hover:bg-flame-500 transition-colors">
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -539,14 +446,61 @@ export const appTemplate = `
               <h1 class="text-3xl display italic text-cream-50 leading-none">Le fil</h1>
               <p class="text-xs text-cream-300/60 mt-2">Les ajouts récents de la communauté.</p>
             </header>
+
+            <!-- ── Nouveaux membres ────────────────────────────────────────── -->
+            <template x-if="newMembers.length > 0">
+              <div class="mb-5">
+                <div class="flex items-center justify-between mb-3">
+                  <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold">Nouveaux membres</p>
+                  <span class="text-[10px] text-cream-300/40">Rejoints récemment</span>
+                </div>
+                <div class="flex gap-4 overflow-x-auto -mx-4 px-4 pb-2 snap-x">
+                  <template x-for="user in newMembers" :key="user.id">
+                    <div class="flex-shrink-0 snap-start flex flex-col items-center gap-2" style="width:72px">
+
+                      <!-- Avatar cliquable → profil -->
+                      <a :href="'#/u/' + user.username" class="block">
+                        <template x-if="user.avatar_url">
+                          <img :src="user.avatar_url" :alt="user.username" class="w-14 h-14 rounded-full object-cover border-2 border-flame-500/25" />
+                        </template>
+                        <template x-if="!user.avatar_url">
+                          <div class="w-14 h-14 rounded-full bg-ink-800 border-2 border-flame-500/25 flex items-center justify-center text-lg font-mono text-cream-200" x-text="user.username?.charAt(0).toUpperCase()"></div>
+                        </template>
+                      </a>
+
+                      <!-- Pseudo -->
+                      <p class="text-[10px] text-cream-200 text-center w-full truncate leading-tight" x-text="'@' + user.username"></p>
+
+                      <!-- Bouton Suivre / Suivi -->
+                      <button
+                        @click="toggleFollow(user.id)"
+                        :disabled="followingInProgress.has(user.id)"
+                        class="w-full text-[10px] py-1 rounded-full border transition-colors disabled:opacity-50"
+                        :class="followingIds.has(user.id)
+                          ? 'bg-transparent border-ink-600 text-cream-300/50'
+                          : 'bg-flame-600 border-transparent text-cream-50 hover:bg-flame-500'"
+                      >
+                        <span x-show="!followingInProgress.has(user.id)" x-text="followingIds.has(user.id) ? 'Suivi' : 'Suivre'"></span>
+                        <span x-show="followingInProgress.has(user.id)">…</span>
+                      </button>
+
+                    </div>
+                  </template>
+                </div>
+                <!-- Séparateur visuel -->
+                <div class="h-px bg-ink-800 mt-1"></div>
+              </div>
+            </template>
+            <!-- ─────────────────────────────────────────────────────────── -->
+
+            <!-- Filtres -->
             <div class="flex gap-2 mb-4 overflow-x-auto -mx-1 px-1">
               <button @click="filter = 'all'" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-300/70'" class="text-[11px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">Tout</button>
               <button @click="filter = 'recommended'" :class="filter === 'recommended' ? 'bg-green-600 text-cream-50' : 'bg-ink-800 text-cream-300/70'" class="text-[11px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">Recommandées</button>
               <button @click="filter = 'not_recommended'" :class="filter === 'not_recommended' ? 'bg-red-600 text-cream-50' : 'bg-ink-800 text-cream-300/70'" class="text-[11px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">Déconseillées</button>
             </div>
-            <template x-if="loading">
-              <div class="space-y-3"><template x-for="i in 4" :key="i"><div class="skeleton h-24 rounded-xl"></div></template></div>
-            </template>
+
+            <template x-if="loading"><div class="space-y-3"><template x-for="i in 4" :key="i"><div class="skeleton h-24 rounded-xl"></div></template></div></template>
             <template x-if="!loading && filtered.length === 0">
               <div class="text-center py-16">
                 <p class="text-sm text-cream-300/50">Aucune activité récente dans ton fil.</p>
@@ -557,22 +511,14 @@ export const appTemplate = `
               <template x-for="entry in filtered" :key="entry.id">
                 <div class="card p-3 flex gap-3 items-center">
                   <a :href="'#/show/' + entry.tmdb_id" class="flex-shrink-0">
-                    <template x-if="entry.show?.poster">
-                      <img :src="entry.show.poster" :alt="entry.show.name" class="w-14 h-20 rounded-lg object-cover" loading="lazy" />
-                    </template>
-                    <template x-if="!entry.show?.poster">
-                      <div class="w-14 h-20 rounded-lg bg-ink-800"></div>
-                    </template>
+                    <template x-if="entry.show?.poster"><img :src="entry.show.poster" :alt="entry.show.name" class="w-14 h-20 rounded-lg object-cover" loading="lazy" /></template>
+                    <template x-if="!entry.show?.poster"><div class="w-14 h-20 rounded-lg bg-ink-800"></div></template>
                   </a>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
                       <a :href="'#/u/' + entry.username" class="flex items-center gap-1.5 group">
-                        <template x-if="entry.avatar_url">
-                          <img :src="entry.avatar_url" :alt="entry.username" class="w-5 h-5 rounded-full object-cover" />
-                        </template>
-                        <template x-if="!entry.avatar_url">
-                          <div class="w-5 h-5 rounded-full bg-ink-700 flex items-center justify-center text-[9px] font-mono text-cream-200" x-text="entry.username?.charAt(0).toUpperCase()"></div>
-                        </template>
+                        <template x-if="entry.avatar_url"><img :src="entry.avatar_url" :alt="entry.username" class="w-5 h-5 rounded-full object-cover" /></template>
+                        <template x-if="!entry.avatar_url"><div class="w-5 h-5 rounded-full bg-ink-700 flex items-center justify-center text-[9px] font-mono text-cream-200" x-text="entry.username?.charAt(0).toUpperCase()"></div></template>
                         <span class="text-xs text-cream-200 group-hover:text-flame-400 transition-colors" x-text="'@' + entry.username"></span>
                       </a>
                       <span class="text-[10px] text-cream-300/40" x-text="formatRelativeDate(entry.created_at)"></span>
@@ -615,13 +561,9 @@ export const appTemplate = `
               <button @click="tab = 'community'" :class="tab === 'community' ? 'text-cream-50 border-flame-500' : 'text-cream-300/60 border-transparent'" class="pb-3 px-1 border-b-2 text-sm font-medium">Chez les membres</button>
               <button @click="tab = 'tmdb'" :class="tab === 'tmdb' ? 'text-cream-50 border-flame-500' : 'text-cream-300/60 border-transparent'" class="pb-3 px-1 border-b-2 text-sm font-medium">Mondial</button>
             </div>
-            <template x-if="loading">
-              <div class="space-y-3"><template x-for="i in 5" :key="i"><div class="skeleton h-16"></div></template></div>
-            </template>
+            <template x-if="loading"><div class="space-y-3"><template x-for="i in 5" :key="i"><div class="skeleton h-16"></div></template></div></template>
             <div x-show="!loading && tab === 'community'">
-              <template x-if="communityRanking.length === 0">
-                <p class="text-center text-cream-300/50 text-sm py-10">Pas encore assez de Top 3 publiés.</p>
-              </template>
+              <template x-if="communityRanking.length === 0"><p class="text-center text-cream-300/50 text-sm py-10">Pas encore assez de Top 3 publiés.</p></template>
               <ol class="space-y-2">
                 <template x-for="(show, idx) in communityRanking" :key="show.id">
                   <li>
@@ -668,19 +610,13 @@ export const appTemplate = `
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Activité</p>
               <h1 class="text-3xl display italic">Notifications</h1>
             </header>
-            <template x-if="loading">
-              <div class="space-y-2"><template x-for="i in 3" :key="i"><div class="skeleton h-16"></div></template></div>
-            </template>
-            <template x-if="!loading && items.length === 0">
-              <p class="text-center text-cream-300/50 text-sm py-10">Aucune notification.</p>
-            </template>
+            <template x-if="loading"><div class="space-y-2"><template x-for="i in 3" :key="i"><div class="skeleton h-16"></div></template></div></template>
+            <template x-if="!loading && items.length === 0"><p class="text-center text-cream-300/50 text-sm py-10">Aucune notification.</p></template>
             <ul class="space-y-2">
               <template x-for="n in items" :key="n.id">
                 <li>
                   <a :href="href(n)" class="card p-3 flex items-start gap-3" :class="!n.read ? 'border-flame-500/30' : ''">
-                    <div class="w-9 h-9 rounded-full bg-ink-700 flex items-center justify-center text-cream-200 text-xs font-mono flex-shrink-0">
-                      <span x-text="n.actor?.username?.charAt(0).toUpperCase() ?? '?'"></span>
-                    </div>
+                    <div class="w-9 h-9 rounded-full bg-ink-700 flex items-center justify-center text-cream-200 text-xs font-mono flex-shrink-0"><span x-text="n.actor?.username?.charAt(0).toUpperCase() ?? '?'"></span></div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm text-cream-100" x-text="label(n)"></p>
                       <p class="text-[11px] text-cream-300/50 mt-0.5" x-text="formatDate(n.created_at)"></p>
@@ -715,12 +651,8 @@ export const appTemplate = `
                   </template>
                   <div class="flex items-end gap-4 mb-4">
                     <div class="relative flex-shrink-0">
-                      <template x-if="avatarUrl">
-                        <img :src="avatarUrl" alt="Avatar" class="w-20 h-20 rounded-full object-cover border-2 border-flame-500/40" />
-                      </template>
-                      <template x-if="!avatarUrl">
-                        <div class="w-20 h-20 rounded-full bg-ink-700 border-2 border-flame-500/40 flex items-center justify-center text-2xl font-mono text-cream-200" x-text="avatarInitial"></div>
-                      </template>
+                      <template x-if="avatarUrl"><img :src="avatarUrl" alt="Avatar" class="w-20 h-20 rounded-full object-cover border-2 border-flame-500/40" /></template>
+                      <template x-if="!avatarUrl"><div class="w-20 h-20 rounded-full bg-ink-700 border-2 border-flame-500/40 flex items-center justify-center text-2xl font-mono text-cream-200" x-text="avatarInitial"></div></template>
                       <template x-if="isMe">
                         <label class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-flame-600 flex items-center justify-center cursor-pointer hover:bg-flame-500 transition-colors" :class="uploadingAvatar ? 'opacity-50 pointer-events-none' : ''">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -735,21 +667,11 @@ export const appTemplate = `
                     </div>
                     <div class="flex-1 min-w-0">
                       <h1 class="text-xl font-bold text-cream-50 truncate" x-text="'@' + profile.username"></h1>
-                      <template x-if="alias">
-                        <p class="text-xs text-flame-500 italic mt-0.5" x-text="alias"></p>
-                      </template>
-                      <template x-if="profile.bio">
-                        <p class="text-xs text-cream-300/70 mt-1 line-clamp-2" x-text="profile.bio"></p>
-                      </template>
+                      <template x-if="alias"><p class="text-xs text-flame-500 italic mt-0.5" x-text="alias"></p></template>
+                      <template x-if="profile.bio"><p class="text-xs text-cream-300/70 mt-1 line-clamp-2" x-text="profile.bio"></p></template>
                       <div class="flex gap-4 mt-2">
-                        <button @click="setTab('followers')" class="text-left">
-                          <span class="text-sm font-bold text-cream-50" x-text="counts.followers"></span>
-                          <span class="text-xs text-cream-300/60 ml-1">abonnés</span>
-                        </button>
-                        <button @click="setTab('following')" class="text-left">
-                          <span class="text-sm font-bold text-cream-50" x-text="counts.following"></span>
-                          <span class="text-xs text-cream-300/60 ml-1">abonnements</span>
-                        </button>
+                        <button @click="setTab('followers')" class="text-left"><span class="text-sm font-bold text-cream-50" x-text="counts.followers"></span><span class="text-xs text-cream-300/60 ml-1">abonnés</span></button>
+                        <button @click="setTab('following')" class="text-left"><span class="text-sm font-bold text-cream-50" x-text="counts.following"></span><span class="text-xs text-cream-300/60 ml-1">abonnements</span></button>
                       </div>
                     </div>
                     <template x-if="!isMe">
@@ -760,49 +682,32 @@ export const appTemplate = `
                   </div>
                   <template x-if="!isMe">
                     <div class="flex items-center gap-2 mb-3">
-                      <template x-if="commonSeriesLoading">
-                        <span class="text-xs text-cream-300/50">Calcul des séries en commun…</span>
-                      </template>
+                      <template x-if="commonSeriesLoading"><span class="text-xs text-cream-300/50">Calcul des séries en commun…</span></template>
                       <template x-if="!commonSeriesLoading && commonSeriesCount !== null">
                         <div class="flex items-center gap-2">
                           <div :class="canChat ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-ink-800 text-cream-300/60 border-ink-700'" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                             <span x-text="commonSeriesCount + ' série' + (commonSeriesCount > 1 ? 's' : '') + ' en commun'"></span>
                           </div>
-                          <template x-if="canChat">
-                            <span class="text-[10px] text-green-400">· Chat disponible bientôt</span>
-                          </template>
+                          <template x-if="canChat"><span class="text-[10px] text-green-400">· Chat disponible bientôt</span></template>
                         </div>
                       </template>
                     </div>
                   </template>
                   <template x-if="isMe">
                     <button @click="toggleVisibility" :disabled="togglingVisibility" class="flex items-center gap-1.5 text-[11px] text-cream-300/60 hover:text-cream-100 transition-colors mb-2">
-                      <template x-if="profile.library_public">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                      </template>
-                      <template x-if="!profile.library_public">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                      </template>
+                      <template x-if="profile.library_public"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></template>
+                      <template x-if="!profile.library_public"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></template>
                       <span x-text="profile.library_public ? 'Bibliothèque publique' : 'Bibliothèque privée'"></span>
                     </button>
                   </template>
                 </div>
-
                 <div class="flex border-b border-ink-700/50 mb-4 px-4 overflow-x-auto">
                   <button @click="setTab('top')" :class="activeTab === 'top' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">Top 3</button>
-                  <button x-show="showAnalysis" @click="setTab('library')" :class="activeTab === 'library' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
-                    Bibliothèque
-                    <span x-show="library.length > 0" class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + library.length + ')'"></span>
-                  </button>
-                  <button x-show="isMe" @click="setTab('followers')" :class="activeTab === 'followers' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
-                    Abonnés <span class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + counts.followers + ')'"></span>
-                  </button>
-                  <button x-show="isMe" @click="setTab('following')" :class="activeTab === 'following' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">
-                    Abonnements <span class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + counts.following + ')'"></span>
-                  </button>
+                  <button x-show="showAnalysis" @click="setTab('library')" :class="activeTab === 'library' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">Bibliothèque <span x-show="library.length > 0" class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + library.length + ')'"></span></button>
+                  <button x-show="isMe" @click="setTab('followers')" :class="activeTab === 'followers' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">Abonnés <span class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + counts.followers + ')'"></span></button>
+                  <button x-show="isMe" @click="setTab('following')" :class="activeTab === 'following' ? 'border-flame-500 text-cream-50' : 'border-transparent text-cream-300/60'" class="flex-shrink-0 text-xs font-medium px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap">Abonnements <span class="ml-1 text-[10px] text-cream-300/50" x-text="'(' + counts.following + ')'"></span></button>
                 </div>
-
                 <template x-if="activeTab === 'top'">
                   <div class="px-4 space-y-6">
                     <template x-if="currentTop && currentTop.shows.length > 0">
@@ -856,12 +761,9 @@ export const appTemplate = `
                     </template>
                   </div>
                 </template>
-
                 <template x-if="activeTab === 'library'">
                   <div class="px-4">
-                    <template x-if="!showAnalysis && !isMe">
-                      <p class="text-sm text-cream-300/50 text-center py-12">Bibliothèque privée.</p>
-                    </template>
+                    <template x-if="!showAnalysis && !isMe"><p class="text-sm text-cream-300/50 text-center py-12">Bibliothèque privée.</p></template>
                     <template x-if="showAnalysis || isMe">
                       <div>
                         <template x-if="libraryLoading"><div class="grid grid-cols-3 gap-3"><template x-for="i in 9" :key="i"><div class="skeleton aspect-[2/3] rounded-lg"></div></template></div></template>
@@ -888,7 +790,6 @@ export const appTemplate = `
                     </template>
                   </div>
                 </template>
-
                 <template x-if="activeTab === 'followers'">
                   <div class="px-4">
                     <template x-if="followersLoading"><div class="space-y-3"><template x-for="i in 4" :key="i"><div class="skeleton h-14 rounded-xl"></div></template></div></template>
@@ -911,7 +812,6 @@ export const appTemplate = `
                     </div>
                   </div>
                 </template>
-
                 <template x-if="activeTab === 'following'">
                   <div class="px-4">
                     <template x-if="followingLoading"><div class="space-y-3"><template x-for="i in 4" :key="i"><div class="skeleton h-14 rounded-xl"></div></template></div></template>
@@ -934,7 +834,6 @@ export const appTemplate = `
                     </div>
                   </div>
                 </template>
-
                 <div class="px-4 pb-8 mt-2">
                   <button x-show="!isMe" @click="showReportModal = true" class="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-cream-300/50 text-sm border border-ink-700/40 hover:border-ink-600 hover:text-cream-300/80 active:bg-ink-800 transition-all">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
@@ -943,7 +842,6 @@ export const appTemplate = `
                 </div>
               </div>
             </template>
-
             <template x-if="pendingDeleteId">
               <div class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="cancelDelete()">
                 <div class="w-full max-w-sm bg-ink-900 rounded-2xl p-6 border border-ink-700/50 animate-slide-up">
@@ -956,7 +854,6 @@ export const appTemplate = `
                 </div>
               </div>
             </template>
-
             <template x-if="showReportModal">
               <div class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showReportModal = false">
                 <div class="w-full max-w-sm bg-ink-900 rounded-2xl p-6 border border-ink-700/50 animate-slide-up">
@@ -992,7 +889,6 @@ export const appTemplate = `
                 </div>
               </div>
             </template>
-
             <template x-if="showDeleteAccountModal">
               <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showDeleteAccountModal = false; deleteConfirmText = ''">
                 <div class="w-full max-w-sm bg-ink-900 rounded-2xl p-6 border border-red-900/50 animate-slide-up max-h-[80vh] overflow-y-auto">
@@ -1082,9 +978,7 @@ export const appTemplate = `
                           <div>
                             <p class="text-[10px] text-flame-500 uppercase tracking-wider mb-1">Abonnement</p>
                             <div class="flex flex-wrap gap-1.5">
-                              <template x-for="p in providers.flatrate" :key="p.provider_id">
-                                <div class="card px-2 py-1 flex items-center gap-1.5"><img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-5 h-5 rounded" /><span class="text-xs" x-text="p.provider_name"></span></div>
-                              </template>
+                              <template x-for="p in providers.flatrate" :key="p.provider_id"><div class="card px-2 py-1 flex items-center gap-1.5"><img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-5 h-5 rounded" /><span class="text-xs" x-text="p.provider_name"></span></div></template>
                             </div>
                           </div>
                         </template>
@@ -1092,9 +986,7 @@ export const appTemplate = `
                           <div>
                             <p class="text-[10px] text-gold-500 uppercase tracking-wider mb-1">Gratuit</p>
                             <div class="flex flex-wrap gap-1.5">
-                              <template x-for="p in freeOrAds" :key="p.provider_id">
-                                <div class="card px-2 py-1 flex items-center gap-1.5"><img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-5 h-5 rounded" /><span class="text-xs" x-text="p.provider_name"></span></div>
-                              </template>
+                              <template x-for="p in freeOrAds" :key="p.provider_id"><div class="card px-2 py-1 flex items-center gap-1.5"><img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-5 h-5 rounded" /><span class="text-xs" x-text="p.provider_name"></span></div></template>
                             </div>
                           </div>
                         </template>
@@ -1110,7 +1002,6 @@ export const appTemplate = `
 
       </main>
 
-      <!-- FOOTER LÉGAL -->
       <footer class="relative z-10 text-center pb-20 pt-4">
         <p class="text-[10px] text-cream-300/30">
           <a href="#/legal/beta" class="hover:text-cream-300/60">Phase de test</a> ·
@@ -1119,7 +1010,7 @@ export const appTemplate = `
         </p>
       </footer>
 
-      <!-- ============== WELCOME MODAL (3 écrans) ============== -->
+      <!-- ============== WELCOME MODAL ============== -->
       <template x-if="$store.app.profile && $store.app.profile.welcome_seen === false">
         <div id="onboarding" x-data="welcomeModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
           <div class="relative w-full max-w-md bg-ink-900 rounded-3xl border border-ink-700/50 overflow-hidden">
@@ -1129,12 +1020,8 @@ export const appTemplate = `
               <div class="h-1 flex-1 rounded-full transition-colors" :class="step >= 2 ? 'bg-flame-500' : 'bg-ink-700'"></div>
               <div class="h-1 flex-1 rounded-full transition-colors" :class="step >= 3 ? 'bg-flame-500' : 'bg-ink-700'"></div>
             </div>
-            <section x-show="step === 1" id="ob-screen-1" class="p-8">
-              <h2 class="text-2xl display italic text-cream-50 mb-6">Comment créer un profil et le supprimer</h2>
-            </section>
-            <section x-show="step === 2" id="ob-screen-2" class="p-8">
-              <h2 class="text-2xl display italic text-cream-50 mb-6">Comment ajouter une série</h2>
-            </section>
+            <section x-show="step === 1" id="ob-screen-1" class="p-8"><h2 class="text-2xl display italic text-cream-50 mb-6">Comment créer un profil et le supprimer</h2></section>
+            <section x-show="step === 2" id="ob-screen-2" class="p-8"><h2 class="text-2xl display italic text-cream-50 mb-6">Comment ajouter une série</h2></section>
             <section x-show="step === 3" id="ob-screen-3" class="p-8">
               <h2 class="text-2xl display italic text-cream-50 mb-6">Vos données, vos choix.</h2>
               <div class="space-y-3">
@@ -1152,7 +1039,7 @@ export const appTemplate = `
         </div>
       </template>
 
-      <!-- ============== BOTTOM NAV : 5 onglets égaux ============== -->
+      <!-- ============== BOTTOM NAV ============== -->
       <nav class="fixed bottom-0 left-0 right-0 z-30 nav-glass nav-bottom">
         <div class="flex items-center justify-around max-w-md mx-auto px-2 pt-2">
           <a href="#/library" :class="$store.app.route.name === 'library' ? 'text-flame-500' : 'text-cream-300/50'" class="flex flex-col items-center gap-0.5 p-2 flex-1 transition-colors">
@@ -1212,9 +1099,7 @@ export const appTemplate = `
                       </div>
                       <p class="text-[10px] text-cream-300/60 mb-1.5">Plateforme</p>
                       <div class="flex flex-wrap gap-1.5">
-                        <template x-for="p in providers" :key="p.id">
-                          <button @click="selectProvider(p)" :class="form.provider_id === p.id ? 'border-flame-500' : 'border-ink-700'" class="flex items-center gap-1 px-2 py-1 rounded-md border bg-ink-800 text-[11px]"><img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-4 h-4 rounded" /><span x-text="p.name"></span></button>
-                        </template>
+                        <template x-for="p in providers" :key="p.id"><button @click="selectProvider(p)" :class="form.provider_id === p.id ? 'border-flame-500' : 'border-ink-700'" class="flex items-center gap-1 px-2 py-1 rounded-md border bg-ink-800 text-[11px]"><img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-4 h-4 rounded" /><span x-text="p.name"></span></button></template>
                         <button @click="selectProvider(null)" class="px-2 py-1 rounded-md border border-ink-700 bg-ink-800 text-[11px]">Aucune</button>
                       </div>
                     </div>
@@ -1260,28 +1145,22 @@ export const appTemplate = `
         </template>
       </div>
 
-  <!-- Pas connecté → vers auth -->
   <template x-if="!$store.app.isAuthed && !['auth','onboarding','legal'].includes($store.app.route.name)">
     <div x-init="window.location.hash = '#/auth'"></div>
   </template>
 
-  <!-- Toast global -->
   <template x-if="$store.app.toast">
     <div class="fixed top-4 left-1/2 -translate-x-1/2 z-[200] safe-top">
       <div class="card-strong px-4 py-2.5 text-sm animate-slide-up" :class="$store.app.toast.type === 'success' ? 'border-flame-500/50 text-flame-400' : ''" x-text="$store.app.toast.message"></div>
     </div>
   </template>
 
-  <!-- Toast Nouvelle version disponible (PWA) -->
   <template x-if="$store.app.updateAvailable">
     <div class="fixed top-4 left-1/2 -translate-x-1/2 z-[201] safe-top px-3 max-w-[92vw]">
       <div class="flex items-center gap-2.5 bg-ink-900 border border-flame-500/50 rounded-xl px-3.5 py-2.5 shadow-2xl shadow-black/50 animate-slide-up">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><polyline points="23 4 23 10 17 10"/><path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14"/></svg>
         <span class="text-[12px] text-cream-100 leading-tight">L'appli a une nouvelle version,</span>
-        <button @click="$store.app.applyUpdate()" :disabled="$store.app.applyingUpdate" class="text-[12px] text-flame-500 hover:text-flame-400 font-semibold whitespace-nowrap transition-colors disabled:opacity-50">
-          <span x-show="!$store.app.applyingUpdate">mettre à jour.</span>
-          <span x-show="$store.app.applyingUpdate">…</span>
-        </button>
+        <button @click="$store.app.applyUpdate()" :disabled="$store.app.applyingUpdate" class="text-[12px] text-flame-500 hover:text-flame-400 font-semibold whitespace-nowrap transition-colors disabled:opacity-50"><span x-show="!$store.app.applyingUpdate">mettre à jour.</span><span x-show="$store.app.applyingUpdate">…</span></button>
         <button @click="$store.app.dismissUpdate()" :disabled="$store.app.applyingUpdate" class="text-cream-300/40 hover:text-cream-200 flex-shrink-0 transition-colors disabled:opacity-30" aria-label="Ignorer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
