@@ -7,7 +7,6 @@ export const libraryView = () => ({
   items: [],
   loading: true,
   error: null,
-
   counts: {
     all: 0,
     watching: 0,
@@ -20,45 +19,67 @@ export const libraryView = () => ({
 
   async init() {
     await this.load()
-    window.addEventListener('library:updated', () => this.load())
+    window.addEventListener('library:updated', () => {
+      // Quand la bibliothèque change ailleurs, on invalide le cache et on recharge
+      const me = window.Alpine.store('app').session?.user?.id
+      if (me) window.Alpine.store('app').cacheInvalidate(`library:${me}`)
+      this.load()
+    })
   },
 
   async load() {
-    this.loading = true
     const me = window.Alpine.store('app').session?.user?.id
     if (!me) { this.loading = false; return }
 
-    // Tri par date d'ajout DESC (les plus récentes en haut)
+    const cacheKey = `library:${me}`
+    const store = window.Alpine.store('app')
+
+    try {
+      const data = await store.cached(
+        cacheKey,
+        async () => this._fetchLibrary(me),
+        60_000,
+        (fresh) => {
+          this.items = fresh
+          this.counts = this._computeCounts(fresh)
+        }
+      )
+      this.items = data
+      this.counts = this._computeCounts(data)
+    } catch (e) {
+      console.warn('[Library] load error', e)
+      this.error = e.message
+    } finally {
+      this.loading = false
+    }
+  },
+
+  async _fetchLibrary(me) {
     const { data, error } = await supabase
       .from('library_items')
       .select('*')
       .eq('user_id', me)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      this.error = error.message
-      this.loading = false
-      return
-    }
+    if (error) throw error
 
     const hydrated = await Promise.all((data || []).map(async (it) => {
       const show = await getShowCard(it.tmdb_id)
       return show ? { ...it, show } : null
     }))
-    const all = hydrated.filter(Boolean)
-    this.items = all
+    return hydrated.filter(Boolean)
+  },
 
-    this.counts = {
-      all: all.length,
-      watching: all.filter(i => i.status === 'watching').length,
-      finished: all.filter(i => i.status === 'finished').length,
-      recommended: all.filter(i => i.recommendation === 'recommended').length,
-      not_recommended: all.filter(i => i.recommendation === 'not_recommended').length,
-      abandoned: all.filter(i => i.status === 'abandoned').length,
-      wishlist: all.filter(i => i.status === 'wishlist').length
+  _computeCounts(items) {
+    return {
+      all: items.length,
+      watching: items.filter(i => i.status === 'watching').length,
+      finished: items.filter(i => i.status === 'finished').length,
+      recommended: items.filter(i => i.recommendation === 'recommended').length,
+      not_recommended: items.filter(i => i.recommendation === 'not_recommended').length,
+      abandoned: items.filter(i => i.status === 'abandoned').length,
+      wishlist: items.filter(i => i.status === 'wishlist').length
     }
-
-    this.loading = false
   },
 
   get filtered() {
