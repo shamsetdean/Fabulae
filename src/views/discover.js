@@ -212,12 +212,16 @@ export const discoverView = () => ({
       this.recommendationsWithScore = []
       return
     }
+    console.log('[Compat] _userProfile:', this._userProfile)
+    console.log('[Compat] recommendations:', this.recommendations.slice(0,3).map(s => s.name))
     this.recommendationsWithScore = this.recommendations.slice(0, 3).map(show => {
       const compat = this._userProfile
         ? computeCompatibility(show, this._userProfile)
         : null
+      console.log('[Compat]', show.name, '→', compat)
       return { ...show, compatibility: compat }
     })
+    console.log('[Compat] result:', this.recommendationsWithScore)
   },
 
   // Tendances filtrées par genre sélectionné
