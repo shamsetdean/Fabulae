@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase.js'
 import { tmdbApi, getShowCard } from '../lib/tmdb.js'
 import { generateAlias } from '../lib/alias.js'
+import { computeExplorationScore } from '../lib/recommender.js'
 
 export const profileView = () => ({
   profile: null,
@@ -39,6 +40,10 @@ export const profileView = () => ({
   analysisLoading: false,
   showAnalysis: false,
   togglingVisibility: false,
+
+  // Exploration du catalogue
+  explorationScore: null,
+  explorationByGenre: [],
 
   uploadingAvatar: false,
 
@@ -538,11 +543,23 @@ export const profileView = () => ({
           this.genreStats = fresh.genreStats
           this.genreNeverWatched = fresh.genreNeverWatched
           this.totalSeriesAnalyzed = fresh.total
+          if (fresh.total > 0) {
+            const exploration = computeExplorationScore(fresh.total, fresh.genreStats)
+            this.explorationScore = exploration.globalPercent
+            this.explorationByGenre = exploration.byGenre.slice(0, 5)
+          }
         }
       )
       this.genreStats = stats.genreStats
       this.genreNeverWatched = stats.genreNeverWatched
       this.totalSeriesAnalyzed = stats.total
+
+      // Calcul du score d'exploration
+      if (stats.total > 0) {
+        const exploration = computeExplorationScore(stats.total, stats.genreStats)
+        this.explorationScore = exploration.globalPercent
+        this.explorationByGenre = exploration.byGenre.slice(0, 5)
+      }
     } catch (e) { this.genreStats = []; this.genreNeverWatched = [] }
     finally { this.analysisLoading = false }
   },
