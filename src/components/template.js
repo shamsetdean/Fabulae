@@ -646,6 +646,35 @@ export const appTemplate = `
               <p class="text-xs text-cream-300/60 mt-2">Les ajouts récents de la communauté.</p>
             </header>
 
+            <!-- Nouveaux membres -->
+            <template x-if="newMembers.length > 0">
+              <div class="mb-5">
+                <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Bienvenue aux nouveaux</p>
+                <div class="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+                  <template x-for="user in newMembers" :key="user.id">
+                    <div class="flex flex-col items-center gap-1.5 flex-shrink-0 w-16">
+                      <div class="relative">
+                        <template x-if="user.avatar_url">
+                          <img :src="user.avatar_url" :alt="user.username" class="w-12 h-12 rounded-full object-cover border-2 border-ink-700" />
+                        </template>
+                        <template x-if="!user.avatar_url">
+                          <div class="w-12 h-12 rounded-full bg-ink-700 border-2 border-ink-600 flex items-center justify-center text-sm font-mono text-cream-200" x-text="user.username?.charAt(0).toUpperCase()"></div>
+                        </template>
+                      </div>
+                      <p class="text-[10px] text-cream-300/70 truncate w-full text-center" x-text="'@' + user.username"></p>
+                      <button
+                        @click="toggleFollow(user.id)"
+                        :disabled="followingInProgress.has(user.id)"
+                        class="text-[9px] px-2 py-0.5 rounded-full transition-colors w-full text-center"
+                        :class="followingIds.has(user.id) ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-flame-600 text-cream-50 hover:bg-flame-500'"
+                        x-text="followingIds.has(user.id) ? '✓ Suivi' : 'Suivre'"
+                      ></button>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
             <!-- Filtres -->
             <div class="flex gap-2 mb-4 overflow-x-auto -mx-1 px-1">
               <button @click="filter = 'all'" :class="filter === 'all' ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-300/70'" class="text-[11px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">Tout</button>
