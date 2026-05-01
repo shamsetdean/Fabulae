@@ -692,7 +692,7 @@ export const appTemplate = `
                       <div class="flex-1 min-w-0">
                         <p class="font-medium text-cream-50 text-sm truncate" x-text="show.name"></p>
                         <p class="text-[11px] text-cream-300/50" x-text="show.year"></p>
-                        <p class="text-[11px] text-flame-500" x-text="show.mentions + ' mention(s)'"></p>
+                        <p class="text-[11px] text-flame-500" x-text="show.mentions + ' mention' + (show.mentions > 1 ? 's' : '')"></p>
                       </div>
                     </a>
                   </li>
