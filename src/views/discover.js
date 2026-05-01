@@ -10,7 +10,8 @@ export const discoverView = () => ({
   _searchTimer: null,
   _searchAbort: null,
 
-  // Profil utilisateur pour calcul de compatibilité
+  // Profil utilisateur stocké hors Alpine (window) pour éviter le Proxy wrapping
+  // qui casse computeCompatibility
   _userProfile: null,
 
   // Filtre genre actif (null = Tout)
@@ -58,7 +59,11 @@ export const discoverView = () => ({
     const me = window.Alpine.store('app').session?.user?.id
     if (me) {
       try {
-        this._userProfile = await buildUserProfile(me)
+        const profile = await buildUserProfile(me)
+        // Stocké sur window pour éviter que Alpine le wrappe dans un Proxy
+        // qui rendrait computeCompatibility inopérant
+        window.__fabuProfile = profile
+        this._userProfile = !!profile // juste un boolean pour déclencher le recalcul
       } catch (e) {
         console.warn('[Discover] buildUserProfile error', e)
       }
@@ -212,16 +217,11 @@ export const discoverView = () => ({
       this.recommendationsWithScore = []
       return
     }
-    console.log('[Compat] _userProfile:', this._userProfile)
-    console.log('[Compat] recommendations:', this.recommendations.slice(0,3).map(s => s.name))
+    const profile = window.__fabuProfile || null
     this.recommendationsWithScore = this.recommendations.slice(0, 3).map(show => {
-      const compat = this._userProfile
-        ? computeCompatibility(show, this._userProfile)
-        : null
-      console.log('[Compat]', show.name, '→', compat)
+      const compat = profile ? computeCompatibility(show, profile) : null
       return { ...show, compatibility: compat }
     })
-    console.log('[Compat] result:', this.recommendationsWithScore)
   },
 
   // Tendances filtrées par genre sélectionné
