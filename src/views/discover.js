@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase.js'
 import { tmdbApi } from '../lib/tmdb.js'
-import { generateRecommendations, invalidateProfileCache } from '../lib/recommender.js'
+import { generateRecommendations, invalidateProfileCache, buildUserProfile, computeCompatibility } from '../lib/recommender.js'
 
 export const discoverView = () => ({
   // Recherche
@@ -10,8 +10,8 @@ export const discoverView = () => ({
   _searchTimer: null,
   _searchAbort: null,
 
-  // Filtre genre
-  genreFilter: null,
+  // Profil utilisateur pour calcul de compatibilité
+  _userProfile: null,
 
   // Genres TMDB disponibles dans Discover
   genres: [
@@ -49,6 +49,11 @@ export const discoverView = () => ({
 
   async init() {
     await this.loadMyLibrary()
+    // Charge le profil utilisateur pour le calcul de compatibilité (sans bloquer)
+    const me = window.Alpine.store('app').session?.user?.id
+    if (me) {
+      buildUserProfile(me).then(p => { this._userProfile = p }).catch(() => {})
+    }
     await Promise.all([
       this.loadTrending(),
       this.loadRecommendations()
@@ -185,6 +190,17 @@ export const discoverView = () => ({
 
   isInLibrary(tmdbId) {
     return this.myLibraryIds.has(tmdbId)
+  },
+
+  // Recommandations enrichies avec % de compatibilité
+  get recommendationsWithScore() {
+    if (!this.recommendations.length) return []
+    return this.recommendations.slice(0, 3).map(show => {
+      const compat = this._userProfile
+        ? computeCompatibility(show, this._userProfile)
+        : null
+      return { ...show, compatibility: compat }
+    })
   },
 
   // Tendances filtrées par genre sélectionné
