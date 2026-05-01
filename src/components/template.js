@@ -496,11 +496,48 @@ export const appTemplate = `
             <header class="mb-4">
               <p class="text-xs tracking-[0.25em] text-flame-500 uppercase mb-1">Explorer</p>
               <h1 class="text-3xl display italic text-cream-50 leading-none">Découverte</h1>
-              <p class="text-xs text-cream-300/60 mt-2">Cherche, ajoute et classe de nouvelles séries.</p>
             </header>
 
-            <!-- Barre de recherche -->
-            <div class="relative mb-5">
+            <!-- ── RECOMMANDATIONS PERSONNALISÉES : 3 posters côte à côte ── -->
+            <template x-if="!recoLoading && recommendations.length > 0">
+              <div class="mb-5">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold">Pour toi</p>
+                  <p class="text-[10px] text-cream-300/40 italic" x-text="recoReason"></p>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                  <template x-for="show in recommendations.slice(0,3)" :key="'reco-' + show.id">
+                    <div class="flex flex-col">
+                      <div class="relative aspect-[2/3] rounded-xl overflow-hidden bg-ink-800">
+                        <template x-if="show.poster">
+                          <img :src="show.poster" :alt="show.name" class="w-full h-full object-cover" loading="lazy" decoding="async" />
+                        </template>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                        <button @click="select(show)" class="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-bold px-2.5 py-1 rounded-full bg-flame-600 text-cream-50 hover:bg-flame-500 transition-colors">
+                          + Classer
+                        </button>
+                      </div>
+                      <p class="text-[10px] font-medium text-cream-100 truncate mt-1.5 leading-tight" x-text="show.name"></p>
+                      <p class="text-[9px] text-cream-300/40" x-text="show.year"></p>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <template x-if="recoLoading">
+              <div class="mb-5">
+                <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-2">Pour toi</p>
+                <div class="grid grid-cols-3 gap-2">
+                  <template x-for="i in 3" :key="i">
+                    <div class="skeleton aspect-[2/3] rounded-xl"></div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <!-- ── BARRE DE RECHERCHE ── -->
+            <div class="relative mb-3">
               <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-cream-300/50" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
               <input
                 type="search"
@@ -512,7 +549,19 @@ export const appTemplate = `
               />
             </div>
 
-            <!-- Résultats de recherche -->
+            <!-- ── FILTRES GENRES ── -->
+            <div class="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-4 px-4">
+              <template x-for="g in genres" :key="g.id">
+                <button
+                  @click="genreFilter = g.id"
+                  :class="genreFilter === g.id ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'"
+                  class="text-[11px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0 transition-colors"
+                  x-text="g.name"
+                ></button>
+              </template>
+            </div>
+
+            <!-- ── RÉSULTATS DE RECHERCHE ── -->
             <template x-if="searchQuery.trim().length >= 2">
               <div class="mb-6">
                 <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Résultats</p>
@@ -553,18 +602,18 @@ export const appTemplate = `
               </div>
             </template>
 
-            <!-- Tendances par défaut (quand pas de recherche active) -->
+            <!-- ── TENDANCES (filtrées par genre) ── -->
             <template x-if="searchQuery.trim().length < 2">
               <div>
                 <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold mb-3">Tendances de la semaine</p>
                 <template x-if="trendingLoading">
                   <div class="grid grid-cols-2 gap-3"><template x-for="i in 6" :key="i"><div class="skeleton aspect-[2/3] rounded-xl"></div></template></div>
                 </template>
-                <template x-if="!trendingLoading && trendingShows.length === 0">
-                  <p class="text-sm text-cream-300/50 text-center py-8">Tendances indisponibles pour le moment.</p>
+                <template x-if="!trendingLoading && trendingFiltered.length === 0">
+                  <p class="text-sm text-cream-300/50 text-center py-8">Aucune série dans ce genre pour le moment.</p>
                 </template>
                 <div class="grid grid-cols-2 gap-3">
-                  <template x-for="show in trendingShows" :key="show.id">
+                  <template x-for="show in trendingFiltered" :key="show.id">
                     <div class="space-y-2">
                       <div class="relative aspect-[2/3] rounded-xl overflow-hidden bg-ink-800">
                         <template x-if="show.poster">
@@ -584,6 +633,7 @@ export const appTemplate = `
                 </div>
               </div>
             </template>
+
           </section>
         </template>
 
