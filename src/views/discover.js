@@ -52,11 +52,18 @@ export const discoverView = () => ({
 
   async init() {
     await this.loadMyLibrary()
-    // Charge le profil utilisateur pour le calcul de compatibilité (sans bloquer)
+
+    // Charge le profil utilisateur EN PREMIER pour que le % soit disponible
+    // quand les recommandations arrivent
     const me = window.Alpine.store('app').session?.user?.id
     if (me) {
-      buildUserProfile(me).then(p => { this._userProfile = p }).catch(() => {})
+      try {
+        this._userProfile = await buildUserProfile(me)
+      } catch (e) {
+        console.warn('[Discover] buildUserProfile error', e)
+      }
     }
+
     await Promise.all([
       this.loadTrending(),
       this.loadRecommendations()
@@ -118,6 +125,7 @@ export const discoverView = () => ({
       this.recommendations = results
       this.recoReason = reason
       this.recoLoaded = true
+      this._computeRecommendationsWithScore()
     } catch (e) {
       console.warn('[Discover] loadRecommendations error', e)
       this.recommendations = []
@@ -196,9 +204,15 @@ export const discoverView = () => ({
   },
 
   // Recommandations enrichies avec % de compatibilité
-  get recommendationsWithScore() {
-    if (!this.recommendations.length) return []
-    return this.recommendations.slice(0, 3).map(show => {
+  // Propriété calculée explicitement (pas un getter) pour garantir la réactivité Alpine
+  recommendationsWithScore: [],
+
+  _computeRecommendationsWithScore() {
+    if (!this.recommendations.length) {
+      this.recommendationsWithScore = []
+      return
+    }
+    this.recommendationsWithScore = this.recommendations.slice(0, 3).map(show => {
       const compat = this._userProfile
         ? computeCompatibility(show, this._userProfile)
         : null
