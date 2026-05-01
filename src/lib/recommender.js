@@ -81,6 +81,16 @@ export async function buildUserProfile(userId) {
     totalItems: items.length
   }
 
+  // Fetch TMDB pour les séries bien notées pas encore en cache mémoire
+  // Limité à 10 appels max — budget réseau raisonnable, cachés ensuite
+  const toFetch = actionable
+    .filter(item => !tmdbApi.getCached(item.tmdb_id) && itemWeight(item) >= 4)
+    .slice(0, 10)
+
+  if (toFetch.length > 0) {
+    await Promise.all(toFetch.map(item => tmdbApi.getShow(item.tmdb_id).catch(() => null)))
+  }
+
   for (const item of actionable) {
     const w    = itemWeight(item)
     const side = w > 0 ? 'pos' : 'neg'
