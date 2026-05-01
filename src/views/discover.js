@@ -127,12 +127,16 @@ export const discoverView = () => ({
     this.recoLoading = true
     try {
       const { results, reason } = await generateRecommendations(me, { limit: 3 })
-      window._fabuReco = { results, reason }
-      console.log('[Reco] results:', results.length, 'reason:', reason)
       this.recommendations = results
       this.recoReason = reason
       this.recoLoaded = true
-      this._computeRecommendationsWithScore()
+
+      // Calcul du % de compatibilité directement ici
+      const profile = window.__fabuProfile || null
+      this.recommendationsWithScore = results.slice(0, 3).map(show => {
+        const compat = profile ? computeCompatibility(show, profile) : null
+        return { ...show, compatibility: compat }
+      })
     } catch (e) {
       console.warn('[Discover] loadRecommendations error', e)
       this.recommendations = []
