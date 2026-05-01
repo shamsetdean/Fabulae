@@ -358,12 +358,16 @@ export const appTemplate = `
             </template>
 
             <template x-if="!loading && filtered.length === 0">
-              <div class="text-center py-16 text-cream-300/60">
-                <svg class="mx-auto mb-3 opacity-40" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M4 4h16v16H4zM4 9h16M9 4v16"/>
+              <div class="text-center py-12 px-6">
+                <svg width="56" height="56" viewBox="0 0 64 64" fill="none" class="mx-auto mb-4">
+                  <rect x="10" y="14" width="20" height="36" rx="2" stroke="#FF6B35" stroke-width="1.5" opacity="0.6"/>
+                  <rect x="34" y="14" width="20" height="36" rx="2" stroke="#FF6B35" stroke-width="1.5" opacity="0.3"/>
+                  <line x1="20" y1="22" x2="20" y2="42" stroke="#FF6B35" stroke-width="1" opacity="0.4"/>
+                  <line x1="44" y1="22" x2="44" y2="42" stroke="#FF6B35" stroke-width="1" opacity="0.2"/>
                 </svg>
-                <p class="text-sm">Rien dans cette catégorie.</p>
-                <p class="text-xs mt-2">Cherche une série pour l'ajouter.</p>
+                <p class="display italic text-xl text-cream-50 mb-2">Rien à voir ici</p>
+                <p class="text-sm text-cream-300/50 leading-relaxed mb-4">Cette catégorie est vide pour le moment.<br/>Ajoute des séries depuis l'onglet Ajouter.</p>
+                <a href="#/discover" class="inline-block bg-flame-500 hover:bg-flame-600 text-ink-950 text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Découvrir</a>
               </div>
             </template>
 
@@ -516,7 +520,15 @@ export const appTemplate = `
                   <div class="space-y-2"><template x-for="i in 4" :key="i"><div class="skeleton h-20 rounded-xl"></div></template></div>
                 </template>
                 <template x-if="!searching && searchResults.length === 0">
-                  <p class="text-sm text-cream-300/50 text-center py-6">Aucun résultat pour cette recherche.</p>
+                  <div class="text-center py-10 px-6">
+                    <svg width="48" height="48" viewBox="0 0 64 64" fill="none" class="mx-auto mb-3">
+                      <circle cx="28" cy="28" r="14" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                      <line x1="38" y1="38" x2="50" y2="50" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+                      <line x1="22" y1="28" x2="34" y2="28" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+                    </svg>
+                    <p class="display italic text-lg text-cream-50 mb-1">Aucune trouvaille</p>
+                    <p class="text-sm text-cream-300/50">Essaie un autre titre ou vérifie l'orthographe.</p>
+                  </div>
                 </template>
                 <div class="space-y-2">
                   <template x-for="show in searchResults" :key="show.id">
@@ -602,9 +614,16 @@ export const appTemplate = `
 
             <!-- Empty -->
             <template x-if="!loading && filtered.length === 0">
-              <div class="text-center py-16">
-                <p class="text-sm text-cream-300/50">Aucune activité récente dans ton fil.</p>
-                <p class="text-xs text-cream-300/40 mt-2">Suis des membres ou ajoute des séries pour voir des recommandations.</p>
+              <div class="text-center py-12 px-6">
+                <svg width="56" height="56" viewBox="0 0 64 64" fill="none" class="mx-auto mb-4">
+                  <circle cx="22" cy="20" r="6" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                  <circle cx="42" cy="20" r="6" stroke="#FF6B35" stroke-width="1.5" opacity="0.3"/>
+                  <path d="M14 36 Q14 32 18 32 L26 32 Q30 32 30 36 L30 50 Q30 54 26 54 L18 54 Q14 54 14 50 Z" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                  <path d="M34 36 Q34 32 38 32 L46 32 Q50 32 50 36 L50 50 Q50 54 46 54 L38 54 Q34 54 34 50 Z" stroke="#FF6B35" stroke-width="1.5" opacity="0.3"/>
+                </svg>
+                <p class="display italic text-xl text-cream-50 mb-2">Le fil est silencieux</p>
+                <p class="text-sm text-cream-300/50 leading-relaxed mb-4">Suis des membres pour voir<br/>leurs Top et Flop apparaître ici.</p>
+                <a href="#/trending" class="inline-block bg-flame-500 hover:bg-flame-600 text-ink-950 text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Explorer les tendances</a>
               </div>
             </template>
 
@@ -681,7 +700,18 @@ export const appTemplate = `
 
             <div x-show="!loading && tab === 'community'">
               <template x-if="communityRanking.length === 0">
-                <p class="text-center text-cream-300/50 text-sm py-10">Pas encore assez de Top 3 publiés.</p>
+                <div class="text-center py-10 px-6">
+                  <svg width="56" height="56" viewBox="0 0 64 64" fill="none" class="mx-auto mb-4">
+                    <path d="M22 14 H42 L40 24 Q40 32 32 32 Q24 32 24 24 Z" stroke="#FF6B35" stroke-width="1.5" opacity="0.6"/>
+                    <path d="M18 18 Q12 18 12 24 Q12 30 22 30" stroke="#FF6B35" stroke-width="1.5" opacity="0.4"/>
+                    <path d="M46 18 Q52 18 52 24 Q52 30 42 30" stroke="#FF6B35" stroke-width="1.5" opacity="0.4"/>
+                    <line x1="32" y1="32" x2="32" y2="44" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                    <line x1="22" y1="50" x2="42" y2="50" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                  </svg>
+                  <p class="display italic text-xl text-cream-50 mb-2">La saison commence</p>
+                  <p class="text-sm text-cream-300/50 leading-relaxed mb-4">Pas encore assez de Top 3 publiés.<br/>Sois parmi les premiers à classer.</p>
+                  <a href="#/library" class="inline-block bg-flame-500 hover:bg-flame-600 text-ink-950 text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Publier mon Top 3</a>
+                </div>
               </template>
               <ol class="space-y-2">
                 <template x-for="(show, idx) in communityRanking" :key="show.id">
@@ -738,7 +768,15 @@ export const appTemplate = `
             </template>
 
             <template x-if="!loading && items.length === 0">
-              <p class="text-center text-cream-300/50 text-sm py-10">Aucune notification.</p>
+              <div class="text-center py-12 px-6">
+                <svg width="56" height="56" viewBox="0 0 64 64" fill="none" class="mx-auto mb-4">
+                  <path d="M44 28 A12 12 0 0 0 20 28 C20 42 14 46 14 46 H50 S44 42 44 28 Z" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                  <path d="M28 50 A4 4 0 0 0 36 50" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                  <line x1="14" y1="46" x2="50" y2="14" stroke="#9aa0ae" stroke-width="1" opacity="0.3" stroke-dasharray="2,2"/>
+                </svg>
+                <p class="display italic text-xl text-cream-50 mb-2">Tout est calme</p>
+                <p class="text-sm text-cream-300/50 leading-relaxed">Tu seras prévenu dès qu'un de tes abonnements<br/>publiera un Top, un Flop ou te suivra.</p>
+              </div>
             </template>
 
             <ul class="space-y-2">
@@ -964,9 +1002,16 @@ export const appTemplate = `
                     </template>
 
                     <template x-if="(!currentTop || currentTop.shows.length === 0) && (!currentFlop || currentFlop.shows.length === 0)">
-                      <div class="text-center py-12">
-                        <p class="text-sm text-cream-300/50 mb-2">Aucune série recommandée pour le moment.</p>
-                        <p class="text-xs text-cream-300/40">Ajoute des séries depuis Découverte et marque-les "Je recommande" ou "Je déconseille" pour qu'elles apparaissent ici.</p>
+                      <div class="text-center py-12 px-6">
+                        <svg width="56" height="56" viewBox="0 0 64 64" fill="none" class="mx-auto mb-4">
+                          <path d="M32 12 L36 24 L48 26 L40 34 L42 46 L32 40 L22 46 L24 34 L16 26 L28 24 Z" stroke="#FF6B35" stroke-width="1.5" opacity="0.6"/>
+                          <circle cx="32" cy="32" r="2" fill="#FF6B35" opacity="0.5"/>
+                          <line x1="14" y1="56" x2="50" y2="56" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+                        </svg>
+                        <p class="display italic text-xl text-cream-50 mb-2">Aucun classement</p>
+                        <p class="text-sm text-cream-300/50 leading-relaxed mb-4" x-show="isMe">Marque tes séries préférées<br/>« Je recommande » pour qu'elles apparaissent ici.</p>
+                        <p class="text-sm text-cream-300/50 leading-relaxed" x-show="!isMe">Cet utilisateur n'a pas encore<br/>publié de Top ou de Flop.</p>
+                        <a x-show="isMe" href="#/discover" class="inline-block bg-flame-500 hover:bg-flame-600 text-ink-950 text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Classer une série</a>
                       </div>
                     </template>
 
@@ -989,7 +1034,15 @@ export const appTemplate = `
                           </div>
                         </template>
                         <template x-if="!libraryLoading && library.length === 0">
-                          <p class="text-sm text-cream-300/50 text-center py-12">Aucune série dans la bibliothèque.</p>
+                          <div class="text-center py-12 px-6">
+                            <svg width="48" height="48" viewBox="0 0 64 64" fill="none" class="mx-auto mb-3">
+                              <rect x="10" y="14" width="20" height="36" rx="2" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                              <rect x="34" y="14" width="20" height="36" rx="2" stroke="#FF6B35" stroke-width="1.5" opacity="0.3"/>
+                            </svg>
+                            <p class="display italic text-lg text-cream-50 mb-1">Bibliothèque vide</p>
+                            <p class="text-sm text-cream-300/50" x-show="isMe">Commence à ajouter des séries pour voir ta collection grandir.</p>
+                            <p class="text-sm text-cream-300/50" x-show="!isMe">Cet utilisateur n'a pas encore ajouté de séries.</p>
+                          </div>
                         </template>
                         <div class="grid grid-cols-3 gap-3" x-show="!libraryLoading && library.length > 0">
                           <template x-for="item in library" :key="item.id">
@@ -1041,7 +1094,15 @@ export const appTemplate = `
                       <div class="space-y-3"><template x-for="i in 4" :key="i"><div class="skeleton h-14 rounded-xl"></div></template></div>
                     </template>
                     <template x-if="!followersLoading && followers.length === 0">
-                      <p class="text-sm text-cream-300/50 text-center py-8">Aucun abonné pour le moment.</p>
+                      <div class="text-center py-10 px-6">
+                        <svg width="48" height="48" viewBox="0 0 64 64" fill="none" class="mx-auto mb-3">
+                          <circle cx="32" cy="22" r="8" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                          <path d="M16 50 Q16 38 32 38 Q48 38 48 50" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                          <circle cx="32" cy="22" r="3" stroke="#FF6B35" stroke-width="1" opacity="0.3"/>
+                        </svg>
+                        <p class="display italic text-lg text-cream-50 mb-1">Personne pour l'instant</p>
+                        <p class="text-sm text-cream-300/50">Publie ton Top 3 du moment<br/>pour attirer la communauté.</p>
+                      </div>
                     </template>
                     <div class="space-y-2">
                       <template x-for="user in followers" :key="user.id">
@@ -1077,7 +1138,17 @@ export const appTemplate = `
                       <div class="space-y-3"><template x-for="i in 4" :key="i"><div class="skeleton h-14 rounded-xl"></div></template></div>
                     </template>
                     <template x-if="!followingLoading && following.length === 0">
-                      <p class="text-sm text-cream-300/50 text-center py-8">Vous ne suivez personne pour le moment.</p>
+                      <div class="text-center py-10 px-6">
+                        <svg width="48" height="48" viewBox="0 0 64 64" fill="none" class="mx-auto mb-3">
+                          <circle cx="24" cy="22" r="7" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                          <path d="M12 48 Q12 38 24 38 Q36 38 36 48" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+                          <line x1="44" y1="20" x2="52" y2="20" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                          <line x1="48" y1="16" x2="48" y2="24" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                        </svg>
+                        <p class="display italic text-lg text-cream-50 mb-1">Aucun abonnement</p>
+                        <p class="text-sm text-cream-300/50 mb-4">Suis des membres pour voir<br/>leurs Top et Flop dans ton fil.</p>
+                        <a href="#/trending" class="inline-block bg-flame-500 hover:bg-flame-600 text-ink-950 text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Découvrir des profils</a>
+                      </div>
                     </template>
                     <div class="space-y-2">
                       <template x-for="user in following" :key="user.id">
