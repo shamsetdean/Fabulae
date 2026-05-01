@@ -55,16 +55,54 @@ async function writeToSupabaseCache(tmdbId, data) {
   }
 }
 
+// ─── Tailles d'images ────────────────────────────────────────────────────────
+// Mapping contexte d'affichage → taille TMDB optimale
+//   thumb  : listes 1 colonne (Bibliothèque, Feed) — affichage ~50-60px
+//   card   : grilles 2-3 colonnes (Profile/Discover) — affichage ~120-180px
+//   detail : page détail série — affichage ~280px
+//   hero   : backdrops plein écran
+//
+// Sources : posters TMDB sont en ratio 2:3, donc w154 = 154x231, w185 = 185x278, etc.
+
+const POSTER_SIZES = {
+  thumb: 'w154',
+  card: 'w185',
+  detail: 'w342',
+  hero: 'w500'
+}
+
+const BACKDROP_SIZES = {
+  card: 'w300',
+  hero: 'w780',
+  full: 'w1280'
+}
+
+export function posterFor(path, context = 'card') {
+  if (!path) return null
+  const size = POSTER_SIZES[context] || POSTER_SIZES.card
+  return `${TMDB_IMAGE}/${size}${path}`
+}
+
+export function backdropFor(path, context = 'hero') {
+  if (!path) return null
+  const size = BACKDROP_SIZES[context] || BACKDROP_SIZES.hero
+  return `${TMDB_IMAGE}/${size}${path}`
+}
+
 // ─── API principale ──────────────────────────────────────────────────────────
 
 export const tmdbApi = {
+  // Conserve l'API legacy pour compatibilité
   poster(path, size = 'w342') {
     if (!path) return null
     return `${TMDB_IMAGE}/${size}${path}`
   },
 
+  // Nouvelle API recommandée : pose le contexte plutôt que la taille brute
+  posterFor,
+  backdropFor,
+
   // Lecture synchrone du cache mémoire — zéro appel réseau
-  // Utilisé par recommender.js pour enrichir le profil sans fetch
   getCached(id) {
     return MEM_CACHE.get(`show_${id}`) ?? null
   },
@@ -154,8 +192,6 @@ export const tmdbApi = {
     }
   },
 
-  // Recommandations natives TMDB — avec double cache (mémoire + Supabase)
-  // Retourne les détails complets (genres, networks, created_by) → pas de fetch supplémentaire
   async getRecommendations(id) {
     if (!id) return []
     const key = `reco_${id}`
@@ -190,7 +226,10 @@ export function getProvidersFR(show) {
   return { flatrate: fr.flatrate || [], free: fr.free || [] }
 }
 
-// ─── Helper : carte série normalisée ─────────────────────────────────────────
+// ─── Helper : carte série normalisée avec multi-tailles ─────────────────────
+// L'objet retourné contient plusieurs tailles de poster : thumb, card, detail
+// Les vues utilisent celle qui correspond à leur contexte d'affichage
+// `card.poster` reste rétro-compatible (alias de card.posterCard)
 
 const SHOW_CARD_CACHE = new Map()
 
@@ -202,11 +241,20 @@ export async function getShowCard(id) {
   if (!show) return null
 
   const providers = show['watch/providers']?.results?.FR
+  const posterPath = show.poster_path
+  const backdropPath = show.backdrop_path
+
   const card = {
     id: show.id,
     name: show.name || '',
-    poster: show.poster_path ? tmdbApi.poster(show.poster_path, 'w154') : null,
-    backdrop: show.backdrop_path ? tmdbApi.poster(show.backdrop_path, 'w780') : null,
+    // Multi-tailles : chaque vue prend ce qu'elle utilise réellement
+    posterThumb: posterFor(posterPath, 'thumb'),
+    posterCard: posterFor(posterPath, 'card'),
+    posterDetail: posterFor(posterPath, 'detail'),
+    // Alias rétro-compatible : ancien `poster` = card (taille moyenne)
+    // Les vues qui utilisent `item.show.poster` continuent de marcher
+    poster: posterFor(posterPath, 'card'),
+    backdrop: backdropFor(backdropPath, 'hero'),
     overview: show.overview || '',
     genres: Array.isArray(show.genres) ? show.genres : [],
     vote_average: show.vote_average || 0,
@@ -217,6 +265,9 @@ export async function getShowCard(id) {
     flatrate: providers?.flatrate || [],
     free: providers?.free || []
   }
+
+  // Compat : `year` simple à utiliser dans les templates
+  card.year = card.first_air_date ? card.first_air_date.slice(0, 4) : ''
 
   SHOW_CARD_CACHE.set(id, card)
   return card
