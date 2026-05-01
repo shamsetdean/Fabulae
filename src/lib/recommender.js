@@ -142,8 +142,15 @@ export async function buildUserProfile(userId) {
 export function computeCompatibility(show, profile) {
   if (!show || !profile) return null
 
-  const genres = show.genres || []
-  if (!genres.length) return null
+  // Accepte genres (objets {id,name}) OU genre_ids (entiers) selon la source TMDB
+  let genreIds = []
+  if (Array.isArray(show.genres) && show.genres.length > 0) {
+    genreIds = show.genres.map(g => g.id)
+  } else if (Array.isArray(show.genre_ids) && show.genre_ids.length > 0) {
+    genreIds = show.genre_ids
+  }
+
+  if (!genreIds.length) return null
 
   const posWeights = Object.values(profile.pos.genres).map(g => g.weight)
   const negWeights = Object.values(profile.neg.genres).map(g => g.weight)
@@ -152,28 +159,23 @@ export function computeCompatibility(show, profile) {
 
   let raw = 0
 
-  // Genres positifs
-  for (const g of genres) {
-    const wPos = profile.pos.genres[g.id]?.weight ?? 0
-    const wNeg = profile.neg.genres[g.id]?.weight ?? 0
+  for (const id of genreIds) {
+    const wPos = profile.pos.genres[id]?.weight ?? 0
+    const wNeg = profile.neg.genres[id]?.weight ?? 0
     raw += (wPos / maxPos) * 70
     raw -= (wNeg / maxNeg) * 30
   }
 
-  // Créateurs connus
   for (const creator of show.created_by ?? []) {
     const w = profile.pos.creators[creator.id]?.weight ?? 0
     if (w > 0) raw += Math.min((w / 10) * 15, 15)
   }
 
-  // Popularité (bonus logarithmique léger)
   raw += Math.log10(Math.max(show.popularity ?? 1, 1)) * 1.5
 
-  // Normalisation 0-100
   const score = Math.min(Math.max(Math.round(raw), 0), 100)
 
-  // Si le score est trop faible (< 20) et que les genres ne sont pas du tout connus → null
-  const hasAnyPosGenre = genres.some(g => (profile.pos.genres[g.id]?.weight ?? 0) > 0)
+  const hasAnyPosGenre = genreIds.some(id => (profile.pos.genres[id]?.weight ?? 0) > 0)
   if (!hasAnyPosGenre && score < 20) return null
 
   return score
@@ -259,6 +261,8 @@ function scoreShowFromCache(show, profile) {
     overview: show.overview || '',
     year:     show.first_air_date?.slice(0, 4) || '',
     genres:   show.genres || [],
+    genre_ids: show.genre_ids || (show.genres || []).map(g => g.id),
+    popularity: show.popularity || 0,
     score:    Math.round(score * 10) / 10
   }
 }
