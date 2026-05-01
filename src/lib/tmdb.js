@@ -4,12 +4,13 @@ const TMDB_BASE = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE = 'https://image.tmdb.org/t/p'
 const CACHE_TTL_HOURS = 24
 const MEM_CACHE = new Map()
+const SEARCH_CACHE = new Map()
 
 function getToken() {
   return import.meta.env.VITE_TMDB_TOKEN
 }
 
-async function tmdbFetch(path, params = {}) {
+async function tmdbFetch(path, params = {}, options = {}) {
   const url = new URL(TMDB_BASE + path)
   url.searchParams.set('language', 'fr-FR')
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
@@ -18,7 +19,8 @@ async function tmdbFetch(path, params = {}) {
     headers: {
       Authorization: `Bearer ${getToken()}`,
       'Content-Type': 'application/json'
-    }
+    },
+    signal: options.signal
   })
   if (!res.ok) throw new Error(`TMDB ${res.status}: ${path}`)
   return res.json()
@@ -132,11 +134,29 @@ export const tmdbApi = {
     }
   },
 
-  async searchTv(query) {
+  async searchTv(query, options = {}) {
     if (!query?.trim()) return { results: [] }
+    const q = query.trim().toLowerCase()
+    const cacheKey = `search_${q}`
+
+    // Cache court 60s sur les recherches identiques
+    const cached = SEARCH_CACHE.get(cacheKey)
+    if (cached && (Date.now() - cached.ts) < 60_000) {
+      return cached.data
+    }
+
     try {
-      return await tmdbFetch('/search/tv', { query: query.trim() })
+      const data = await tmdbFetch('/search/tv', { query: query.trim() }, options)
+      SEARCH_CACHE.set(cacheKey, { data, ts: Date.now() })
+      // Nettoyage : garde au max 30 recherches récentes
+      if (SEARCH_CACHE.size > 30) {
+        const oldest = [...SEARCH_CACHE.entries()].sort((a, b) => a[1].ts - b[1].ts)[0]
+        if (oldest) SEARCH_CACHE.delete(oldest[0])
+      }
+      return data
     } catch (e) {
+      // AbortError n'est pas une vraie erreur — on la propage proprement
+      if (e.name === 'AbortError') throw e
       console.warn('[TMDB] search error', e)
       return { results: [] }
     }
