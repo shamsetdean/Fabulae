@@ -558,7 +558,7 @@ export const appTemplate = `
 
             <!-- ── FILTRES GENRES ── -->
             <div class="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-4 px-4">
-              <template x-for="g in genres" :key="g.id">
+              <template x-for="g in genres" :key="g.id !== null ? g.id : 'all'">
                 <button
                   @click="genreFilter = g.id"
                   :class="genreFilter === g.id ? 'bg-cream-100 text-ink-950' : 'bg-ink-800 text-cream-200'"
