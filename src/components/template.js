@@ -506,13 +506,20 @@ export const appTemplate = `
                   <p class="text-[10px] text-cream-300/40 italic" x-text="recoReason"></p>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
-                  <template x-for="show in recommendations.slice(0,3)" :key="'reco-' + show.id">
+                  <template x-for="show in recommendationsWithScore" :key="'reco-' + show.id">
                     <div class="flex flex-col">
                       <div class="relative aspect-[2/3] rounded-xl overflow-hidden bg-ink-800">
                         <template x-if="show.poster">
                           <img :src="show.poster" :alt="show.name" class="w-full h-full object-cover" loading="lazy" decoding="async" />
                         </template>
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                        <!-- Badge compatibilité -->
+                        <template x-if="show.compatibility !== null && show.compatibility !== undefined">
+                          <span class="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                            :class="show.compatibility >= 75 ? 'bg-green-500/90 text-white' : show.compatibility >= 50 ? 'bg-flame-500/90 text-ink-950' : 'bg-ink-700/90 text-cream-300'"
+                            x-text="show.compatibility + '%'">
+                          </span>
+                        </template>
                         <button @click="select(show)" class="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-bold px-2.5 py-1 rounded-full bg-flame-600 text-cream-50 hover:bg-flame-500 transition-colors">
                           + Classer
                         </button>
@@ -1091,6 +1098,47 @@ export const appTemplate = `
                         <p class="text-sm text-cream-300/50 leading-relaxed mb-4" x-show="isMe">Marque tes séries préférées<br/>« Je recommande » pour qu'elles apparaissent ici.</p>
                         <p class="text-sm text-cream-300/50 leading-relaxed" x-show="!isMe">Cet utilisateur n'a pas encore<br/>publié de Top ou de Flop.</p>
                         <a x-show="isMe" href="#/discover" class="inline-block bg-flame-500 hover:bg-flame-600 text-ink-950 text-sm font-semibold px-5 py-2.5 rounded-full transition-colors">Classer une série</a>
+                      </div>
+                    </template>
+
+                    <!-- ─── EXPLORATION DU CATALOGUE (mon profil uniquement) ─── -->
+                    <template x-if="isMe && explorationScore !== null">
+                      <div class="mt-6 pt-5 border-t border-ink-700/40">
+                        <div class="flex items-center justify-between mb-3">
+                          <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold">Exploration du catalogue</p>
+                          <span class="text-[10px] text-cream-300/40" x-text="totalSeriesAnalyzed + ' séries classées'"></span>
+                        </div>
+
+                        <!-- Jauge globale -->
+                        <div class="card p-4 mb-3">
+                          <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs text-cream-200">Catalogue mondial TMDB</p>
+                            <span class="text-sm font-semibold text-flame-500" x-text="explorationScore + '%'"></span>
+                          </div>
+                          <div class="h-1.5 bg-ink-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-flame-500 rounded-full transition-all duration-700"
+                              :style="'width: ' + Math.min(explorationScore * 20, 100) + '%'">
+                            </div>
+                          </div>
+                          <p class="text-[10px] text-cream-300/40 mt-2">Sur ~10 000 séries de qualité recensées</p>
+                        </div>
+
+                        <!-- Par genre -->
+                        <template x-if="explorationByGenre.length > 0">
+                          <div class="space-y-2">
+                            <template x-for="g in explorationByGenre" :key="g.id">
+                              <div class="flex items-center gap-3">
+                                <span class="text-[11px] text-cream-300/70 w-28 flex-shrink-0 truncate" x-text="g.name"></span>
+                                <div class="flex-1 h-1 bg-ink-700 rounded-full overflow-hidden">
+                                  <div class="h-full rounded-full transition-all duration-700"
+                                    :style="'width: ' + Math.min(g.explorationPercent * 10, 100) + '%; background: ' + g.color">
+                                  </div>
+                                </div>
+                                <span class="text-[10px] text-cream-300/50 w-8 text-right flex-shrink-0" x-text="g.explorationPercent + '%'"></span>
+                              </div>
+                            </template>
+                          </div>
+                        </template>
                       </div>
                     </template>
 
