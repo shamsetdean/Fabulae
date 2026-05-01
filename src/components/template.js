@@ -503,7 +503,7 @@ export const appTemplate = `
               <div class="mb-5">
                 <div class="flex items-center justify-between mb-2">
                   <p class="text-[10px] uppercase tracking-[0.25em] text-flame-500 font-semibold">Pour toi</p>
-                  <p class="text-[10px] text-cream-300/40 italic" x-text="recoReason"></p>
+                  <p class="text-[10px] text-cream-300/40 italic" x-show="recoReason && recoReason !== 'ok'" x-text="recoReason === 'no_ratings' ? 'Note des séries pour affiner' : recoReason === 'no_liked' ? 'Ajoute des favoris' : ''"></p>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
                   <template x-for="show in recommendationsWithScore" :key="'reco-' + show.id">
