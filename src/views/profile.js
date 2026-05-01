@@ -14,31 +14,25 @@ export const profileView = () => ({
   error: null,
   _routeKey: null,
 
-  // Onglets
-  activeTab: 'top', // 'top' | 'library' | 'followers' | 'following'
+  activeTab: 'top',
 
-  // Bibliothèque
   library: [],
   libraryLoading: false,
   libraryFilter: 'all',
   libraryVisible: false,
 
-  // Mes propres séries (pour le badge "En commun" sur les bibliothèques d'autrui)
   myLibraryIds: new Set(),
   isFollowingProfile: false,
 
-  // Réseau
   followers: [],
   following: [],
   followersLoading: false,
   followingLoading: false,
   networkLoaded: false,
 
-  // Séries en commun
   commonSeriesCount: null,
   commonSeriesLoading: false,
 
-  // Analyse genres
   genreStats: [],
   genreNeverWatched: [],
   totalSeriesAnalyzed: 0,
@@ -46,19 +40,15 @@ export const profileView = () => ({
   showAnalysis: false,
   togglingVisibility: false,
 
-  // Upload avatar
   uploadingAvatar: false,
 
-  // Suppression item bibliothèque
   pendingDeleteId: null,
   deleting: false,
 
-  // Suppression de compte
   showDeleteAccountModal: false,
   deletingAccount: false,
   deleteConfirmText: '',
 
-  // Signalement
   showReportModal: false,
   reportCategory: 'inappropriate',
   reportReason: '',
@@ -66,7 +56,6 @@ export const profileView = () => ({
   reportSent: false,
 
   async init() {
-    // Surveille les changements de route param pour réinitialiser sur navigation entre profils
     if (this.$watch) {
       this.$watch('$store.app.route', (newRoute) => {
         if (newRoute.name === 'u' || newRoute.name === 'profile') {
@@ -96,32 +85,49 @@ export const profileView = () => ({
     this.following = []
     this.networkLoaded = false
     this.commonSeriesCount = null
-    this.activeTab = 'top'  // Reset tab only on actual navigation change
+    this.activeTab = 'top'
 
     try {
       const me = store.session?.user?.id
       const route = store.route
 
+      // ─── Récupération du profil (avec cache) ────────────────────────────
+      const profileCacheKey = route?.name === 'u' && route.params?.[0]
+        ? `profile:username:${route.params[0]}`
+        : `profile:id:${me}`
+
       let profile = null
 
       if (route?.name === 'u' && route.params?.[0]) {
-        // Profil d'un autre utilisateur — recherche par username
         const targetUsername = route.params[0]
-        const { data, error: pErr } = await supabase
-          .from('profiles').select('*').eq('username', targetUsername).maybeSingle()
-        if (pErr) throw pErr
-        if (!data) { this.error = 'Utilisateur introuvable'; this.loading = false; return }
-        profile = data
+        profile = await store.cached(
+          profileCacheKey,
+          async () => {
+            const { data, error } = await supabase
+              .from('profiles').select('*').eq('username', targetUsername).maybeSingle()
+            if (error) throw error
+            return data
+          },
+          60_000,
+          (fresh) => {
+            if (fresh && this._routeKey === currentKey) this.profile = fresh
+          }
+        )
+        if (!profile) { this.error = 'Utilisateur introuvable'; this.loading = false; return }
       } else if (me) {
-        // Mon propre profil — recherche directe par id (plus fiable, pas de race condition)
-        // Attend que le store ait chargé le profil si possible
         if (store.profile?.id === me) {
           profile = store.profile
         } else {
-          const { data, error: pErr } = await supabase
-            .from('profiles').select('*').eq('id', me).maybeSingle()
-          if (pErr) throw pErr
-          profile = data
+          profile = await store.cached(
+            profileCacheKey,
+            async () => {
+              const { data, error } = await supabase
+                .from('profiles').select('*').eq('id', me).maybeSingle()
+              if (error) throw error
+              return data
+            },
+            60_000
+          )
         }
         if (!profile) { this.error = 'Profil introuvable'; this.loading = false; return }
       } else {
@@ -133,60 +139,46 @@ export const profileView = () => ({
       this.profile = profile
       this.isMe = profile.id === me
 
-      // Top + Flop calculés depuis library_items (nouveau système)
-      // Top = toutes les séries marquées "Je recommande", triées par note ↓ puis date ↓
-      // Flop = toutes les séries marquées "Je déconseille", même tri
-      const { data: ratedItems } = await supabase
-        .from('library_items')
-        .select('tmdb_id, recommendation, rating, created_at')
-        .eq('user_id', profile.id)
-        .not('recommendation', 'is', null)
+      // ─── Top + Flop (avec cache) ────────────────────────────────────────
+      const topFlopCacheKey = `topflop:${profile.id}`
+      const topFlop = await store.cached(
+        topFlopCacheKey,
+        async () => this._fetchTopFlop(profile.id),
+        60_000,
+        (fresh) => {
+          if (this._routeKey !== currentKey) return
+          this.currentTop = fresh.top.length > 0 ? { shows: fresh.top } : null
+          this.currentFlop = fresh.flop.length > 0 ? { shows: fresh.flop } : null
+          try {
+            if (fresh.top.length > 0) this.alias = generateAlias(fresh.top.slice(0, 3))
+          } catch (e) {}
+        }
+      )
 
-      const sortByRatingThenDate = (a, b) => {
-        const ra = a.rating || 0, rb = b.rating || 0
-        if (rb !== ra) return rb - ra
-        return new Date(b.created_at) - new Date(a.created_at)
-      }
-
-      const recommended = (ratedItems || [])
-        .filter(i => i.recommendation === 'recommended')
-        .sort(sortByRatingThenDate)
-      const notRecommended = (ratedItems || [])
-        .filter(i => i.recommendation === 'not_recommended')
-        .sort(sortByRatingThenDate)
-
-      // Hydrate avec TMDB
-      const hydrate = async (items) => {
-        const shows = await Promise.all(items.map(async (i) => {
-          const s = await tmdbApi.getShow(i.tmdb_id)
-          if (!s) return null
-          return {
-            id: s.id,
-            name: s.name || '',
-            poster: s.poster_path ? tmdbApi.poster(s.poster_path, 'w154') : null,
-            genres: Array.isArray(s.genres) ? s.genres : [],
-            rating: i.rating
-          }
-        }))
-        return shows.filter(Boolean)
-      }
-
-      const topShows = await hydrate(recommended)
-      const flopShows = await hydrate(notRecommended)
-
-      this.currentTop = topShows.length > 0 ? { shows: topShows } : null
-      this.currentFlop = flopShows.length > 0 ? { shows: flopShows } : null
+      this.currentTop = topFlop.top.length > 0 ? { shows: topFlop.top } : null
+      this.currentFlop = topFlop.flop.length > 0 ? { shows: topFlop.flop } : null
 
       try {
-        if (topShows.length > 0) this.alias = generateAlias(topShows.slice(0, 3))
+        if (topFlop.top.length > 0) this.alias = generateAlias(topFlop.top.slice(0, 3))
       } catch (e) { this.alias = null }
 
-      // Compteurs followers/following
-      const [followersRes, followingRes] = await Promise.all([
-        supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', profile.id),
-        supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', profile.id)
-      ])
-      this.counts = { followers: followersRes.count || 0, following: followingRes.count || 0 }
+      // ─── Compteurs (avec cache) ─────────────────────────────────────────
+      const countsCacheKey = `counts:${profile.id}`
+      const counts = await store.cached(
+        countsCacheKey,
+        async () => {
+          const [fRes, gRes] = await Promise.all([
+            supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', profile.id),
+            supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', profile.id)
+          ])
+          return { followers: fRes.count || 0, following: gRes.count || 0 }
+        },
+        60_000,
+        (fresh) => {
+          if (this._routeKey === currentKey) this.counts = fresh
+        }
+      )
+      this.counts = counts
 
       if (me && !this.isMe) {
         const { data: f } = await supabase.from('follows').select('*')
@@ -209,6 +201,41 @@ export const profileView = () => ({
     } finally {
       this.loading = false
     }
+  },
+
+  async _fetchTopFlop(profileId) {
+    const { data: ratedItems } = await supabase
+      .from('library_items')
+      .select('tmdb_id, recommendation, rating, created_at')
+      .eq('user_id', profileId)
+      .not('recommendation', 'is', null)
+
+    const sortByRatingThenDate = (a, b) => {
+      const ra = a.rating || 0, rb = b.rating || 0
+      if (rb !== ra) return rb - ra
+      return new Date(b.created_at) - new Date(a.created_at)
+    }
+
+    const recommended = (ratedItems || []).filter(i => i.recommendation === 'recommended').sort(sortByRatingThenDate)
+    const notRecommended = (ratedItems || []).filter(i => i.recommendation === 'not_recommended').sort(sortByRatingThenDate)
+
+    const hydrate = async (items) => {
+      const shows = await Promise.all(items.map(async (i) => {
+        const s = await tmdbApi.getShow(i.tmdb_id)
+        if (!s) return null
+        return {
+          id: s.id,
+          name: s.name || '',
+          poster: s.poster_path ? tmdbApi.poster(s.poster_path, 'w154') : null,
+          genres: Array.isArray(s.genres) ? s.genres : [],
+          rating: i.rating
+        }
+      }))
+      return shows.filter(Boolean)
+    }
+
+    const [top, flop] = await Promise.all([hydrate(recommended), hydrate(notRecommended)])
+    return { top, flop }
   },
 
   setTab(tab) {
@@ -246,7 +273,13 @@ export const profileView = () => ({
 
       this.profile = { ...this.profile, avatar_url: avatarUrl }
       window.Alpine.store('app').profile = { ...window.Alpine.store('app').profile, avatar_url: avatarUrl }
-      window.Alpine.store('app').showToast('Photo mise à jour', 'success')
+
+      // Invalide le cache du profil pour qu'il soit rechargé avec la nouvelle photo
+      const store = window.Alpine.store('app')
+      store.cacheInvalidate(`profile:id:${this.profile.id}`)
+      if (this.profile.username) store.cacheInvalidate(`profile:username:${this.profile.username}`)
+
+      store.showToast('Photo mise à jour', 'success')
     } catch (e) {
       console.warn('[Profile] uploadAvatar error', e)
       window.Alpine.store('app').showToast('Erreur lors de l\'upload', 'error')
@@ -263,30 +296,47 @@ export const profileView = () => ({
     return (this.profile?.username || '?').charAt(0).toUpperCase()
   },
 
-  // ─── RÉSEAU ─────────────────────────────────────────────────────────────────
+  // ─── RÉSEAU (avec cache) ───────────────────────────────────────────────────
 
   async loadNetwork() {
     if (this.networkLoaded || !this.profile) return
     this.networkLoaded = true
     const profileId = this.profile.id
+    const store = window.Alpine.store('app')
 
     this.followersLoading = true
     try {
-      const { data } = await supabase
-        .from('follows')
-        .select('follower_id, profiles!follows_follower_id_fkey(id, username, avatar_url, library_public)')
-        .eq('following_id', profileId)
-      this.followers = (data || []).map(f => f.profiles).filter(Boolean)
+      const data = await store.cached(
+        `followers:${profileId}`,
+        async () => {
+          const { data } = await supabase
+            .from('follows')
+            .select('follower_id, profiles!follows_follower_id_fkey(id, username, avatar_url, library_public)')
+            .eq('following_id', profileId)
+          return (data || []).map(f => f.profiles).filter(Boolean)
+        },
+        60_000,
+        (fresh) => { this.followers = fresh }
+      )
+      this.followers = data
     } catch (e) { console.warn('[Profile] followers error', e) }
     finally { this.followersLoading = false }
 
     this.followingLoading = true
     try {
-      const { data } = await supabase
-        .from('follows')
-        .select('following_id, profiles!follows_following_id_fkey(id, username, avatar_url, library_public)')
-        .eq('follower_id', profileId)
-      this.following = (data || []).map(f => f.profiles).filter(Boolean)
+      const data = await store.cached(
+        `following:${profileId}`,
+        async () => {
+          const { data } = await supabase
+            .from('follows')
+            .select('following_id, profiles!follows_following_id_fkey(id, username, avatar_url, library_public)')
+            .eq('follower_id', profileId)
+          return (data || []).map(f => f.profiles).filter(Boolean)
+        },
+        60_000,
+        (fresh) => { this.following = fresh }
+      )
+      this.following = data
     } catch (e) { console.warn('[Profile] following error', e) }
     finally { this.followingLoading = false }
   },
@@ -309,7 +359,7 @@ export const profileView = () => ({
 
   get canChat() { return this.commonSeriesCount !== null && this.commonSeriesCount >= 5 },
 
-  // ─── BIBLIOTHÈQUE ───────────────────────────────────────────────────────────
+  // ─── BIBLIOTHÈQUE (avec cache) ──────────────────────────────────────────────
 
   async loadLibrary() {
     if (!this.profile) return
@@ -317,33 +367,47 @@ export const profileView = () => ({
     this._libraryLoading = true
     this.libraryLoading = true
 
-    // Si je consulte un autre profil ET je le suis → charge ma propre biblio pour comparaison
+    const store = window.Alpine.store('app')
+    const profileId = this.profile.id
+
     if (!this.isMe && this.isFollowing) {
       try {
-        const me = window.Alpine.store('app').session?.user?.id
+        const me = store.session?.user?.id
         if (me) {
-          const { data: mine } = await supabase
-            .from('library_items')
-            .select('tmdb_id')
-            .eq('user_id', me)
-          this.myLibraryIds = new Set((mine || []).map(i => i.tmdb_id))
+          const myLibIds = await store.cached(
+            `myLibIds:${me}`,
+            async () => {
+              const { data: mine } = await supabase.from('library_items').select('tmdb_id').eq('user_id', me)
+              return (mine || []).map(i => i.tmdb_id)
+            },
+            60_000
+          )
+          this.myLibraryIds = new Set(myLibIds)
         }
       } catch (e) {
         console.warn('[Profile] myLibraryIds error', e)
       }
     }
-    try {
-      const { data, error } = await supabase
-        .from('library_items').select('*')
-        .eq('user_id', this.profile.id)
-        .order('updated_at', { ascending: false })
-      if (error) throw error
 
-      const hydrated = await Promise.all((data || []).map(async item => {
-        const show = await getShowCard(item.tmdb_id).catch(() => null)
-        return show ? { ...item, show } : null
-      }))
-      this.library = hydrated.filter(Boolean)
+    try {
+      const data = await store.cached(
+        `profileLib:${profileId}`,
+        async () => {
+          const { data, error } = await supabase
+            .from('library_items').select('*')
+            .eq('user_id', profileId)
+            .order('updated_at', { ascending: false })
+          if (error) throw error
+          const hydrated = await Promise.all((data || []).map(async item => {
+            const show = await getShowCard(item.tmdb_id).catch(() => null)
+            return show ? { ...item, show } : null
+          }))
+          return hydrated.filter(Boolean)
+        },
+        60_000,
+        (fresh) => { this.library = fresh }
+      )
+      this.library = data
     } catch (e) {
       console.warn('[Profile] loadLibrary error', e)
       this.library = []
@@ -394,7 +458,18 @@ export const profileView = () => ({
       const { error } = await supabase.from('library_items').delete().eq('id', this.pendingDeleteId)
       if (!error) {
         this.library = this.library.filter(i => i.id !== this.pendingDeleteId)
-        window.Alpine.store('app').showToast('Série supprimée', 'success')
+        // Invalide les caches concernés
+        const store = window.Alpine.store('app')
+        const profileId = this.profile?.id
+        if (profileId) {
+          store.cacheInvalidate(`profileLib:${profileId}`)
+          store.cacheInvalidate(`topflop:${profileId}`)
+          if (this.isMe) {
+            store.cacheInvalidate(`library:${profileId}`)
+            store.cacheInvalidate(`myLibIds:${profileId}`)
+          }
+        }
+        store.showToast('Série supprimée', 'success')
       }
     } catch (e) { console.warn('[Profile] delete error', e) }
     finally { this.deleting = false; this.pendingDeleteId = null }
@@ -404,7 +479,6 @@ export const profileView = () => ({
 
   swipeCard(item) {
     if (!item) {
-      // Guard : retourne un objet inerte si item null (évite crash Alpine)
       return {
         _item: null,
         startX: 0, currentX: 0, swiping: false, THRESHOLD: 80,
@@ -455,32 +529,50 @@ export const profileView = () => ({
     if (!this.profile) return
     this.analysisLoading = true
     try {
-      const { data: items, error } = await supabase
-        .from('library_items').select('tmdb_id').eq('user_id', this.profile.id)
-      if (error) throw error
-      this.totalSeriesAnalyzed = (items || []).length
-      if (!items || items.length === 0) {
-        this.genreStats = []; this.genreNeverWatched = ALL_TV_GENRES.slice(); return
-      }
-      const shows = await Promise.all(items.map(it => tmdbApi.getShow(it.tmdb_id).catch(() => null)))
-      const counts = {}; const seen = new Set()
-      for (const s of shows) {
-        if (!s || !Array.isArray(s.genres)) continue
-        const inThisShow = new Set()
-        for (const g of s.genres) {
-          if (!g?.id || inThisShow.has(g.id)) continue
-          inThisShow.add(g.id); seen.add(g.id)
-          counts[g.id] = counts[g.id] || { id: g.id, name: g.name, count: 0 }
-          counts[g.id].count += 1
+      const store = window.Alpine.store('app')
+      const stats = await store.cached(
+        `genres:${this.profile.id}`,
+        async () => this._fetchGenreAnalysis(this.profile.id),
+        300_000, // 5 min : l'analyse genres change peu
+        (fresh) => {
+          this.genreStats = fresh.genreStats
+          this.genreNeverWatched = fresh.genreNeverWatched
+          this.totalSeriesAnalyzed = fresh.total
         }
-      }
-      const arr = Object.values(counts).sort((a, b) => b.count - a.count)
-      const total = arr.reduce((sum, g) => sum + g.count, 0)
-      const palette = ['#FF6B35','#E63946','#F4A261','#E9B44C','#B8A99A','#8A7D70','#5C534A','#3F3A35','#2A2724','#1C1A17']
-      this.genreStats = arr.map((g, i) => ({ ...g, percent: total > 0 ? (g.count / total) * 100 : 0, color: palette[i % palette.length] }))
-      this.genreNeverWatched = ALL_TV_GENRES.filter(g => !seen.has(g.id))
+      )
+      this.genreStats = stats.genreStats
+      this.genreNeverWatched = stats.genreNeverWatched
+      this.totalSeriesAnalyzed = stats.total
     } catch (e) { this.genreStats = []; this.genreNeverWatched = [] }
     finally { this.analysisLoading = false }
+  },
+
+  async _fetchGenreAnalysis(profileId) {
+    const { data: items, error } = await supabase
+      .from('library_items').select('tmdb_id').eq('user_id', profileId)
+    if (error) throw error
+    const total = (items || []).length
+    if (!items || items.length === 0) {
+      return { genreStats: [], genreNeverWatched: ALL_TV_GENRES.slice(), total: 0 }
+    }
+    const shows = await Promise.all(items.map(it => tmdbApi.getShow(it.tmdb_id).catch(() => null)))
+    const counts = {}; const seen = new Set()
+    for (const s of shows) {
+      if (!s || !Array.isArray(s.genres)) continue
+      const inThisShow = new Set()
+      for (const g of s.genres) {
+        if (!g?.id || inThisShow.has(g.id)) continue
+        inThisShow.add(g.id); seen.add(g.id)
+        counts[g.id] = counts[g.id] || { id: g.id, name: g.name, count: 0 }
+        counts[g.id].count += 1
+      }
+    }
+    const arr = Object.values(counts).sort((a, b) => b.count - a.count)
+    const totalCount = arr.reduce((sum, g) => sum + g.count, 0)
+    const palette = ['#FF6B35','#E63946','#F4A261','#E9B44C','#B8A99A','#8A7D70','#5C534A','#3F3A35','#2A2724','#1C1A17']
+    const genreStats = arr.map((g, i) => ({ ...g, percent: totalCount > 0 ? (g.count / totalCount) * 100 : 0, color: palette[i % palette.length] }))
+    const genreNeverWatched = ALL_TV_GENRES.filter(g => !seen.has(g.id))
+    return { genreStats, genreNeverWatched, total }
   },
 
   async toggleVisibility() {
@@ -491,7 +583,10 @@ export const profileView = () => ({
       const { error } = await supabase.from('profiles').update({ library_public: next }).eq('id', this.profile.id)
       if (error) throw error
       this.profile = { ...this.profile, library_public: next }
-      window.Alpine.store('app').showToast(next ? 'Bibliothèque publique' : 'Bibliothèque privée', 'success')
+      const store = window.Alpine.store('app')
+      store.cacheInvalidate(`profile:id:${this.profile.id}`)
+      if (this.profile.username) store.cacheInvalidate(`profile:username:${this.profile.username}`)
+      store.showToast(next ? 'Bibliothèque publique' : 'Bibliothèque privée', 'success')
     } catch (e) { window.Alpine.store('app').showToast('Erreur de sauvegarde') }
     finally { this.togglingVisibility = false }
   },
@@ -535,7 +630,7 @@ export const profileView = () => ({
 
       if (error) throw new Error(error)
 
-      // Nettoyer et rediriger
+      window.Alpine.store('app').cacheClear()
       localStorage.clear()
       window.location.hash = '#/auth'
       window.location.reload()
@@ -590,6 +685,14 @@ export const profileView = () => ({
         this.isFollowing = true
         this.counts.followers += 1
       }
+      // Invalide les caches dépendants
+      const store = window.Alpine.store('app')
+      store.cacheInvalidate(`counts:${this.profile.id}`)
+      store.cacheInvalidate(`counts:${me}`)
+      store.cacheInvalidate(`followers:${this.profile.id}`)
+      store.cacheInvalidate(`following:${me}`)
+      store.cacheInvalidate(`feed:${me}`)
+      store.cacheInvalidate(`newMembers:${me}`)
     } catch (e) { console.error('[Profile] toggleFollow error', e) }
   }
 })
