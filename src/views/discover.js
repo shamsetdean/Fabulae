@@ -7,7 +7,8 @@ export const discoverView = () => ({
   searchQuery: '',
   searchResults: [],
   searching: false,
-  searchTimer: null,
+  _searchTimer: null,
+  _searchAbort: null,
 
   // Tendances par défaut
   trendingShows: [],
@@ -22,7 +23,7 @@ export const discoverView = () => ({
   // État
   myLibraryIds: new Set(),
 
-  // Série sélectionnée pour classification (apparaît en haut)
+  // Série sélectionnée pour classification
   selectedShow: null,
   selStatus: 'watching',
   selRating: 0,
@@ -31,12 +32,10 @@ export const discoverView = () => ({
 
   async init() {
     await this.loadMyLibrary()
-    // Lancement en parallèle — les recos n'attendent pas les tendances
     await Promise.all([
       this.loadTrending(),
       this.loadRecommendations()
     ])
-    // Invalide le cache reco si la bibliothèque est mise à jour depuis une autre vue
     window.addEventListener('library:updated', () => {
       const userId = window.Alpine.store('app').session?.user?.id
       if (userId) invalidateProfileCache(userId)
@@ -103,38 +102,73 @@ export const discoverView = () => ({
     }
   },
 
+  // ─── Recherche debounced + cancellable ─────────────────────────────────
+  // Pattern complet :
+  //  1. clearTimeout : annule le prochain appel programmé
+  //  2. abort() : annule la requête réseau en cours (évite race condition)
+  //  3. nouveau setTimeout 300ms : démarre la nouvelle recherche
+
   onSearchInput() {
-    clearTimeout(this.searchTimer)
+    clearTimeout(this._searchTimer)
+    if (this._searchAbort) {
+      this._searchAbort.abort()
+      this._searchAbort = null
+    }
+
     const q = this.searchQuery.trim()
-    if (q.length < 2) { this.searchResults = []; return }
+    if (q.length < 2) {
+      this.searchResults = []
+      this.searching = false
+      return
+    }
+
     this.searching = true
-    this.searchTimer = setTimeout(async () => {
-      try {
-        const data = await tmdbApi.searchTv(q)
-        this.searchResults = (data?.results || [])
-          .filter(r => !this.myLibraryIds.has(r.id))
-          .slice(0, 20)
-          .map(r => ({
-            id: r.id,
-            name: r.name,
-            year: r.first_air_date ? r.first_air_date.slice(0, 4) : '',
-            poster: r.poster_path ? tmdbApi.poster(r.poster_path, 'w342') : null,
-            overview: r.overview || ''
-          }))
-      } catch (e) {
-        console.warn('[Discover] search error', e)
-        this.searchResults = []
-      } finally {
+    this._searchTimer = setTimeout(() => this._runSearch(q), 300)
+  },
+
+  async _runSearch(q) {
+    // Vérifie que la query est toujours d'actualité (l'utilisateur a pu effacer)
+    if (this.searchQuery.trim() !== q) return
+
+    const controller = new AbortController()
+    this._searchAbort = controller
+
+    try {
+      const data = await tmdbApi.searchTv(q, { signal: controller.signal })
+
+      // Vérifie une seconde fois : la requête a pu prendre du temps,
+      // l'utilisateur a peut-être déjà tapé autre chose
+      if (this.searchQuery.trim() !== q) return
+
+      this.searchResults = (data?.results || [])
+        .filter(r => !this.myLibraryIds.has(r.id))
+        .slice(0, 20)
+        .map(r => ({
+          id: r.id,
+          name: r.name,
+          year: r.first_air_date ? r.first_air_date.slice(0, 4) : '',
+          poster: r.poster_path ? tmdbApi.poster(r.poster_path, 'w342') : null,
+          overview: r.overview || ''
+        }))
+    } catch (e) {
+      if (e.name === 'AbortError') return // Annulation normale, silencieux
+      console.warn('[Discover] search error', e)
+      this.searchResults = []
+    } finally {
+      // Ne désactive le spinner que si on est toujours sur la même query
+      if (this.searchQuery.trim() === q) {
         this.searching = false
       }
-    }, 300)
+      if (this._searchAbort === controller) {
+        this._searchAbort = null
+      }
+    }
   },
 
   isInLibrary(tmdbId) {
     return this.myLibraryIds.has(tmdbId)
   },
 
-  // Sélectionne une série → affichage modal de classification
   select(show) {
     this.selectedShow = show
     this.selStatus = 'watching'
@@ -171,16 +205,13 @@ export const discoverView = () => ({
       const { error } = await supabase.from('library_items').insert(payload)
       if (error) throw error
 
-      // Mise à jour locale instantanée
       this.myLibraryIds = new Set([...this.myLibraryIds, this.selectedShow.id])
 
-      // Retire la série des trois listes
       const id = this.selectedShow.id
       this.searchResults   = this.searchResults.filter(s => s.id !== id)
       this.trendingShows   = this.trendingShows.filter(s => s.id !== id)
       this.recommendations = this.recommendations.filter(s => s.id !== id)
 
-      // Invalide le cache profil si la série est bien notée (signal positif fort)
       if (this.selRating >= 5) {
         invalidateProfileCache(me)
         this.recoLoaded = false
