@@ -1443,6 +1443,50 @@ export const appTemplate = `
                     <span x-text="myEntry ? 'Modifier · ' + statusLabel : 'Ajouter à ma bibliothèque'"></span>
                   </button>
 
+                  <!-- ═══ OÙ REGARDER (rendu plus visible : carte pleine, logos agrandis, remonté en haut de page) ═══ -->
+                  <template x-if="providers && allProviders.length > 0">
+                    <div class="card-strong p-4 mb-4">
+                      <div class="flex items-center gap-2 mb-3">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                        <h2 class="text-sm font-semibold text-cream-50">Disponible sur</h2>
+                      </div>
+                      <div class="space-y-3">
+                        <template x-if="providers.flatrate?.length">
+                          <div>
+                            <p class="text-[10px] text-flame-500 uppercase tracking-wider font-semibold mb-1.5">Abonnement</p>
+                            <div class="flex flex-wrap gap-2">
+                              <template x-for="p in providers.flatrate" :key="p.provider_id">
+                                <div class="flex items-center gap-2 bg-ink-800 border border-ink-700 rounded-xl px-3 py-2">
+                                  <img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-7 h-7 rounded-md" />
+                                  <span class="text-sm font-medium text-cream-100" x-text="p.provider_name"></span>
+                                </div>
+                              </template>
+                            </div>
+                          </div>
+                        </template>
+                        <template x-if="freeOrAds.length > 0">
+                          <div>
+                            <p class="text-[10px] text-gold-500 uppercase tracking-wider font-semibold mb-1.5">Gratuit</p>
+                            <div class="flex flex-wrap gap-2">
+                              <template x-for="p in freeOrAds" :key="p.provider_id">
+                                <div class="flex items-center gap-2 bg-ink-800 border border-ink-700 rounded-xl px-3 py-2">
+                                  <img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-7 h-7 rounded-md" />
+                                  <span class="text-sm font-medium text-cream-100" x-text="p.provider_name"></span>
+                                </div>
+                              </template>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                      <p class="text-[10px] text-cream-300/40 mt-3">Données JustWatch via TMDB.</p>
+                    </div>
+                  </template>
+                  <template x-if="!providers || allProviders.length === 0">
+                    <div class="card p-4 mb-4">
+                      <p class="text-sm text-cream-300/60">Non disponible en streaming en France pour le moment.</p>
+                    </div>
+                  </template>
+
                   <!-- Recommandations des comptes suivis -->
                   <template x-if="followedRecommenders.length > 0">
                     <div class="card p-3 mb-4">
@@ -1470,44 +1514,6 @@ export const appTemplate = `
                       <p class="text-sm text-cream-200 leading-relaxed" x-text="show.overview"></p>
                     </div>
                   </template>
-
-                  <div class="mb-5">
-                    <h2 class="text-[11px] tracking-wider uppercase text-cream-300/60 mb-2">Où regarder en France</h2>
-                    <template x-if="!providers || allProviders.length === 0">
-                      <p class="text-xs text-cream-300/50">Aucune plateforme française listée.</p>
-                    </template>
-                    <template x-if="providers && allProviders.length > 0">
-                      <div class="space-y-2">
-                        <template x-if="providers.flatrate?.length">
-                          <div>
-                            <p class="text-[10px] text-flame-500 uppercase tracking-wider mb-1">Abonnement</p>
-                            <div class="flex flex-wrap gap-1.5">
-                              <template x-for="p in providers.flatrate" :key="p.provider_id">
-                                <div class="card px-2 py-1 flex items-center gap-1.5">
-                                  <img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-5 h-5 rounded" />
-                                  <span class="text-xs" x-text="p.provider_name"></span>
-                                </div>
-                              </template>
-                            </div>
-                          </div>
-                        </template>
-                        <template x-if="freeOrAds.length > 0">
-                          <div>
-                            <p class="text-[10px] text-gold-500 uppercase tracking-wider mb-1">Gratuit</p>
-                            <div class="flex flex-wrap gap-1.5">
-                              <template x-for="p in freeOrAds" :key="p.provider_id">
-                                <div class="card px-2 py-1 flex items-center gap-1.5">
-                                  <img :src="'https://image.tmdb.org/t/p/w92' + p.logo_path" class="w-5 h-5 rounded" />
-                                  <span class="text-xs" x-text="p.provider_name"></span>
-                                </div>
-                              </template>
-                            </div>
-                          </div>
-                        </template>
-                        <p class="text-[10px] text-cream-300/40">Données JustWatch via TMDB.</p>
-                      </div>
-                    </template>
-                  </div>
                 </div>
               </div>
             </template>
