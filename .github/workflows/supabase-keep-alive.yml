@@ -24,16 +24,27 @@ jobs:
             exit 1
           fi
 
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&limit=1" \
-            -H "apikey: ${SUPABASE_ANON_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          # Nettoyage des valeurs : espaces, retours à la ligne, barre oblique finale, suffixe /rest/v1
+          BASE_URL=$(printf '%s' "$SUPABASE_URL" | tr -d '[:space:]')
+          BASE_URL="${BASE_URL%/}"
+          BASE_URL="${BASE_URL%/rest/v1}"
+          BASE_URL="${BASE_URL%/}"
+          KEY=$(printf '%s' "$SUPABASE_ANON_KEY" | tr -d '[:space:]')
+          TABLE=$(printf '%s' "$SUPABASE_TABLE" | tr -d '[:space:]')
+
+          STATUS=$(curl -s -o response.txt -w "%{http_code}" \
+            "${BASE_URL}/rest/v1/${TABLE}?select=*&limit=1" \
+            -H "apikey: ${KEY}" \
+            -H "Authorization: Bearer ${KEY}")
 
           echo "Réponse Supabase : HTTP ${STATUS}"
 
           if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
             echo "Base sollicitée avec succès."
           else
+            echo "Détail renvoyé par Supabase :"
+            head -c 500 response.txt
+            echo
             echo "Échec de la requête."
             exit 1
           fi
