@@ -1,1 +1,39 @@
+name: Supabase keep alive
 
+# Interroge la base Supabase tous les 3 jours pour empêcher
+# la mise en pause automatique du projet (plan gratuit : pause après 7 jours d'inactivité).
+
+on:
+  schedule:
+    - cron: "0 8 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Requête vers Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_TABLE: ${{ secrets.SUPABASE_TABLE }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ] || [ -z "$SUPABASE_TABLE" ]; then
+            echo "Secrets manquants : SUPABASE_URL, SUPABASE_ANON_KEY ou SUPABASE_TABLE"
+            exit 1
+          fi
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+
+          echo "Réponse Supabase : HTTP ${STATUS}"
+
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
+            echo "Base sollicitée avec succès."
+          else
+            echo "Échec de la requête."
+            exit 1
+          fi
